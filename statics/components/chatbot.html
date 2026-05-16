@@ -1,0 +1,114 @@
+<!-- ═══════════════════════════════════════════════════════
+     chatbot.html v3.1 — AI-first scan page
+     FIX 1: Textarea with auto-expand (ChatGPT-like input)
+     FIX 2: Removed broken attach file & voice buttons
+     ═══════════════════════════════════════════════════════ -->
+
+<div class="page active" id="page-scan">
+
+  <!-- ── Desktop left panel ── -->
+  <div class="left-scan">
+
+    <!-- FIX19: Progress card with Stop Scan red pill button inside -->
+    <div class="prog" id="prog">
+      <div class="prog-bar">
+        <div class="prog-fill" id="prog-fill" style="animation:none;width:0%"></div>
+      </div>
+      <span class="prog-lbl" id="prog-lbl">Scanning…</span>
+      <span class="prog-pct" id="prog-pct">0%</span>
+      <button id="prog-stop-btn" onclick="Chatbot.confirmStop()" title="Stop the running scan">⏹ Stop</button>
+    </div>
+
+    <!-- Chat -->
+    <div class="chat-wrap">
+      <div class="chat" id="chat" onscroll="Chatbot._onChatScroll()">
+        <!-- Welcome message injected by Chatbot.showGreeting() on init -->
+      </div>
+      <!-- Scroll-to-bottom button (Fix 8) -->
+      <button class="scroll-to-bottom" id="scroll-to-bottom" onclick="Chatbot.scrollToBottom()" title="Scroll to latest">↓</button>
+
+    </div>
+
+    <!-- FIX 1 & 2: ChatGPT-like textarea input, no attach/voice buttons -->
+    <div class="chat-in" id="chat-in-wrap">
+      <div class="chat-autocomplete" id="chat-autocomplete" style="display:none"></div>
+      <div class="chat-textarea-wrap">
+        <textarea
+          id="chat-inp"
+          placeholder="Scan a target…"
+          rows="1"
+          onkeydown="Chatbot.onChatKeyDown(event)"
+          oninput="Chatbot.onChatInput(event)"
+          autocomplete="off"
+          aria-label="Chat input"
+        ></textarea>
+        <!-- Send button only — attach and voice removed (FIX 2) -->
+        <button class="chat-send-btn" onclick="Chatbot.sendChat()" title="Send" aria-label="Send">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
+            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile collapsible panels -->
+    <div class="panels" id="mobile-panels">
+
+      <div class="panel-toggle" onclick="Utils.togglePanel('risk-panel',this)">
+        🛡 Risk Summary <span class="arrow">▼</span>
+      </div>
+      <div class="panel-body" id="risk-panel">
+        <div class="empty" id="risk-empty-m"><div class="empty-icon">🛡</div>Run a scan first</div>
+        <div id="risk-body-m"></div>
+      </div>
+
+      <div class="panel-toggle" onclick="Utils.togglePanel('cve-panel',this)" style="border-top:1px solid var(--border)">
+        🔍 CVE Details <span class="arrow">▼</span>
+      </div>
+      <div class="panel-body" id="cve-panel">
+        <div class="empty" id="cve-empty-m"><div class="empty-icon">🔍</div>Run a scan first</div>
+        <div id="cve-body-m"></div>
+      </div>
+
+      <div class="panel-toggle" onclick="Utils.togglePanel('rec-panel',this)" style="border-top:1px solid var(--border)">
+        💡 Findings <span class="arrow">▼</span>
+      </div>
+      <div class="panel-body" id="rec-panel">
+        <div class="empty" id="rec-empty-m"><div class="empty-icon">💡</div>Run a scan first</div>
+        <div id="rec-body-m"></div>
+      </div>
+
+      <div class="panel-toggle" onclick="Utils.togglePanel('ai-panel',this)" style="border-top:1px solid var(--border)">
+        🤖 AI Analysis <span class="arrow">▼</span>
+      </div>
+      <div class="panel-body" id="ai-panel">
+        <div class="empty" id="ai-empty-m"><div class="empty-icon">🤖</div>Run a scan first</div>
+        <div id="ai-body-m"></div>
+      </div>
+
+    </div>
+  </div><!-- /left-scan -->
+
+  <!-- ── Desktop right panel ── -->
+  <div class="right-scan">
+    <div class="r-tabs">
+      <div class="r-tab active" onclick="Chatbot.rTab('risk')">Risk</div>
+      <div class="r-tab"        onclick="Chatbot.rTab('cve')">CVE</div>
+      <div class="r-tab"        onclick="Chatbot.rTab('find')">Findings</div>
+      <div class="r-tab"        onclick="Chatbot.rTab('ai')">AI</div>
+    </div>
+    <div class="r-content active" id="rc-risk">
+      <div class="empty"><div class="empty-icon">🛡</div>Run a scan</div>
+    </div>
+    <div class="r-content" id="rc-cve">
+      <div class="empty"><div class="empty-icon">🔍</div>Run a scan</div>
+    </div>
+    <div class="r-content" id="rc-find">
+      <div class="empty"><div class="empty-icon">📋</div>Run a scan</div>
+    </div>
+    <div class="r-content" id="rc-ai">
+      <div class="empty"><div class="empty-icon">🤖</div>Run a scan</div>
+    </div>
+  </div>
+
+</div><!-- /page-scan -->

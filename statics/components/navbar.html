@@ -1,0 +1,128 @@
+<!-- Drawer overlay -->
+<div class="drawer-overlay" id="overlay" aria-hidden="true"></div>
+
+<!-- Drawer / Sidebar -->
+<div class="drawer" id="drawer" aria-hidden="true" role="dialog" aria-label="Navigation menu">
+  <div class="drawer-hdr">
+    <span>☰ ScanWise AI</span>
+    <button class="drawer-close"
+            onclick="closeSidebar()"
+            data-action="close-drawer"
+            aria-label="Close menu"
+            type="button">✕</button>
+  </div>
+  <div class="drawer-action" onclick="closeSidebar();setTimeout(()=>Chatbot.newChat(),120)">
+    <span class="drawer-action-icon">🆕</span>
+    <span class="drawer-action-label">New Chat</span>
+  </div>
+  <div class="drawer-divider"></div>
+  <div class="drawer-section-label">Project History</div>
+  <div class="drawer-search">
+    <input type="text" placeholder="Search projects…" id="dr-search"
+           oninput="Chatbot.filterDrawer()" style="height:36px"/>
+  </div>
+  <div class="drawer-list" id="dr-list">
+    <div class="empty" style="padding:20px;font-size:12px">No scans yet</div>
+  </div>
+</div>
+
+<!-- Top bar -->
+<div class="topbar">
+  <button class="hamburger"
+          onclick="toggleSidebar()"
+          data-action="toggle-drawer"
+          aria-label="Toggle navigation menu"
+          aria-expanded="false"
+          aria-controls="drawer"
+          type="button">☰</button>
+
+  <div class="logo">
+    <div class="logo-icon">🛡</div>
+    <div class="logo-text">ScanWise AI</div>
+  </div>
+
+  <div class="model-indicator" id="model-indicator" title="Active AI model — click for diagnostics"
+       onclick="Chatbot.quickChat('/model')">
+    <span class="model-dot" id="model-dot"></span>
+    <span class="model-name" id="model-name">Detecting…</span>
+    <span class="model-meta" id="model-meta">Starting…</span>
+  </div>
+
+  <div class="topbar-right">
+    <div class="status-pill" id="status-pill">
+      <div class="status-indicator" id="status-indicator"></div>
+      <span id="status-txt">Idle</span>
+    </div>
+  </div>
+</div>
+
+<style>
+.model-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: rgba(127, 119, 221, 0.1);
+  border: 1px solid rgba(127, 119, 221, 0.25);
+  border-radius: 20px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.model-indicator:hover {
+  background: rgba(127, 119, 221, 0.2);
+  border-color: rgba(127, 119, 221, 0.5);
+}
+.model-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulse 2s infinite;
+  flex-shrink: 0;
+}
+.model-dot.checking { background: #f0c040; }
+.model-dot.error    { background: #e24b4a; animation: none; }
+.model-name { font-weight: 600; color: #a5b4fc; }
+.model-meta { color: var(--text3); font-size: 10px; }
+.model-latency { color: #22c55e; font-size: 10px; font-family: var(--mono); }
+
+.nav-tab-stop {
+  color: #f85149 !important;
+  border-bottom-color: transparent !important;
+  gap: 6px;
+  font-weight: 600;
+  opacity: 0.92;
+  transition: color .15s, background .15s, opacity .15s;
+}
+.nav-tab-stop:hover {
+  color: #ff7b72 !important;
+  background: rgba(248,81,73,0.10);
+  opacity: 1;
+}
+.nav-tab-stop:active { opacity: 0.75; }
+</style>
+
+<!-- Live Status Strip -->
+<div class="status-strip" id="status-strip">
+  <div class="status-strip-inner">
+    <span class="strip-icon" id="strip-icon">🟢</span>
+    <span class="strip-msg"  id="strip-msg">System ready — type /scan &lt;ip&gt; to begin</span>
+    <span class="strip-spin" id="strip-spin" style="display:none">
+      <span class="spinner"></span>
+    </span>
+  </div>
+</div>
+
+<!-- Nav tabs -->
+<div class="nav">
+  <div class="nav-tab active" data-page="scan" onclick="Router.showPage('scan')">💬 Scan</div>
+  <div class="nav-tab"        data-page="dash" onclick="Router.showPage('dash')">📊 Dashboard</div>
+  <div class="nav-tab"        data-page="cmp"  onclick="Dashboard.runCompare()">🤖 Compare</div>
+  <div class="nav-tab nav-tab-stop" id="nav-stop-btn" onclick="Chatbot.confirmStop()" style="display:none" title="Stop running scan">
+    <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" style="flex-shrink:0"><rect x="3" y="3" width="10" height="10" rx="1.5"/></svg>
+    Stop Scan
+  </div>
+</div>

@@ -1,0 +1,251 @@
+<!-- ═══════════════════════════════════════════════════════
+     dashboard.html — Dashboard page
+     Sub-tab 1: SOC Intelligence Dashboard (Radial)
+     Sub-tab 2: OSINT horizontal tree (D3)
+     ═══════════════════════════════════════════════════════ -->
+
+<div class="page" id="page-dash" style="flex-direction:column;overflow:hidden">
+
+  <!-- Dashboard sub-tabs -->
+  <div class="dash-subtabs">
+    <button class="dash-subtab active" id="subtab-radial" onclick="Dashboard.switchDashTab('radial')">
+      📊 Graph (Radial)
+    </button>
+    <button class="dash-subtab" id="subtab-osint" onclick="Dashboard.switchDashTab('osint')">
+      🕸 Graph (OSINT)
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       View 1: SOC Intelligence Dashboard
+  ══════════════════════════════════════════════════════ -->
+  <div id="dash-radial" style="flex:1;overflow-y:auto;padding:14px;gap:12px;display:flex;flex-direction:column">
+
+    <!-- ── Empty state ── -->
+    <div class="soc-empty" id="dash-empty">
+      <div class="soc-empty-icon">🛡</div>
+      <div class="soc-empty-title">No scan data yet</div>
+      <div class="soc-empty-sub">Run a scan on the Scan tab to populate this intelligence dashboard.</div>
+    </div>
+
+    <!-- ══ ROW 1: Severity Cards (4) + Risk Distribution ══ -->
+    <div class="soc-row1" id="soc-row1" style="display:none">
+
+      <!-- Critical card -->
+      <div class="sev-card sev-card--critical" id="scard-critical">
+        <div class="sev-card__header">
+          <span class="sev-card__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#e24b4a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="sev-card__label">CRITICAL</span>
+        </div>
+        <div class="sev-card__count" id="scard-n-critical">—</div>
+        <div class="sev-card__pct" id="scard-p-critical">—% of findings</div>
+        <div class="sev-card__sparkline"><canvas id="spark-critical" height="36"></canvas></div>
+      </div>
+
+      <!-- High card -->
+      <div class="sev-card sev-card--high" id="scard-high">
+        <div class="sev-card__header">
+          <span class="sev-card__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#ef9f27" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="9" x2="12" y2="13" stroke="#ef9f27" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="#ef9f27" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <span class="sev-card__label">HIGH</span>
+        </div>
+        <div class="sev-card__count" id="scard-n-high">—</div>
+        <div class="sev-card__pct" id="scard-p-high">—% of findings</div>
+        <div class="sev-card__sparkline"><canvas id="spark-high" height="36"></canvas></div>
+      </div>
+
+      <!-- Medium card -->
+      <div class="sev-card sev-card--medium" id="scard-medium">
+        <div class="sev-card__header">
+          <span class="sev-card__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#378add" stroke-width="2"/><line x1="12" y1="8" x2="12" y2="12" stroke="#378add" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="16" x2="12.01" y2="16" stroke="#378add" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <span class="sev-card__label">MEDIUM</span>
+        </div>
+        <div class="sev-card__count" id="scard-n-medium">—</div>
+        <div class="sev-card__pct" id="scard-p-medium">—% of findings</div>
+        <div class="sev-card__sparkline"><canvas id="spark-medium" height="36"></canvas></div>
+      </div>
+
+      <!-- Low card -->
+      <div class="sev-card sev-card--low" id="scard-low">
+        <div class="sev-card__header">
+          <span class="sev-card__icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" stroke="#1d9e75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="22 4 12 14.01 9 11.01" stroke="#1d9e75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="sev-card__label">LOW</span>
+        </div>
+        <div class="sev-card__count" id="scard-n-low">—</div>
+        <div class="sev-card__pct" id="scard-p-low">—% of findings</div>
+        <div class="sev-card__sparkline"><canvas id="spark-low" height="36"></canvas></div>
+      </div>
+
+      <!-- Risk Distribution donut -->
+      <div class="soc-panel soc-donut-panel">
+        <div class="soc-panel__title">RISK DISTRIBUTION</div>
+        <div class="soc-donut-wrap">
+          <div class="soc-donut-chart-area">
+            <canvas id="ch-risk-donut"></canvas>
+            <div class="soc-donut-center">
+              <div class="soc-donut-total" id="donut-total">—</div>
+              <div class="soc-donut-label">Total Findings</div>
+            </div>
+          </div>
+          <div class="soc-donut-legend">
+            <div class="sdl-item"><span class="sdl-dot sdl-dot--critical"></span><span class="sdl-name">Critical</span><span class="sdl-stat" id="sdl-critical">—</span></div>
+            <div class="sdl-item"><span class="sdl-dot sdl-dot--high"></span><span class="sdl-name">High</span><span class="sdl-stat" id="sdl-high">—</span></div>
+            <div class="sdl-item"><span class="sdl-dot sdl-dot--medium"></span><span class="sdl-name">Medium</span><span class="sdl-stat" id="sdl-medium">—</span></div>
+            <div class="sdl-item"><span class="sdl-dot sdl-dot--low"></span><span class="sdl-name">Low</span><span class="sdl-stat" id="sdl-low">—</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ROW 2: Threat Score | Risk Summary Radar | Top Vulnerable Services ══ -->
+    <div class="soc-row2" id="soc-row2" style="display:none">
+
+      <!-- Threat Score Gauge -->
+      <div class="soc-panel soc-gauge-panel">
+        <div class="soc-panel__title">THREAT SCORE</div>
+        <div class="soc-gauge-layout">
+          <div class="soc-gauge-left">
+            <div class="soc-gauge-arc-wrap">
+              <canvas id="ch-gauge-arc" width="200" height="120"></canvas>
+              <div class="soc-gauge-overlay">
+                <div class="soc-gauge-score" id="gauge-score">—</div>
+                <div class="soc-gauge-denom">/100</div>
+                <div class="soc-gauge-risk-label" id="gauge-risk-label">—</div>
+              </div>
+            </div>
+            <div class="soc-gauge-meta">
+              <span id="gauge-target-meta">Scan Target: —</span>
+              <span id="gauge-duration-meta">Scan Duration: —</span>
+            </div>
+          </div>
+          <div class="soc-gauge-right">
+            <div class="sgr-row"><span class="sgr-label">Attack Surface</span>     <span class="sgr-val sgr-val--high"   id="gg-attack">—</span></div>
+            <div class="sgr-row"><span class="sgr-label">Vulnerability Density</span><span class="sgr-val sgr-val--medium" id="gg-vulndens">—</span></div>
+            <div class="sgr-row"><span class="sgr-label">Exposed Services</span>   <span class="sgr-val sgr-val--num"   id="gg-exposed">—</span></div>
+            <div class="sgr-row"><span class="sgr-label">Data Leaks</span>          <span class="sgr-val sgr-val--num"   id="gg-leaks">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Risk Summary Radar -->
+      <div class="soc-panel soc-radar-panel">
+        <div class="soc-panel__title">RISK SUMMARY</div>
+        <div class="soc-radar-wrap">
+          <canvas id="ch-radar" style="max-width:260px;max-height:220px"></canvas>
+        </div>
+        <div class="soc-radar-risk" id="radar-risk-label">—</div>
+        <div class="soc-radar-desc" id="radar-risk-desc">—</div>
+      </div>
+
+      <!-- Top Vulnerable Services -->
+      <div class="soc-panel soc-services-panel">
+        <div class="soc-panel__title">TOP VULNERABLE SERVICES</div>
+        <div class="soc-services-list" id="soc-services-list">
+          <!-- populated by JS -->
+        </div>
+        <div class="soc-panel__link">View all services →</div>
+      </div>
+    </div>
+
+    <!-- ══ ROW 3: Top CVE Table | CVEs per Service | Recent Activity ══ -->
+    <div class="soc-row3" id="soc-row3" style="display:none">
+
+      <!-- Top CVE Table -->
+      <div class="soc-panel soc-cve-panel">
+        <div class="soc-panel__title">TOP CVE BY SEVERITY</div>
+        <div class="soc-cve-table">
+          <div class="sct-head">
+            <span>CVE ID</span>
+            <span>SEVERITY</span>
+            <span>AFFECTED SERVICE</span>
+            <span>CVSS SCORE</span>
+          </div>
+          <div class="sct-body" id="sct-body">
+            <!-- populated by JS -->
+          </div>
+        </div>
+        <div class="soc-panel__link">View all vulnerabilities →</div>
+      </div>
+
+      <!-- CVEs Per Service Bar Chart -->
+      <div class="soc-panel soc-bar-panel">
+        <div class="soc-panel__title">CVES PER SERVICE</div>
+        <div style="flex:1;position:relative;min-height:160px">
+          <canvas id="ch-cve-service"></canvas>
+        </div>
+        <div class="soc-panel__link">View detailed report →</div>
+      </div>
+
+      <!-- Recent Activity Feed -->
+      <div class="soc-panel soc-activity-panel">
+        <div class="soc-panel__title">RECENT ACTIVITY</div>
+        <div class="soc-activity-feed" id="soc-activity-feed">
+          <!-- populated by JS -->
+        </div>
+        <div class="soc-panel__link">View all activity →</div>
+      </div>
+    </div>
+
+  </div><!-- /#dash-radial -->
+
+  <!-- ══════════════════════════════════════════════════════
+       View 2: OSINT Horizontal Tree (UNCHANGED)
+  ══════════════════════════════════════════════════════ -->
+  <div id="dash-osint" style="flex:1;overflow:hidden;display:none;flex-direction:column">
+
+    <div class="osint-toolbar">
+      <span style="font-size:12px;color:var(--text2)" id="osint-status">Run a scan first, then switch to this view.</span>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn btn-sec" onclick="Graphs.osintReset()"    style="height:32px;padding:0 12px;font-size:12px">⟳ Reset</button>
+        <button class="btn btn-sec" onclick="Graphs.osintExpand()"   style="height:32px;padding:0 12px;font-size:12px">⊞ Expand</button>
+        <button class="btn btn-sec" onclick="Graphs.osintCollapse()" style="height:32px;padding:0 12px;font-size:12px">⊟ Collapse</button>
+      </div>
+    </div>
+
+    <div class="osint-legend">
+      <span class="ol-item"><span class="ol-dot" style="background:#388bfd"></span>Host</span>
+      <span class="ol-item"><span class="ol-dot" style="background:#888"></span>Port</span>
+      <span class="ol-item"><span class="ol-dot" style="background:#e24b4a"></span>Critical</span>
+      <span class="ol-item"><span class="ol-dot" style="background:#ef9f27"></span>High</span>
+      <span class="ol-item"><span class="ol-dot" style="background:#f0c040"></span>Medium</span>
+      <span class="ol-item"><span class="ol-dot" style="background:#1d9e75"></span>Low/Safe</span>
+      <span style="color:var(--text3);font-size:11px;margin-left:8px">Click node to expand · Scroll/drag to pan</span>
+    </div>
+
+    <div id="osint-canvas" style="flex:1;overflow:hidden;cursor:grab;background:var(--bg);position:relative">
+      <svg id="osint-svg" style="width:100%;height:100%;display:block">
+        <defs>
+          <filter id="osint-glow">
+            <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <g id="osint-zoom-g">
+          <g id="osint-links"></g>
+          <g id="osint-nodes"></g>
+        </g>
+      </svg>
+      <div id="osint-empty" style="position:absolute;inset:0;display:flex;flex-direction:column;
+           align-items:center;justify-content:center;pointer-events:none">
+        <div style="font-size:40px;opacity:.3">🕸</div>
+        <div style="font-size:13px;color:var(--text3);margin-top:10px;text-align:center;max-width:240px">
+          Run a scan on the <strong style="color:var(--text2)">Scan</strong> tab,<br>
+          then come back to see the OSINT tree.
+        </div>
+      </div>
+    </div>
+
+    <div id="osint-tip" style="position:fixed;background:var(--bg2);border:1px solid var(--border);
+         border-radius:10px;padding:10px 13px;font-size:12px;color:var(--text);pointer-events:none;
+         opacity:0;transition:opacity .15s;z-index:999;max-width:250px;box-shadow:0 6px 20px #00000055">
+    </div>
+  </div>
+
+</div>

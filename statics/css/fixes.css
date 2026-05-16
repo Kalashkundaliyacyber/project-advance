@@ -1,0 +1,539 @@
+/* ════════════════════════════════════════════════════════════════
+   fixes.css — FIX16 through FIX21
+   Load AFTER all other CSS files so overrides take effect.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════
+   FIX20 — Typography & Spacing
+   ══════════════════════════════════════════════════════ */
+body {
+  font-size: 15px;   /* FIX20: raised from 14px */
+}
+
+/* Message spacing minimum 16px, AI gets a left border accent */
+.msg {
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 0;  /* gap on .chat handles spacing */
+}
+.chat { gap: 16px; }   /* FIX20: minimum 16px between messages */
+
+/* AI message subtle left border — exclude card wrappers that have their own layout */
+.msg-ai:not(.onboard-card):not(.scan-selector-wrap):not(.vuln-dash-wrap):not(.patch-dash-wrap):not(.vuln-table-wrap):not(.project-init-card) {
+  border-left: 3px solid rgba(127, 119, 221, 0.45) !important;
+  padding-left: 14px !important;
+}
+
+/* Copy button on code blocks */
+.msg pre {
+  position: relative;
+}
+.msg pre .copy-code-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--text2);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background .15s;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.msg pre:hover .copy-code-btn { opacity: 1; }
+.msg pre .copy-code-btn:hover { background: rgba(255,255,255,0.18); color: var(--text); }
+
+/* ══════════════════════════════════════════════════════
+   FIX19 — Top Bar Improvements
+   Model indicator larger, breadcrumb, Stop Scan in card
+   ══════════════════════════════════════════════════════ */
+
+/* Larger, more visible model dot */
+.model-dot {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+/* Bigger model name label */
+.model-name {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+/* Breadcrumb navigation in topbar */
+#topbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+#topbar-breadcrumb .bc-sep { color: var(--border2); margin: 0 2px; }
+#topbar-breadcrumb .bc-current { color: var(--text2); font-weight: 600; }
+#topbar-breadcrumb .bc-root { color: var(--purple); font-weight: 700; }
+
+/* Stop Scan button — red pill, inside progress card */
+#prog-stop-btn {
+  background: #e24b4a;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background .15s, transform .1s;
+  letter-spacing: .02em;
+}
+#prog-stop-btn:hover  { background: #c0392b; }
+#prog-stop-btn:active { transform: scale(.95); }
+
+/* Hide the old nav Stop Scan tab — replaced by in-card button */
+#nav-stop-btn { display: none !important; }
+
+/* ══════════════════════════════════════════════════════
+   FIX 1 & 2 — ChatGPT-like Textarea Input
+   Auto-expanding textarea, no attach/voice buttons.
+   ══════════════════════════════════════════════════════ */
+
+/* Outer container — just padding + border-top */
+/* FIX3+4: preserve protected boundary — z-index and pointer-events from chatbot.css
+   must not be undone here. Only visual/spacing properties are overridden. */
+.chat-in {
+  padding: 10px 14px 12px !important;
+  border-top: 1px solid var(--border) !important;
+  background: var(--bg2) !important;
+  flex-shrink: 0;
+  /* No flex: inner wrap handles layout */
+  position: relative !important;   /* FIX3: maintain stacking context */
+  z-index: 10 !important;          /* FIX3: always above chat-wrap floats */
+  pointer-events: all !important;  /* FIX4: never suppress input interactions */
+}
+
+/* Inner row: textarea + send button */
+.chat-textarea-wrap {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(127,119,221,0.3);
+  border-radius: 14px;
+  padding: 10px 10px 10px 16px;
+  transition: border-color .2s, box-shadow .2s;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.2);
+}
+.chat-textarea-wrap:focus-within {
+  border-color: rgba(127,119,221,0.7);
+  box-shadow: 0 0 0 3px rgba(127,119,221,0.10), 0 2px 14px rgba(0,0,0,0.25);
+}
+
+/* Auto-expanding textarea — FIX 1 */
+#chat-inp {
+  flex: 1;
+  min-width: 0;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--font);
+  line-height: 1.55;
+  resize: none;
+  overflow-y: auto;
+  /* 1 row default, max 6 rows then internal scroll */
+  min-height: 22px;
+  max-height: 160px;
+  padding: 0 !important;
+  scrollbar-width: thin;
+  scrollbar-color: #334155 transparent;
+  /* Smooth height — no layout shift */
+  box-sizing: border-box;
+}
+#chat-inp::-webkit-scrollbar { width: 4px; }
+#chat-inp::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+#chat-inp::placeholder { color: var(--text3); transition: opacity .25s; }
+
+/* Send button — aligned to bottom of textarea */
+.chat-send-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s, transform .1s, opacity .15s;
+  align-self: flex-end;
+}
+.chat-send-btn:hover  { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+.chat-send-btn:active { transform: scale(.90); }
+.chat-send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Mobile — slightly smaller send button */
+@media (max-width: 600px) {
+  .chat-in { padding: 8px 10px 10px !important; }
+  .chat-textarea-wrap { padding: 8px 8px 8px 12px; border-radius: 12px; }
+  #chat-inp { font-size: 13px; }
+  .chat-send-btn { width: 34px; height: 34px; }
+}
+
+/* ══════════════════════════════════════════════════════
+   FIX17 — Greeting / Onboarding Redesign
+   Larger shield, purple glow, quick action chips
+   ══════════════════════════════════════════════════════ */
+
+/* Larger 64px shield */
+.ob-shield { font-size: 64px !important; }
+.ob-shield-wrap { width: 90px !important; height: 90px !important; }
+
+/* Purple glow behind shield */
+.ob-shield-wrap::after {
+  content: '';
+  position: absolute;
+  inset: -16px;
+  background: radial-gradient(circle, rgba(127,119,221,0.25) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: glowPulse 3s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%,100% { opacity: .6; transform: scale(.9); }
+  50%      { opacity: 1;  transform: scale(1.1); }
+}
+
+/* Quick action chips replacing old button */
+.ob-quick-chips {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 14px 0 0;
+}
+.ob-chip {
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(127,119,221,0.35);
+  background: rgba(127,119,221,0.1);
+  color: #a5b4fc;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.ob-chip:hover {
+  background: rgba(127,119,221,0.25);
+  border-color: rgba(127,119,221,0.65);
+  transform: translateY(-1px);
+}
+.ob-chip:active { transform: scale(.97); }
+
+/* Dissolve animation for onboarding card on Enter */
+.ob-dissolve {
+  animation: dissolveOut .4s ease forwards;
+}
+@keyframes dissolveOut {
+  from { opacity:1; transform: scale(1); }
+  to   { opacity:0; transform: scale(.95); pointer-events:none; }
+}
+
+/* ══════════════════════════════════════════════════════
+   FIX18 — Scan Completion Experience
+   Green flash, slide-in card, confetti on zero CVEs
+   ══════════════════════════════════════════════════════ */
+
+/* Green flash overlay on scan completion */
+@keyframes scanCompleteFlash {
+  0%   { background: rgba(34,197,94,0.18); }
+  60%  { background: rgba(34,197,94,0.08); }
+  100% { background: transparent; }
+}
+.scan-complete-flash {
+  animation: scanCompleteFlash 1.2s ease forwards;
+}
+
+/* Slide-in animation for result card */
+@keyframes slideInUp {
+  from { opacity:0; transform: translateY(18px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.scan-result-summary-card {
+  animation: slideInUp .4s cubic-bezier(.4,0,.2,1);
+}
+
+/* Larger result card stats */
+.src-stat-num {
+  font-size: 28px !important;
+  font-weight: 800 !important;
+}
+
+/* Strong risk badge hierarchy */
+.src-risk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 8px;
+}
+.src-risk-badge.critical { background: rgba(226,75,74,.2);  color: #f87171; border: 1px solid rgba(226,75,74,.4); }
+.src-risk-badge.high     { background: rgba(239,159,39,.2); color: #fbbf24; border: 1px solid rgba(239,159,39,.4); }
+.src-risk-badge.medium   { background: rgba(55,138,221,.2); color: #60a5fa; border: 1px solid rgba(55,138,221,.4); }
+.src-risk-badge.low      { background: rgba(29,158,117,.2); color: #34d399; border: 1px solid rgba(29,158,117,.4); }
+
+/* Zero-CVE pulse animation */
+@keyframes zeroCvePulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+  50%      { box-shadow: 0 0 0 12px rgba(34,197,94,0); }
+}
+.zero-cve-pulse { animation: zeroCvePulse 1.8s ease infinite; }
+
+/* ══════════════════════════════════════════════════════
+   FIX21 — Mobile Responsiveness Improvements
+   ══════════════════════════════════════════════════════ */
+
+/* Drawer full-width on mobile */
+@media (max-width: 600px) {
+  .drawer {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Minimum 52px input height */
+  /* FIX3+4: preserve protected boundary on mobile */
+  .chat-in  { min-height: 52px !important; position: relative !important; z-index: 10 !important; pointer-events: all !important; }
+  #chat-inp { min-height: 40px !important; font-size: 16px !important; position: relative !important; z-index: 11 !important; pointer-events: all !important; } /* 16px prevents iOS zoom */
+
+  /* Bottom nav: icons only */
+  .nav-tab { font-size: 0 !important; padding: 0 18px !important; }
+  .nav-tab::first-letter { font-size: 18px; }
+  /* Keep the emoji visible by targeting the emoji character */
+  .nav-tab { letter-spacing: 0 !important; }
+  /* Show only emoji by hiding text after first char — use ::after hack */
+  .nav { justify-content: space-around; }
+
+  /* Disable pinch-zoom on chart containers */
+  .chart-box, .chart-grid, .chart-full {
+    touch-action: pan-y !important;
+  }
+
+  /* Onboarding card full width */
+  .onboard-card { border-radius: 12px !important; }
+
+  /* Result card full width */
+  .scan-result-summary-card { border-radius: 0 !important; }
+
+  /* Landscape mode: tighter chat height */
+  @media (orientation: landscape) {
+    .chat-wrap { height: 55vh; }
+    .chat-in { min-height: 48px !important; }
+  }
+}
+
+@media (max-width: 375px) {
+  .chat-in { padding: 5px 6px 5px 12px !important; min-height: 52px !important; position: relative !important; z-index: 10 !important; pointer-events: all !important; } /* FIX3+4 */
+  .ob-chip { font-size: 11px; padding: 6px 12px; }
+  .src-stat-num { font-size: 22px !important; }
+}
+
+/* Tablet landscape */
+@media (min-width: 601px) and (max-width: 768px) {
+  .chat-in { max-width: 600px; position: relative !important; z-index: 10 !important; pointer-events: all !important; } /* FIX3+4 */
+  .drawer  { width: 320px !important; }
+}
+
+/* ══════════════════════════════════════════════════════
+   FIX13 — CVSS Vector Breakdown UI
+   ══════════════════════════════════════════════════════ */
+.cvss-vector-breakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+}
+.cvss-metric-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cvss-metric-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text3);
+}
+.cvss-metric-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+.cvss-metric-value.av-network      { color: #f87171; }
+.cvss-metric-value.ac-low          { color: #fbbf24; }
+.cvss-metric-value.pr-none         { color: #f87171; }
+.cvss-metric-value.conf-high,
+.cvss-metric-value.integ-high,
+.cvss-metric-value.avail-high      { color: #f87171; }
+
+/* FIX14 — Side-by-side compare column layout */
+.cmp-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+@media (max-width: 600px) {
+  .cmp-columns { grid-template-columns: 1fr; }
+}
+.cmp-col-header {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--border2);
+  margin-bottom: 8px;
+}
+.cmp-col-ai     { border-bottom-color: #7c3aed; color: #a78bfa; }
+.cmp-col-rules  { border-bottom-color: #0891b2; color: #67e8f9; }
+.cmp-finding {
+  font-size: 12px;
+  color: var(--text2);
+  padding: 6px 8px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  border-left: 3px solid transparent;
+}
+.cmp-finding.both    { border-left-color: #22c55e; background: rgba(34,197,94,.06);  }
+.cmp-finding.ai-only { border-left-color: #7c3aed; background: rgba(124,58,237,.06); }
+.cmp-finding.rb-only { border-left-color: #0891b2; background: rgba(8,145,178,.06);  }
+.cmp-agree-tag   { font-size: 9px; font-weight:700; color:#22c55e; text-transform:uppercase; }
+.cmp-verify-tag  { font-size: 9px; font-weight:700; color:#fbbf24; text-transform:uppercase; }
+
+/* ══════════════════════════════════════════════════════
+   FIX: PREVENT HIDDEN NEW-CHAT TRIGGER — fixes.css additions
+   Loads AFTER chatbot.css so these rules take final effect.
+   ══════════════════════════════════════════════════════ */
+
+/* FIX5: Scroll-to-bottom button — make it fully visible and well-separated
+   from the input area when shown. Clear icon + elevated contrast ensures
+   users always know what they're clicking. */
+.scroll-to-bottom {
+  /* Improved visual presence — no ghost appearance when visible */
+  box-shadow: 0 3px 14px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08) !important;
+  font-weight: 700;
+}
+.scroll-to-bottom.visible {
+  /* Subtle entrance animation so users notice it appeared */
+  animation: stbFadeIn .2s ease;
+}
+@keyframes stbFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* FIX6: Debounce — after the button is clicked (active state) briefly suppress
+   pointer-events so rapid double-clicks cannot fire two session actions.
+   The .visible class is removed by _onChatScroll() naturally; this CSS
+   gap just prevents double-fire on fast taps. */
+.scroll-to-bottom:active {
+  pointer-events: none !important;
+  opacity: 0.7;
+  transform: scale(0.92);
+}
+
+/* FIX8: Hard safety rule — the .chat-in row and everything inside it must
+   ALWAYS win any z-index contest. Use a large value here in fixes.css
+   (which loads last) so it cannot be accidentally overridden by any
+   component stylesheet that loads earlier. */
+.chat-in,
+#chat-in-wrap {
+  z-index: 20 !important;    /* final authority — no floating element can beat this */
+  pointer-events: all !important;
+}
+#chat-inp,
+.chat-send-btn,
+.chat-textarea-wrap {
+  z-index: 21 !important;
+  pointer-events: all !important;
+}
+
+/* FIX7: Landscape mobile — input area protected at reduced chat height */
+@media (max-width: 768px) and (orientation: landscape) {
+  .chat-in {
+    z-index: 20 !important;
+    pointer-events: all !important;
+  }
+  .scroll-to-bottom {
+    /* In landscape the chat area is shorter; keep button well inside it */
+    bottom: 8px !important;
+    right: 10px !important;
+  }
+}
+
+/* FIX7: High-zoom safety (150%+, effective viewport ~512px wide on 768px screen).
+   Ensures button doesn't escape chat area at unusual zoom levels. */
+@media (max-width: 512px) {
+  .scroll-to-bottom {
+    bottom: 8px !important;
+    right: 8px !important;
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 13px !important;
+  }
+}
+
+
+/* ── THE DEFINITIVE INPUT FIX ────────────────────────────────────────────────
+   Root cause: chatbot.css applies pointer-events:none to several ancestor layers
+   (.left-scan > *, .chat-wrap > *). The old fix maintained a fragile class
+   exception-list that always missed new card types (sms-card, miu-wrap, etc).
+
+   New approach: a single wildcard rule restores pointer-events on EVERY
+   descendant of .chat — current cards and any future ones — with no list to maintain.
+   Loaded last (fixes.css) so it wins over all earlier rules. */
+
+/* Wildcard: every element inside .chat is always interactive */
+.chat,
+.chat * {
+  pointer-events: all !important;
+}
+
+/* The chat-in input row and all its children are always interactive */
+.chat-in,
+.chat-in *,
+#chat-in-wrap,
+#chat-in-wrap * {
+  pointer-events: all !important;
+}
+
+/* Scan-card cursor — cosmetic only, not blocked by above */
+.scan-card,
+.sms-card {
+  cursor: pointer !important;
+}
+
+/* Drawer overlay: only block when actually open */
+.drawer-overlay:not(.open) {
+  display: none !important;
+  pointer-events: none !important;
+}

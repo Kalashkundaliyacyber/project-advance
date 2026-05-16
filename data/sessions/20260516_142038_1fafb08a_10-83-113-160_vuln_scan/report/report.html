@@ -1,0 +1,1732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ScanWise AI — Security Report — 10.83.113.160</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+       background:#f6f8fa;color:#24292f;font-size:14px;line-height:1.6}
+  .page{max-width:1100px;margin:0 auto;padding:32px 24px}
+  h1{font-size:24px;font-weight:700;color:#0d1117}
+  h2{font-size:16px;font-weight:600;color:#0d1117;margin:28px 0 12px;
+      border-bottom:2px solid #e1e4e8;padding-bottom:6px}
+  h3{font-size:14px;font-weight:600;color:#0d1117;margin:0 0 8px}
+  .header{background:#0d1117;color:#e6edf3;padding:28px 32px;border-radius:12px;
+           margin-bottom:28px;display:flex;justify-content:space-between;align-items:center}
+  .header-left h1{color:#e6edf3;font-size:22px}
+  .header-left p{color:#8b949e;margin-top:4px;font-size:13px}
+  .badge{padding:4px 12px;border-radius:20px;font-weight:700;font-size:12px;
+          text-transform:uppercase}
+  .badge-critical{background:#3d1f1f;color:#E24B4A}
+  .badge-high{background:#3d2a0f;color:#EF9F27}
+  .badge-medium{background:#1a2d3d;color:#378ADD}
+  .badge-low{background:#1a2d25;color:#1D9E75}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+  .card{background:#fff;border:1px solid #d0d7de;border-radius:8px;padding:16px;text-align:center}
+  .card-num{font-size:32px;font-weight:700}
+  .card-label{font-size:12px;color:#57606a;margin-top:4px}
+  .card-critical .card-num{color:#E24B4A}
+  .card-high .card-num{color:#EF9F27}
+  .card-medium .card-num{color:#378ADD}
+  .card-low .card-num{color:#1D9E75}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #d0d7de;
+         border-radius:8px;overflow:hidden;font-size:13px}
+  th{background:#f6f8fa;padding:10px 14px;text-align:left;font-weight:600;
+      border-bottom:1px solid #d0d7de;color:#57606a;font-size:12px;text-transform:uppercase}
+  td{padding:10px 14px;border-bottom:1px solid #f0f0f0}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#f6f8fa}
+  .risk-pill{display:inline-block;padding:2px 8px;border-radius:10px;
+              font-size:11px;font-weight:700;text-transform:uppercase}
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+  .chart-box{background:#fff;border:1px solid #d0d7de;border-radius:8px;
+              padding:20px;height:280px;position:relative}
+  .chart-box h3{margin-bottom:12px;font-size:13px;color:#57606a}
+  .guidance-list{background:#fff;border:1px solid #d0d7de;border-radius:8px;padding:16px}
+  .guidance-item{padding:8px 0;border-bottom:1px solid #f0f0f0;
+                  display:flex;gap:10px;font-size:13px}
+  .guidance-item:last-child{border-bottom:none}
+  .guidance-arrow{color:#1D9E75;font-weight:700;flex-shrink:0}
+  .rec-box{background:#1c2d40;border:1px solid #2a5a7e;border-radius:8px;
+            padding:16px;color:#e6edf3}
+  .rec-box h3{color:#388bfd;margin-bottom:6px}
+  .rec-box p{font-size:13px;color:#8b949e}
+  .ai-box{background:#1a1f2e;border:1px solid #7f77dd44;border-radius:8px;
+           padding:16px;color:#e6edf3}
+  .ai-box h3{color:#7f77dd;margin-bottom:8px}
+  .ai-summary{font-size:13px;color:#c9d1d9;line-height:1.7}
+  .ai-engine{font-size:11px;color:#8b949e;margin-top:8px}
+  .footer{text-align:center;color:#8b949e;font-size:12px;margin-top:32px;
+           padding-top:16px;border-top:1px solid #e1e4e8}
+  .section{background:#fff;border:1px solid #d0d7de;border-radius:8px;
+            padding:20px;margin-bottom:20px}
+  @media print{
+    body{background:#fff}
+    .page{padding:16px}
+    .charts{grid-template-columns:1fr 1fr}
+    canvas{max-height:200px}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <h1>🛡 ScanWise AI — Security Assessment Report</h1>
+      <p>Target: <strong>10.83.113.160</strong> &nbsp;|&nbsp;
+         Scan: <strong>vuln_scan</strong> &nbsp;|&nbsp;
+         Date: <strong>2026-05-16 14:30:55</strong></p>
+    </div>
+    <div>
+      <span class="badge badge-critical">CRITICAL RISK</span>
+    </div>
+  </div>
+
+  <!-- Summary cards -->
+  <h2>Executive Summary</h2>
+  <div class="cards">
+  <div class="card card-critical">
+    <div class="card-num">15</div>
+    <div class="card-label">Critical</div>
+  </div>
+  <div class="card card-high">
+    <div class="card-num">5</div>
+    <div class="card-label">High</div>
+  </div>
+  <div class="card card-medium">
+    <div class="card-num">3</div>
+    <div class="card-label">Medium</div>
+  </div>
+  <div class="card card-low">
+    <div class="card-num">7</div>
+    <div class="card-label">Low</div>
+  </div>
+</div>
+<div class="cards" style="grid-template-columns:repeat(2,1fr)">
+  <div class="card">
+    <div class="card-num" style="color:#7f77dd">178</div>
+    <div class="card-label">Total CVEs Matched</div>
+  </div>
+  <div class="card">
+    <div class="card-num" style="color:#388bfd">1</div>
+    <div class="card-label">Live Hosts</div>
+  </div>
+</div>
+
+  <!-- Charts -->
+  <h2>Visual Analysis</h2>
+  <div class="charts">
+    <div class="chart-box">
+      <h3>Risk Distribution</h3>
+      <canvas id="riskChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>CVEs per Service</h3>
+      <canvas id="cveChart"></canvas>
+    </div>
+  </div>
+
+  <!-- AI Analysis -->
+  <h2>AI Analysis</h2>
+<div class="ai-box">
+  <h3>⚙️ Rule-Based Analysis</h3>
+  <div class="ai-summary"></div>
+  
+  <div class="ai-engine">Engine: gemini</div>
+</div>
+
+  <!-- Findings table -->
+  <h2>Findings (30 open ports)</h2>
+  <table>
+<thead><tr>
+  <th>Host</th><th>Port</th><th>Service</th><th>Version</th>
+  <th>V.Status</th><th>State</th><th>Risk</th><th>Score</th>
+</tr></thead>
+<tbody><tr>
+  <td>10.83.113.160</td>
+  <td><strong>21/tcp</strong></td>
+  <td>ftp</td>
+  <td style="font-family:monospace;font-size:12px">vsftpd 2.3.4</td>
+  <td>unsupported</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>22/tcp</strong></td>
+  <td>ssh</td>
+  <td style="font-family:monospace;font-size:12px">OpenSSH 4.7p1 Debian 8ubuntu1</td>
+  <td>outdated</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>23/tcp</strong></td>
+  <td>telnet</td>
+  <td style="font-family:monospace;font-size:12px">Linux telnetd</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="font-weight:700;color:#EF9F27">6.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>25/tcp</strong></td>
+  <td>smtp</td>
+  <td style="font-family:monospace;font-size:12px">Postfix smtpd</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#1D9E7522;color:#1D9E75">LOW</span></td>
+  <td style="font-weight:700;color:#1D9E75">3.3</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>53/tcp</strong></td>
+  <td>domain</td>
+  <td style="font-family:monospace;font-size:12px">ISC BIND 9.4.2</td>
+  <td>outdated</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>80/tcp</strong></td>
+  <td>http</td>
+  <td style="font-family:monospace;font-size:12px">Apache httpd 2.2.8</td>
+  <td>unsupported</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>111/tcp</strong></td>
+  <td>rpcbind</td>
+  <td style="font-family:monospace;font-size:12px">2</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>139/tcp</strong></td>
+  <td>netbios-ssn</td>
+  <td style="font-family:monospace;font-size:12px">Samba smbd 3.X - 4.X</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>445/tcp</strong></td>
+  <td>netbios-ssn</td>
+  <td style="font-family:monospace;font-size:12px">Samba smbd 3.X - 4.X</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>512/tcp</strong></td>
+  <td>exec</td>
+  <td style="font-family:monospace;font-size:12px">netkit-rsh rexecd</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#1D9E7522;color:#1D9E75">LOW</span></td>
+  <td style="font-weight:700;color:#1D9E75">2.7</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>513/tcp</strong></td>
+  <td>login</td>
+  <td style="font-family:monospace;font-size:12px">OpenBSD or Solaris rlogind</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#1D9E7522;color:#1D9E75">LOW</span></td>
+  <td style="font-weight:700;color:#1D9E75">2.7</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>514/tcp</strong></td>
+  <td>tcpwrapped</td>
+  <td style="font-family:monospace;font-size:12px">—</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#1D9E7522;color:#1D9E75">LOW</span></td>
+  <td style="font-weight:700;color:#1D9E75">2.7</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>1099/tcp</strong></td>
+  <td>java-rmi</td>
+  <td style="font-family:monospace;font-size:12px">GNU Classpath grmiregistry</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>1524/tcp</strong></td>
+  <td>bindshell</td>
+  <td style="font-family:monospace;font-size:12px">Metasploitable root shell</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#1D9E7522;color:#1D9E75">LOW</span></td>
+  <td style="font-weight:700;color:#1D9E75">2.7</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>2049/tcp</strong></td>
+  <td>nfs</td>
+  <td style="font-family:monospace;font-size:12px">2-4</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>2121/tcp</strong></td>
+  <td>ftp</td>
+  <td style="font-family:monospace;font-size:12px">ProFTPD 1.3.1</td>
+  <td>outdated</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="font-weight:700;color:#EF9F27">6.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>3306/tcp</strong></td>
+  <td>mysql</td>
+  <td style="font-family:monospace;font-size:12px">MySQL 5.0.51a-3ubuntu5</td>
+  <td>outdated</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="font-weight:700;color:#378ADD">4.2</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>3632/tcp</strong></td>
+  <td>distccd</td>
+  <td style="font-family:monospace;font-size:12px">distccd v1</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="font-weight:700;color:#EF9F27">6.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>5432/tcp</strong></td>
+  <td>postgresql</td>
+  <td style="font-family:monospace;font-size:12px">PostgreSQL DB 8.3.0 - 8.3.7</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="font-weight:700;color:#378ADD">4.3</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>5900/tcp</strong></td>
+  <td>vnc</td>
+  <td style="font-family:monospace;font-size:12px">VNC</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>6000/tcp</strong></td>
+  <td>X11</td>
+  <td style="font-family:monospace;font-size:12px">—</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#1D9E7522;color:#1D9E75">LOW</span></td>
+  <td style="font-weight:700;color:#1D9E75">2.7</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>6667/tcp</strong></td>
+  <td>irc</td>
+  <td style="font-family:monospace;font-size:12px">UnrealIRCd</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>6697/tcp</strong></td>
+  <td>irc</td>
+  <td style="font-family:monospace;font-size:12px">UnrealIRCd</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="font-weight:700;color:#378ADD">4.0</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>8009/tcp</strong></td>
+  <td>ajp13</td>
+  <td style="font-family:monospace;font-size:12px">Apache Jserv</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="font-weight:700;color:#EF9F27">6.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>8180/tcp</strong></td>
+  <td>http</td>
+  <td style="font-family:monospace;font-size:12px">Apache Tomcat/Coyote JSP engine 1.1</td>
+  <td>outdated</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="font-weight:700;color:#EF9F27">6.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>8787/tcp</strong></td>
+  <td>drb</td>
+  <td style="font-family:monospace;font-size:12px">Ruby DRb RMI</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#1D9E7522;color:#1D9E75">LOW</span></td>
+  <td style="font-weight:700;color:#1D9E75">2.7</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>37740/tcp</strong></td>
+  <td>status</td>
+  <td style="font-family:monospace;font-size:12px">1</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>41535/tcp</strong></td>
+  <td>java-rmi</td>
+  <td style="font-family:monospace;font-size:12px">GNU Classpath grmiregistry</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>43990/tcp</strong></td>
+  <td>mountd</td>
+  <td style="font-family:monospace;font-size:12px">1-3</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr><tr>
+  <td>10.83.113.160</td>
+  <td><strong>45361/tcp</strong></td>
+  <td>nlockmgr</td>
+  <td style="font-family:monospace;font-size:12px">1-4</td>
+  <td>unknown</td>
+  <td>open</td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="font-weight:700;color:#E24B4A">8.5</td>
+</tr></tbody>
+</table>
+
+  <!-- CVE table -->
+  <h2>CVE Details (178 matched)</h2>
+  <table>
+<thead><tr>
+  <th>CVE ID</th><th>Service</th><th>CVSS</th><th>Severity</th>
+  <th>Description</th><th>Patch</th>
+</tr></thead>
+<tbody><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-2523</td>
+  <td>ftp</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">vsFTPd 2.3.4 backdoor — supply-chain compromise allows unauthenticated RCE via port 6200.</td>
+  <td style="color:#1D9E75;font-size:12px">Remove vsftpd 2.3.4 immediately. Deploy vsftpd 3.0.5+.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-1999-0661</td>
+  <td>ssh</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">A system is running a version of software that was replaced with a Trojan Horse at one of its distribution points, such as (1) TCP Wrappers 7.6, (2) util-linux 2.9g, (3) wuarchive ftpd (wuftpd) 2.2 and 2.1f, (4) IRC client (ircII) ircII 2.2.9, (5) OpenSSH 3.4p1, or (6) Sendmail 8.12.6.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-1999-0661</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2000-0525</td>
+  <td>ssh</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">OpenSSH does not properly drop privileges when the UseLogin option is enabled, which allows local users to execute arbitrary commands by providing the command to the ssh daemon.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2000-0525</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2002-0640</td>
+  <td>ssh</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Buffer overflow in sshd in OpenSSH 2.3.1 through 3.3 may allow remote attackers to execute arbitrary code via a large number of responses during challenge response authentication when OpenBSD is using PAM modules with interactive keyboard authentication (PAMAuthenticationViaKbdInt).</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2002-0640</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2008-0122</td>
+  <td>domain</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Off-by-one error in the inet_network function in libbind in ISC BIND 9.4.2 and earlier, as used in libc in FreeBSD 6.2 through 7.0-PRERELEASE, allows context-dependent attackers to cause a denial of service (crash) and possibly execute arbitrary code via crafted input that triggers memory corruption.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2008-0122</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2010-0425</td>
+  <td>http</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">modules/arch/win32/mod_isapi.c in mod_isapi in the Apache HTTP Server 2.0.37 through 2.0.63, 2.2.0 through 2.2.14, and 2.3.x before 2.3.7, when running on Windows, does not ensure that request processing is complete before calling isapi_unload for an ISAPI .dll module, which allows remote attackers to execute arbitrary code via unspecified vectors related to a crafted request, a reset packet, and </td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://httpd.apache.org/security/vulnerabilities_20.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-2523</td>
+  <td>rpcbind</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Backdoor in vsftpd 2.3.4 — supply-chain compromise.</td>
+  <td style="color:#1D9E75;font-size:12px">Remove vsftpd 2.3.4 immediately. Deploy vsftpd 3.0.5+.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2020-0796</td>
+  <td>rpcbind</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply KB4551762. Disable SMBv3 compression as interim mitigation.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-4862</td>
+  <td>rpcbind</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Buffer overflow in BSD telnetd — pre-auth RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Disable telnet immediately. Replace with SSH.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-3556</td>
+  <td>rpcbind</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Java RMI server allows unauthenticated remote code execution.</td>
+  <td style="color:#1D9E75;font-size:12px">Disable RMI registry. Restrict port 1099. Upgrade to Java 7u2+.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2012-1182</td>
+  <td>netbios-ssn</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">The RPC code generator in Samba 3.x before 3.4.16, 3.5.x before 3.5.14, and 3.6.x before 3.6.4 does not implement validation of an array length in a manner consistent with validation of array memory allocation, which allows remote attackers to execute arbitrary code via a crafted RPC call.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2012-1182</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2012-1182</td>
+  <td>netbios-ssn</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">The RPC code generator in Samba 3.x before 3.4.16, 3.5.x before 3.5.14, and 3.6.x before 3.6.4 does not implement validation of an array length in a manner consistent with validation of array memory allocation, which allows remote attackers to execute arbitrary code via a crafted RPC call.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2012-1182</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-3556</td>
+  <td>java-rmi</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Java RMI registry default configuration allows remote classloading → unauthenticated RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Disable RMI registry. Restrict port 1099 with firewall. Upgrade to Java 7u2+.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2020-0796</td>
+  <td>nfs</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply KB4551762. Disable SMBv3 compression as interim mitigation.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-4862</td>
+  <td>nfs</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Buffer overflow in BSD telnetd — pre-auth RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Disable telnet immediately. Replace with SSH.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-3556</td>
+  <td>nfs</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Java RMI server allows unauthenticated remote code execution.</td>
+  <td style="color:#1D9E75;font-size:12px">Disable RMI registry. Restrict port 1099. Upgrade to Java 7u2+.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2002-2088</td>
+  <td>vnc</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">The MOSIX Project clump/os 5.4 creates a default VNC account without a password, which allows remote attackers to gain root access.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://archives.neohapsis.com/archives/bugtraq/2002-04/0327.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2006-4309</td>
+  <td>vnc</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">VNC server on the AK-Systems Windows Terminal 1.2.5 ExVLP is not password protected, which allows remote attackers to login and view RDP or Citrix sessions.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2006-4309</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2010-2075</td>
+  <td>irc</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Looks like trojaned version of unrealircd. See http://seclists.org/fulldisclosure/2010/Jun/277</td>
+  <td style="color:#1D9E75;font-size:12px">See https://nvd.nist.gov/vuln/detail/CVE-2010-2075</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2020-0796</td>
+  <td>status</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply KB4551762. Disable SMBv3 compression as interim mitigation.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-4862</td>
+  <td>status</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Buffer overflow in BSD telnetd — pre-auth RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Disable telnet immediately. Replace with SSH.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-3556</td>
+  <td>status</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Java RMI server allows unauthenticated remote code execution.</td>
+  <td style="color:#1D9E75;font-size:12px">Disable RMI registry. Restrict port 1099. Upgrade to Java 7u2+.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-3556</td>
+  <td>java-rmi</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Java RMI registry default configuration allows remote classloading → unauthenticated RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Disable RMI registry. Restrict port 1099 with firewall. Upgrade to Java 7u2+.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2020-0796</td>
+  <td>mountd</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply KB4551762. Disable SMBv3 compression as interim mitigation.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-4862</td>
+  <td>mountd</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Buffer overflow in BSD telnetd — pre-auth RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Disable telnet immediately. Replace with SSH.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-3556</td>
+  <td>mountd</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Java RMI server allows unauthenticated remote code execution.</td>
+  <td style="color:#1D9E75;font-size:12px">Disable RMI registry. Restrict port 1099. Upgrade to Java 7u2+.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2020-0796</td>
+  <td>nlockmgr</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply KB4551762. Disable SMBv3 compression as interim mitigation.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-4862</td>
+  <td>nlockmgr</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Buffer overflow in BSD telnetd — pre-auth RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Disable telnet immediately. Replace with SSH.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-3556</td>
+  <td>nlockmgr</td>
+  <td><strong>10.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Java RMI server allows unauthenticated remote code execution.</td>
+  <td style="color:#1D9E75;font-size:12px">Disable RMI registry. Restrict port 1099. Upgrade to Java 7u2+.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2002-0083</td>
+  <td>ssh</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Off-by-one error in the channel code of OpenSSH 2.0 through 3.0.2 allows local users or remote malicious servers to gain privileges.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2002-0083</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2002-0639</td>
+  <td>ssh</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Integer overflow in sshd in OpenSSH 2.9.9 through 3.3 allows remote attackers to execute arbitrary code during challenge response authentication (ChallengeResponseAuthentication) when OpenSSH is using SKEY or BSD_AUTH authentication.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2002-0639</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-27171</td>
+  <td>telnet</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">An issue was discovered on FiberHome HG6245D devices through RP2613. It is possible to start a Linux telnetd as root on port 26/tcp by using the CLI interface commands of ddd and shell (or tshell).</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2021-27171</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-7679</td>
+  <td>http</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">mod_mime buffer overread in Apache 2.2.x — allows remote code execution.</td>
+  <td style="color:#1D9E75;font-size:12px">Apache 2.2 is EOL. Upgrade to Apache 2.4.26 or later immediately.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-26855</td>
+  <td>http</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply Microsoft Exchange cumulative update patches from March 2021.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-7679</td>
+  <td>rpcbind</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">mod_mime buffer overread in Apache 2.2.x — allows remote code execution.</td>
+  <td style="color:#1D9E75;font-size:12px">Apache 2.2 is EOL. Upgrade to Apache 2.4.26 or later immediately.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-41773</td>
+  <td>rpcbind</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Path traversal and RCE in Apache 2.4.49. Files readable outside docroot.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to Apache 2.4.51 or later immediately.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-42013</td>
+  <td>rpcbind</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Incomplete fix for CVE-2021-41773 in Apache 2.4.50.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to Apache 2.4.51 or later.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2022-31813</td>
+  <td>rpcbind</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">HTTP Request Smuggling in Apache mod_proxy.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to Apache 2.4.54 or later.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2018-1000861</td>
+  <td>rpcbind</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Unauthenticated RCE in Jenkins via Stapler URL routing.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to Jenkins 2.154 / LTS 2.138.4.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-0144</td>
+  <td>rpcbind</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">EternalBlue: SMBv1 remote code execution, exploited by WannaCry.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply MS17-010. Disable SMBv1. Block port 445 at perimeter.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-0708</td>
+  <td>rpcbind</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">BlueKeep: pre-auth RCE in Windows RDP — wormable.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply Microsoft patch KB4499175. Disable RDP or put behind VPN.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-1182</td>
+  <td>rpcbind</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">DejaBlue: second BlueKeep-class pre-auth RDP RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply August 2019 Microsoft patch Tuesday updates.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-26855</td>
+  <td>rpcbind</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply Microsoft Exchange cumulative update patches from March 2021.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-7494</td>
+  <td>netbios-ssn</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">SambaCry: remote code execution via writable share in Samba.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to Samba 4.6.4, 4.5.10, 4.4.14+. Add &#x27;nt pipe support = no&#x27; as workaround.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-7494</td>
+  <td>netbios-ssn</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">SambaCry: remote code execution via writable share in Samba.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to Samba 4.6.4, 4.5.10, 4.4.14+. Add &#x27;nt pipe support = no&#x27; as workaround.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-0144</td>
+  <td>nfs</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">EternalBlue: SMBv1 remote code execution, exploited by WannaCry.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply MS17-010. Disable SMBv1. Block port 445 at perimeter.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-0708</td>
+  <td>nfs</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">BlueKeep: pre-auth RCE in Windows RDP — wormable.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply Microsoft patch KB4499175. Disable RDP or put behind VPN.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-1182</td>
+  <td>nfs</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">DejaBlue: second BlueKeep-class pre-auth RDP RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply August 2019 Microsoft patch Tuesday updates.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-26855</td>
+  <td>nfs</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply Microsoft Exchange cumulative update patches from March 2021.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-12815</td>
+  <td>ftp</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">An arbitrary file copy vulnerability in mod_copy in ProFTPD up to 1.3.5b allows for remote code execution and information disclosure without authentication, a related issue to CVE-2015-3306.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://bugs.proftpd.org/show_bug.cgi?id=4372</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2020-1938</td>
+  <td>ajp13</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">When using the Apache JServ Protocol (AJP), care must be taken when trusting incoming connections to Apache Tomcat. Tomcat treats AJP connections as having higher trust than, for example, a similar HTTP connection. If such connections are available to an attacker, they can be exploited in ways that may be surprising. In Apache Tomcat 9.0.0.M1 to 9.0.0.30, 8.5.0 to 8.5.50 and 7.0.0 to 7.0.99, Tomca</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2020-1938</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-26855</td>
+  <td>http</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply Microsoft Exchange cumulative update patches from March 2021.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2016-8735</td>
+  <td>http</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Remote code execution is possible with Apache Tomcat before 6.0.48, 7.x before 7.0.73, 8.x before 8.0.39, 8.5.x before 8.5.7, and 9.x before 9.0.0.M12 if JmxRemoteLifecycleListener is used and an attacker can reach JMX ports. The issue exists because this listener wasn&#x27;t updated for consistency with the CVE-2016-3427 Oracle patch that affected credential types.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://seclists.org/oss-sec/2016/q4/502</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-10211</td>
+  <td>status</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Arbitrary code execution in PostgreSQL via host connection parameter injection.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to PostgreSQL 12.1, 11.6, 10.11, 9.6.16, or 9.4.21+.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-0144</td>
+  <td>status</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">EternalBlue: SMBv1 remote code execution, exploited by WannaCry.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply MS17-010. Disable SMBv1. Block port 445 at perimeter.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-0708</td>
+  <td>status</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">BlueKeep: pre-auth RCE in Windows RDP — wormable.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply Microsoft patch KB4499175. Disable RDP or put behind VPN.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-1182</td>
+  <td>status</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">DejaBlue: second BlueKeep-class pre-auth RDP RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply August 2019 Microsoft patch Tuesday updates.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-26855</td>
+  <td>status</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply Microsoft Exchange cumulative update patches from March 2021.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-0144</td>
+  <td>mountd</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">EternalBlue: SMBv1 remote code execution, exploited by WannaCry.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply MS17-010. Disable SMBv1. Block port 445 at perimeter.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-0708</td>
+  <td>mountd</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">BlueKeep: pre-auth RCE in Windows RDP — wormable.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply Microsoft patch KB4499175. Disable RDP or put behind VPN.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-1182</td>
+  <td>mountd</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">DejaBlue: second BlueKeep-class pre-auth RDP RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply August 2019 Microsoft patch Tuesday updates.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-26855</td>
+  <td>mountd</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply Microsoft Exchange cumulative update patches from March 2021.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-0144</td>
+  <td>nlockmgr</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">EternalBlue: SMBv1 remote code execution, exploited by WannaCry.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply MS17-010. Disable SMBv1. Block port 445 at perimeter.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-0708</td>
+  <td>nlockmgr</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">BlueKeep: pre-auth RCE in Windows RDP — wormable.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply Microsoft patch KB4499175. Disable RDP or put behind VPN.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-1182</td>
+  <td>nlockmgr</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">DejaBlue: second BlueKeep-class pre-auth RDP RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply August 2019 Microsoft patch Tuesday updates.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-26855</td>
+  <td>nlockmgr</td>
+  <td><strong>9.8</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply Microsoft Exchange cumulative update patches from March 2021.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2004-2687</td>
+  <td>distccd</td>
+  <td><strong>9.3</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">distcc daemon allows unauthenticated remote command execution. CVSSv2 9.3 HIGH.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade distcc to version &gt; 3.1. Restrict distccd access with --allow firewall rules.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2007-2526</td>
+  <td>vnc</td>
+  <td><strong>9.3</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Heap-based buffer overflow in the ConnectAsyncEx function in VNC Viewer ActiveX control (scvncctrl.dll) in the SmartCode VNC Manager 3.6 allows remote attackers to execute arbitrary code via a long argument.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://secunia.com/advisories/25203</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2008-0610</td>
+  <td>vnc</td>
+  <td><strong>9.3</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Stack-based buffer overflow in the ClientConnection::NegotiateProtocolVersion function in vncviewer/ClientConnection.cpp in vncviewer for UltraVNC 1.0.2 and 1.0.4 before 01252008, when in LISTENING mode or when using the DSM plugin, allows remote attackers to execute arbitrary code or cause a denial of service (crash) via a modified size value.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://secunia.com/advisories/28747</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2008-5001</td>
+  <td>vnc</td>
+  <td><strong>9.3</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Multiple stack-based buffer overflows in multiple functions in vncviewer/FileTransfer.cpp in vncviewer for UltraVNC 1.0.2 and 1.0.4 before 01252008, when in LISTENING mode or when using the DSM plugin, allow remote attackers to cause a denial of service (crash) and possibly execute arbitrary code via unspecified parameters, a different issue than CVE-2008-0610.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://forum.ultravnc.info/viewtopic.php?p=45150#45150</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2015-1427</td>
+  <td>status</td>
+  <td><strong>9.3</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Groovy sandbox escape in Elasticsearch allows unauthenticated OS command execution.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to Elasticsearch 1.4.3+. Disable dynamic scripting.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-2411</td>
+  <td>netbios-ssn</td>
+  <td><strong>9.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Unspecified vulnerability on HP NonStop Servers with software H06.x through H06.23.00 and J06.x through J06.12.00, when Samba is used, allows remote authenticated users to execute arbitrary code via unknown vectors.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.itrc.hp.com/service/cki/docDisplay.do?docId=emr_na-c03008543</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-2411</td>
+  <td>netbios-ssn</td>
+  <td><strong>9.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Unspecified vulnerability on HP NonStop Servers with software H06.x through H06.23.00 and J06.x through J06.12.00, when Samba is used, allows remote authenticated users to execute arbitrary code via unknown vectors.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.itrc.hp.com/service/cki/docDisplay.do?docId=emr_na-c03008543</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-4130</td>
+  <td>ftp</td>
+  <td><strong>9.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Use-after-free vulnerability in the Response API in ProFTPD before 1.3.3g allows remote authenticated users to execute arbitrary code via vectors involving an error that occurs after an FTP data transfer.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://bugs.proftpd.org/show_bug.cgi?id=3711</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2006-1652</td>
+  <td>vnc</td>
+  <td><strong>9.0</strong></td>
+  <td><span class="risk-pill" style="background:#E24B4A22;color:#E24B4A">CRITICAL</span></td>
+  <td style="color:#57606a">Multiple buffer overflows in (a) UltraVNC (aka Ultr@VNC) 1.0.1 and earlier and (b) tabbed_viewer 1.29 (1) allow user-assisted remote attackers to execute arbitrary code via a malicious server that sends a long string to a client that connects on TCP port 5900, which triggers an overflow in Log::ReallyPrint; and (2) allow remote attackers to cause a denial of service (server crash) via a long HTTP </td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://secunia.com/advisories/19513</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-44142</td>
+  <td>netbios-ssn</td>
+  <td><strong>8.8</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">The Samba vfs_fruit module uses extended file attributes (EA, xattr) to provide &quot;...enhanced compatibility with Apple SMB clients and interoperability with a Netatalk 3 AFP fileserver.&quot; Samba versions prior to 4.13.17, 4.14.12 and 4.15.5 with vfs_fruit configured allow out-of-bounds heap read and write via specially crafted extended file attributes. A remote attacker with write access to extended </td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2021-44142</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-44142</td>
+  <td>netbios-ssn</td>
+  <td><strong>8.8</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">The Samba vfs_fruit module uses extended file attributes (EA, xattr) to provide &quot;...enhanced compatibility with Apple SMB clients and interoperability with a Netatalk 3 AFP fileserver.&quot; Samba versions prior to 4.13.17, 4.14.12 and 4.15.5 with vfs_fruit configured allow out-of-bounds heap read and write via specially crafted extended file attributes. A remote attacker with write access to extended </td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2021-44142</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2012-1667</td>
+  <td>domain</td>
+  <td><strong>8.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">ISC BIND 9.x before 9.7.6-P1, 9.8.x before 9.8.3-P1, 9.9.x before 9.9.1-P1, and 9.4-ESV and 9.6-ESV before 9.6-ESV-R7-P1 does not properly handle resource records with a zero-length RDATA section, which allows remote DNS servers to cause a denial of service (daemon crash or data corruption) or obtain sensitive information from process memory via a crafted record.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2012-1667</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2016-5423</td>
+  <td>postgresql</td>
+  <td><strong>8.3</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">PostgreSQL before 9.1.23, 9.2.x before 9.2.18, 9.3.x before 9.3.14, 9.4.x before 9.4.9, and 9.5.x before 9.5.4 allow remote authenticated users to cause a denial of service (NULL pointer dereference and server crash), obtain sensitive memory information, or possibly execute arbitrary code via (1) a CASE expression within the test value subexpression of another CASE or (2) inlining of an SQL functi</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2016-5423</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2016-7144</td>
+  <td>irc</td>
+  <td><strong>8.1</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">The m_authenticate function in modules/m_sasl.c in UnrealIRCd before 3.2.10.7 and 4.x before 4.0.6 allows remote attackers to spoof certificate fingerprints and consequently log in as another user via a crafted AUTHENTICATE parameter.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: https://forums.unrealircd.org/viewtopic.php?f=1&amp;t=8588</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2016-7144</td>
+  <td>irc</td>
+  <td><strong>8.1</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">The m_authenticate function in modules/m_sasl.c in UnrealIRCd before 3.2.10.7 and 4.x before 4.0.6 allows remote attackers to spoof certificate fingerprints and consequently log in as another user via a crafted AUTHENTICATE parameter.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: https://forums.unrealircd.org/viewtopic.php?f=1&amp;t=8588</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2012-3817</td>
+  <td>domain</td>
+  <td><strong>7.8</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">ISC BIND 9.4.x, 9.5.x, 9.6.x, and 9.7.x before 9.7.6-P2; 9.8.x before 9.8.3-P2; 9.9.x before 9.9.1-P2; and 9.6-ESV before 9.6-ESV-R7-P2, when DNSSEC validation is enabled, does not properly initialize the failing-query cache, which allows remote attackers to cause a denial of service (assertion failure and daemon exit) by sending many queries.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2012-3817</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2012-4244</td>
+  <td>domain</td>
+  <td><strong>7.8</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">ISC BIND 9.x before 9.7.6-P3, 9.8.x before 9.8.3-P3, 9.9.x before 9.9.1-P3, and 9.4-ESV and 9.6-ESV before 9.6-ESV-R7-P3 allows remote attackers to cause a denial of service (assertion failure and named daemon exit) via a query for a long resource record.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2012-4244</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2012-5166</td>
+  <td>domain</td>
+  <td><strong>7.8</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">ISC BIND 9.x before 9.7.6-P4, 9.8.x before 9.8.3-P4, 9.9.x before 9.9.1-P4, and 9.4-ESV and 9.6-ESV before 9.6-ESV-R7-P4 allows remote attackers to cause a denial of service (named daemon hang) via unspecified combinations of resource records.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2012-5166</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2014-8500</td>
+  <td>domain</td>
+  <td><strong>7.8</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">ISC BIND 9.0.x through 9.8.x, 9.9.0 through 9.9.6, and 9.10.0 through 9.10.1 does not limit delegation chaining, which allows remote attackers to cause a denial of service (memory consumption and named crash) via a large or infinite number of referrals.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://cert.ssi.gouv.fr/site/CERTFR-2014-AVI-512/index.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-3192</td>
+  <td>http</td>
+  <td><strong>7.8</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Apache 2.2 Range header DoS (Apache Killer). Server exhausted with overlapping ranges.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to Apache 2.2.21+ or deploy mod_reqtimeout. Prefer 2.4.x.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2011-3192</td>
+  <td>rpcbind</td>
+  <td><strong>7.8</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Apache 2.2 Range header DoS (Apache Killer). Server exhausted with overlapping ranges.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to Apache 2.2.21+ or deploy mod_reqtimeout. Prefer 2.4.x.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2007-0756</td>
+  <td>vnc</td>
+  <td><strong>7.8</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Chicken of the VNC (cotv) 2.0 allows remote attackers to cause a denial of service (application crash) via a large computer-name size value in a ServerInit packet, which triggers a failed malloc and a resulting NULL dereference.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2007-0756</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2008-5714</td>
+  <td>vnc</td>
+  <td><strong>7.8</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Off-by-one error in monitor.c in Qemu 0.9.1 might make it easier for remote attackers to guess the VNC password, which is limited to seven characters where eight was intended.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2008-5714</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-23017</td>
+  <td>status</td>
+  <td><strong>7.7</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Off-by-one in nginx DNS resolver allows heap write / RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to nginx 1.21.0 or 1.20.1+.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2010-0382</td>
+  <td>domain</td>
+  <td><strong>7.6</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">ISC BIND 9.0.x through 9.3.x, 9.4 before 9.4.3-P5, 9.5 before 9.5.2-P2, 9.6 before 9.6.1-P3, and 9.7.0 beta handles out-of-bailiwick data accompanying a secure response without re-fetching from the original source, which allows remote attackers to have an unspecified impact via a crafted response, aka Bug 20819.  NOTE: this vulnerability exists because of a regression during the fix for CVE-2009-4</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2010-0382</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2007-3536</td>
+  <td>vnc</td>
+  <td><strong>7.6</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Multiple buffer overflows in the AMX NetLinx VNC (AmxVnc) ActiveX control in AmxVnc.dll 1.0.13.0 allow remote attackers to execute arbitrary code via long (1) Host, (2) Password, or (3) LogFile property values.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://secunia.com/advisories/25891</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2000-1169</td>
+  <td>ssh</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">OpenSSH SSH client before 2.3.0 does not properly disable X11 or agent forwarding, which could allow a malicious SSH server to gain access to the X11 display and sniff X11 events, or gain access to the ssh-agent.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://archives.neohapsis.com/archives/bugtraq/2000-11/0195.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2001-1459</td>
+  <td>ssh</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">OpenSSH 2.9 and earlier does not initiate a Pluggable Authentication Module (PAM) session if commands are executed with no pty, which allows local users to bypass resource limits (rlimits) set in pam.d.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.securityfocus.com/bid/2917</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2001-0572</td>
+  <td>ssh</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">The SSH protocols 1 and 2 (aka SSH-2) as implemented in OpenSSH and other packages have various weaknesses which can allow a remote attacker to obtain the following information via sniffing: (1) password lengths or ranges of lengths, which simplifies brute force password guessing, (2) whether RSA or DSA authentication is being used, (3) the number of authorized_keys in RSA authentication, or (4) t</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://archives.neohapsis.com/archives/bugtraq/2001-03/0225.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2001-1380</td>
+  <td>ssh</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">OpenSSH before 2.9.9, while using keypairs and multiple keys of different types in the ~/.ssh/authorized_keys2 file, may not properly handle the &quot;from&quot; option associated with a key, which could allow remote attackers to login from unauthorized IP addresses.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://rhn.redhat.com/errata/RHSA-2001-114.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2001-0816</td>
+  <td>ssh</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">OpenSSH before 2.9.9, when running sftp using sftp-server and using restricted keypairs, allows remote authenticated users to bypass authorized_keys2 command= restrictions using sftp commands.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://archives.neohapsis.com/archives/bugtraq/2001-09/0153.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2009-0265</td>
+  <td>domain</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Internet Systems Consortium (ISC) BIND 9.6.0 and earlier does not properly check the return value from the OpenSSL EVP_VerifyFinal function, which allows remote attackers to bypass validation of the certificate chain via a malformed SSL/TLS signature, a similar vulnerability to CVE-2008-5077 and CVE-2009-0025.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://secunia.com/advisories/33559</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2007-6750</td>
+  <td>http</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Slowloris DoS: partial HTTP requests keep connections open, exhausting server resources.</td>
+  <td style="color:#1D9E75;font-size:12px">Enable mod_reqtimeout / RequestReadTimeout. Use nginx or a reverse proxy with timeout controls.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-9798</td>
+  <td>http</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Optionsbleed — Apache HTTP OPTIONS method leaks data from server memory.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to Apache 2.4.28 or later. Apache 2.2 is end-of-life.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2009-1955</td>
+  <td>http</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">The expat XML parser in the apr_xml_* interface in xml/apr_xml.c in Apache APR-util before 1.3.7, as used in the mod_dav and mod_dav_svn modules in the Apache HTTP Server, allows remote attackers to cause a denial of service (memory consumption) via a crafted XML document containing a large number of nested entity references, as demonstrated by a PROPFIND request, a similar issue to CVE-2003-1564.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://marc.info/?l=apr-dev&amp;m=124396021826125&amp;w=2</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2009-2699</td>
+  <td>http</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">The Solaris pollset feature in the Event Port backend in poll/unix/port.c in the Apache Portable Runtime (APR) library before 1.3.9, as used in the Apache HTTP Server before 2.2.14 and other products, does not properly handle errors, which allows remote attackers to cause a denial of service (daemon hang) via unspecified HTTP requests, related to the prefork and event MPMs.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.apache.org/dist/httpd/CHANGES_2.2.14</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-9798</td>
+  <td>rpcbind</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Optionsbleed — Apache HTTP OPTIONS method leaks data from server memory.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to Apache 2.4.28 or later. Apache 2.2 is end-of-life.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2015-8080</td>
+  <td>rpcbind</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Integer overflow in Redis Lua scripting — DoS / RCE.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to Redis 3.0.6+.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-2619</td>
+  <td>netbios-ssn</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Samba before versions 4.6.1, 4.5.7 and 4.4.11 are vulnerable to a malicious client using a symlink race to allow access to areas of the server file system not exported under the share definition.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2017-2619</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-2619</td>
+  <td>netbios-ssn</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Samba before versions 4.6.1, 4.5.7 and 4.4.11 are vulnerable to a malicious client using a symlink race to allow access to areas of the server file system not exported under the share definition.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2017-2619</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-18217</td>
+  <td>ftp</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">ProFTPD before 1.3.6b and 1.3.7rc before 1.3.7rc2 allows remote unauthenticated denial-of-service due to incorrect handling of overly long commands because main.c in a child process enters an infinite loop.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2019-18217</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-19270</td>
+  <td>ftp</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">An issue was discovered in tls_verify_crl in ProFTPD through 1.3.6b. Failure to check for the appropriate field of a CRL entry (checking twice for subject, rather than once for subject and once for issuer) prevents some valid CRLs from being taken into account, and can allow clients whose certificates have been revoked to proceed with a connection to the server.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: https://github.com/proftpd/proftpd/issues/859</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-19271</td>
+  <td>ftp</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">An issue was discovered in tls_verify_crl in ProFTPD before 1.3.6. A wrong iteration variable, used when checking a client certificate against CRL entries (installed by a system administrator), can cause some CRL entries to be ignored, and can allow clients whose certificates have been revoked to proceed with a connection to the server.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: https://github.com/proftpd/proftpd/issues/860</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-19272</td>
+  <td>ftp</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">An issue was discovered in tls_verify_crl in ProFTPD before 1.3.6. Direct dereference of a NULL pointer (a variable initialized to NULL) leads to a crash when validating the certificate of a client connecting to the server in a TLS client/server mutual-authentication setup.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2019-19272</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2020-9272</td>
+  <td>ftp</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">ProFTPD 1.3.7 has an out-of-bounds (OOB) read vulnerability in mod_cap via the cap_text.c cap_to_text function.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: https://github.com/proftpd/proftpd/issues/902</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-46854</td>
+  <td>ftp</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">mod_radius in ProFTPD before 1.3.7c allows memory disclosure to RADIUS servers because it copies blocks of 16 characters.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.proftpd.org/docs/RELEASE_NOTES-1.3.7e</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2023-51713</td>
+  <td>ftp</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">make_ftp_cmd in main.c in ProFTPD before 1.3.8a has a one-byte out-of-bounds read, and daemon crash, because of mishandling of quote/backslash semantics.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: https://github.com/proftpd/proftpd/issues/1683</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2012-2122</td>
+  <td>mysql</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Authentication bypass in MySQL via timing attack.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to MySQL 5.5.24 or later.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2016-0773</td>
+  <td>postgresql</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">PostgreSQL before 9.1.20, 9.2.x before 9.2.15, 9.3.x before 9.3.11, 9.4.x before 9.4.6, and 9.5.x before 9.5.1 allows remote attackers to cause a denial of service (infinite loop or buffer overflow and crash) via a large Unicode character range in a regular expression.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2016-0773</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-7484</td>
+  <td>postgresql</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">It was found that some selectivity estimation functions in PostgreSQL before 9.2.21, 9.3.x before 9.3.17, 9.4.x before 9.4.12, 9.5.x before 9.5.7, and 9.6.x before 9.6.3 did not check user privileges before providing information from pg_statistic, possibly leaking information. An unprivileged attacker could use this flaw to steal some information from tables they are otherwise not allowed to acces</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2017-7484</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2001-1422</td>
+  <td>vnc</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">WinVNC 3.3.3 and earlier generates the same challenge string for multiple connections, which allows remote attackers to bypass VNC authentication by sniffing the challenge and response of other users.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.securityfocus.com/bid/2275</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2023-50784</td>
+  <td>irc</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">A buffer overflow in websockets in UnrealIRCd 6.1.0 through 6.1.3 before 6.1.4 allows an unauthenticated remote attacker to crash the server by sending an oversized packet (if a websocket port is open). Remote code execution might be possible on some uncommon, older platforms.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: https://forums.unrealircd.org/viewtopic.php?t=9340</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2010-2075</td>
+  <td>irc</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">UnrealIRCd 3.2.8.1, as distributed on certain mirror sites from November 2009 through June 2010, contains an externally introduced modification (Trojan Horse) in the DEBUG3_DOLOG_SYSTEM macro, which allows remote attackers to execute arbitrary commands.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://secunia.com/advisories/40169</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2023-50784</td>
+  <td>irc</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">A buffer overflow in websockets in UnrealIRCd 6.1.0 through 6.1.3 before 6.1.4 allows an unauthenticated remote attacker to crash the server by sending an oversized packet (if a websocket port is open). Remote code execution might be possible on some uncommon, older platforms.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: https://forums.unrealircd.org/viewtopic.php?t=9340</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2002-0493</td>
+  <td>http</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Apache Tomcat may be started without proper security settings if errors are encountered while reading the web.xml file, which could allow attackers to bypass intended restrictions.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2002-0493</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2013-2185</td>
+  <td>http</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">The readObject method in the DiskFileItem class in Apache Tomcat and JBoss Web, as used in Red Hat JBoss Enterprise Application Platform 6.1.0 and Red Hat JBoss Portal 6.0.0, allows remote attackers to write to arbitrary files via a NULL byte in a file name in a serialized instance, a similar issue to CVE-2013-2186.  NOTE: this issue is reportedly disputed by the Apache Tomcat team, although Red H</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://rhn.redhat.com/errata/RHSA-2013-1193.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-7529</td>
+  <td>status</td>
+  <td><strong>7.5</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Integer overflow in nginx range filter — information disclosure.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade to nginx 1.13.3 or 1.12.1+.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-3618</td>
+  <td>ftp</td>
+  <td><strong>7.4</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">ALPACA cross-protocol attack affecting vsftpd.</td>
+  <td style="color:#1D9E75;font-size:12px">Enable strict TLS SNI. Upgrade to vsftpd 3.0.5.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-3618</td>
+  <td>rpcbind</td>
+  <td><strong>7.4</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">ALPACA cross-protocol attack affecting vsftpd.</td>
+  <td style="color:#1D9E75;font-size:12px">Enable strict TLS SNI. Upgrade to vsftpd 3.0.5.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-12151</td>
+  <td>netbios-ssn</td>
+  <td><strong>7.4</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">A flaw was found in the way samba client before samba 4.4.16, samba 4.5.14 and samba 4.6.8 used encryption with the max protocol set as SMB3. The connection could lose the requirement for signing and encrypting to any DFS redirects, allowing an attacker to read or alter the contents of the connection via a man-in-the-middle attack.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2017-12151</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-12151</td>
+  <td>netbios-ssn</td>
+  <td><strong>7.4</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">A flaw was found in the way samba client before samba 4.4.16, samba 4.5.14 and samba 4.6.8 used encryption with the max protocol set as SMB3. The connection could lose the requirement for signing and encrypting to any DFS redirects, allowing an attacker to read or alter the contents of the connection via a man-in-the-middle attack.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2017-12151</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2014-0224</td>
+  <td>postgresql</td>
+  <td><strong>7.4</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">OpenSSL CCS Injection: MITM attackers can hijack sessions via crafted TLS handshake.</td>
+  <td style="color:#1D9E75;font-size:12px">Upgrade OpenSSL to 0.9.8za, 1.0.0m, or 1.0.1h+.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2015-8461</td>
+  <td>domain</td>
+  <td><strong>7.1</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Race condition in resolver.c in named in ISC BIND 9.9.8 before 9.9.8-P2 and 9.10.3 before 9.10.3-P2 allows remote attackers to cause a denial of service (INSIST assertion failure and daemon exit) via unspecified vectors.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2015-8461</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2009-1890</td>
+  <td>http</td>
+  <td><strong>7.1</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">The stream_reqbody_cl function in mod_proxy_http.c in the mod_proxy module in the Apache HTTP Server before 2.3.3, when a reverse proxy is configured, does not properly handle an amount of streamed data that exceeds the Content-Length value, which allows remote attackers to cause a denial of service (CPU consumption) via crafted requests.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://secunia.com/advisories/35691</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2009-1891</td>
+  <td>http</td>
+  <td><strong>7.1</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">The mod_deflate module in Apache httpd 2.2.11 and earlier compresses large files until completion even after the associated network connection is closed, which allows remote attackers to cause a denial of service (CPU consumption).</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2009-1891</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2010-3867</td>
+  <td>ftp</td>
+  <td><strong>7.1</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">Multiple directory traversal vulnerabilities in the mod_site_misc module in ProFTPD before 1.3.3c allow remote authenticated users to create directories, delete directories, create symlinks, and modify file timestamps via directory traversal sequences in a (1) SITE MKDIR, (2) SITE RMDIR, (3) SITE SYMLINK, or (4) SITE UTIME command.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2010-3867</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2016-5424</td>
+  <td>postgresql</td>
+  <td><strong>7.1</strong></td>
+  <td><span class="risk-pill" style="background:#EF9F2722;color:#EF9F27">HIGH</span></td>
+  <td style="color:#57606a">PostgreSQL before 9.1.23, 9.2.x before 9.2.18, 9.3.x before 9.3.14, 9.4.x before 9.4.9, and 9.5.x before 9.5.4 might allow remote authenticated users with the CREATEDB or CREATEROLE role to gain superuser privileges via a (1) &quot; (double quote), (2) \ (backslash), (3) carriage return, or (4) newline character in a (a) database or (b) role name that is mishandled during an administrative operation.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2016-5424</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2009-0025</td>
+  <td>domain</td>
+  <td><strong>6.8</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">BIND 9.6.0, 9.5.1, 9.5.0, 9.4.3, and earlier does not properly check the return value from the OpenSSL DSA_verify function, which allows remote attackers to bypass validation of the certificate chain via a malformed SSL/TLS signature, a similar vulnerability to CVE-2008-5077.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2009-0025</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2013-2395</td>
+  <td>mysql</td>
+  <td><strong>6.8</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Unspecified vulnerability in Oracle MySQL 5.6.10 and earlier allows remote authenticated users to affect availability via unknown vectors related to Data Manipulation Language, a different vulnerability than CVE-2013-1567.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.oracle.com/technetwork/topics/security/cpuapr2013-1899555.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2009-3231</td>
+  <td>postgresql</td>
+  <td><strong>6.8</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">The core server component in PostgreSQL 8.3 before 8.3.8 and 8.2 before 8.2.14, when using LDAP authentication with anonymous binds, allows remote attackers to bypass authentication via an empty password.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://secunia.com/advisories/36660</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2009-4893</td>
+  <td>irc</td>
+  <td><strong>6.8</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Buffer overflow in UnrealIRCd 3.2beta11 through 3.2.8, when allow::options::noident is enabled, allows remote attackers to cause a denial of service (crash) and possibly execute arbitrary code via unspecified vectors.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.unrealircd.com/txt/unrealsecadvisory.20090413.txt</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2009-4893</td>
+  <td>irc</td>
+  <td><strong>6.8</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Buffer overflow in UnrealIRCd 3.2beta11 through 3.2.8, when allow::options::noident is enabled, allows remote attackers to cause a denial of service (crash) and possibly execute arbitrary code via unspecified vectors.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.unrealircd.com/txt/unrealsecadvisory.20090413.txt</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2013-6357</td>
+  <td>http</td>
+  <td><strong>6.8</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Cross-site request forgery (CSRF) vulnerability in the Manager application in Apache Tomcat 5.5.25 and earlier allows remote attackers to hijack the authentication of administrators for requests that manipulate application deployment via the POST method, as demonstrated by a /manager/html/undeploy?path= URI.  NOTE: the vendor disputes the significance of this report, stating that &quot;the Apache Tomca</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2013-6357</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2013-4444</td>
+  <td>http</td>
+  <td><strong>6.8</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Unrestricted file upload vulnerability in Apache Tomcat 7.x before 7.0.40, in certain situations involving outdated java.io.File code and a custom JMX configuration, allows remote attackers to execute arbitrary code by uploading and accessing a JSP file.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://tomcat.apache.org/security-7.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-9461</td>
+  <td>netbios-ssn</td>
+  <td><strong>6.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">smbd in Samba before 4.4.10 and 4.5.x before 4.5.6 has a denial of service vulnerability (fd_open_atomic infinite loop with high CPU usage and memory consumption) due to wrongly handling dangling symlinks.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: https://bugs.debian.org/864291</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-3824</td>
+  <td>netbios-ssn</td>
+  <td><strong>6.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">A flaw was found in the way an LDAP search expression could crash the shared LDAP server process of a samba AD DC in samba before version 4.10. An authenticated user, having read permissions on the LDAP server, could use this flaw to cause denial of service.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: https://bugzilla.redhat.com/show_bug.cgi?id=CVE-2019-3824</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-10218</td>
+  <td>netbios-ssn</td>
+  <td><strong>6.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">A flaw was found in the samba client, all samba versions before samba 4.11.2, 4.10.10 and 4.9.15, where a malicious server can supply a pathname to the client with separators. This could allow the client to access files and folders outside of the SMB network pathnames. An attacker could use this vulnerability to create files outside of the current working directory using the privileges of the clie</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2019-10218</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-3671</td>
+  <td>netbios-ssn</td>
+  <td><strong>6.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">A null pointer de-reference was found in the way samba kerberos server handled missing sname in TGS-REQ (Ticket Granting Server - Request). An authenticated user could use this flaw to crash the samba server.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: https://github.com/heimdal/heimdal/commit/04171147948d0a3636bc6374181926f0fb2ec83a</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-9461</td>
+  <td>netbios-ssn</td>
+  <td><strong>6.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">smbd in Samba before 4.4.10 and 4.5.x before 4.5.6 has a denial of service vulnerability (fd_open_atomic infinite loop with high CPU usage and memory consumption) due to wrongly handling dangling symlinks.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: https://bugs.debian.org/864291</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-3824</td>
+  <td>netbios-ssn</td>
+  <td><strong>6.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">A flaw was found in the way an LDAP search expression could crash the shared LDAP server process of a samba AD DC in samba before version 4.10. An authenticated user, having read permissions on the LDAP server, could use this flaw to cause denial of service.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: https://bugzilla.redhat.com/show_bug.cgi?id=CVE-2019-3824</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2019-10218</td>
+  <td>netbios-ssn</td>
+  <td><strong>6.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">A flaw was found in the samba client, all samba versions before samba 4.11.2, 4.10.10 and 4.9.15, where a malicious server can supply a pathname to the client with separators. This could allow the client to access files and folders outside of the SMB network pathnames. An attacker could use this vulnerability to create files outside of the current working directory using the privileges of the clie</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2019-10218</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2021-3671</td>
+  <td>netbios-ssn</td>
+  <td><strong>6.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">A null pointer de-reference was found in the way samba kerberos server handled missing sname in TGS-REQ (Ticket Granting Server - Request). An authenticated user could use this flaw to crash the samba server.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: https://github.com/heimdal/heimdal/commit/04171147948d0a3636bc6374181926f0fb2ec83a</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2012-4414</td>
+  <td>mysql</td>
+  <td><strong>6.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Multiple SQL injection vulnerabilities in the replication code in Oracle MySQL possibly before 5.5.29, and MariaDB 5.1.x through 5.1.62, 5.2.x through 5.2.12, 5.3.x through 5.3.7, and 5.5.x through 5.5.25, allow remote authenticated users to execute arbitrary SQL commands via vectors related to the binary log.  NOTE: as of 20130116, Oracle has not commented on claims from a downstream vendor that </td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2012-4414</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2010-0442</td>
+  <td>postgresql</td>
+  <td><strong>6.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">The bitsubstr function in backend/utils/adt/varbit.c in PostgreSQL 8.0.23, 8.1.11, and 8.3.8 allows remote authenticated users to cause a denial of service (daemon crash) or have unspecified other impact via vectors involving a negative integer in the third argument, as demonstrated by a SELECT statement that contains a call to the substring function for a bit string, related to an &quot;overflow.&quot;</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://archives.postgresql.org/pgsql-committers/2010-01/msg00125.php</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2012-3489</td>
+  <td>postgresql</td>
+  <td><strong>6.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">The xml_parse function in the libxml2 support in the core server component in PostgreSQL 8.3 before 8.3.20, 8.4 before 8.4.13, 9.0 before 9.0.9, and 9.1 before 9.1.5 allows remote authenticated users to determine the existence of arbitrary files or URLs, and possibly obtain file or URL content that triggers a parsing error, via an XML value that refers to (1) a DTD or (2) an entity, related to an </td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2012-3489</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2014-0061</td>
+  <td>postgresql</td>
+  <td><strong>6.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">The validator functions for the procedural languages (PLs) in PostgreSQL before 8.4.20, 9.0.x before 9.0.16, 9.1.x before 9.1.12, 9.2.x before 9.2.7, and 9.3.x before 9.3.3 allow remote authenticated users to gain privileges via a function that is (1) defined in another language or (2) not allowed to be directly called by the user due to permissions.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2014-0061</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2014-0063</td>
+  <td>postgresql</td>
+  <td><strong>6.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Multiple stack-based buffer overflows in PostgreSQL before 8.4.20, 9.0.x before 9.0.16, 9.1.x before 9.1.12, 9.2.x before 9.2.7, and 9.3.x before 9.3.3 allow remote authenticated users to cause a denial of service (crash) or possibly execute arbitrary code via vectors related to an incorrect MAXDATELEN constant and datetime values involving (1) intervals, (2) timestamps, or (3) timezones, a differ</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2014-0063</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2012-3147</td>
+  <td>mysql</td>
+  <td><strong>6.4</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Unspecified vulnerability in the MySQL Server component in Oracle MySQL 5.5.26 and earlier allows remote attackers to affect integrity and availability, related to MySQL Client.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.oracle.com/technetwork/topics/security/cpuoct2012-1515893.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2013-3798</td>
+  <td>mysql</td>
+  <td><strong>5.8</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Unspecified vulnerability in the MySQL Server component in Oracle MySQL 5.6.11 and earlier allows remote attackers to affect integrity and availability via unknown vectors related to MemCached.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2013-3798</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2013-4286</td>
+  <td>http</td>
+  <td><strong>5.8</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Apache Tomcat before 6.0.39, 7.x before 7.0.47, and 8.x before 8.0.0-RC3, when an HTTP connector or AJP connector is used, does not properly handle certain inconsistent HTTP request headers, which allows remote attackers to trigger incorrect identification of a request&#x27;s length and conduct request-smuggling attacks via (1) multiple Content-Length headers or (2) a Content-Length header and a &quot;Trans</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2013-4286</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-13649</td>
+  <td>irc</td>
+  <td><strong>5.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">UnrealIRCd 4.0.13 and earlier creates a PID file after dropping privileges to a non-root account, which might allow local users to kill arbitrary processes by leveraging access to this non-root account for PID file modification before a root script executes a &quot;kill `cat /pathname`&quot; command. NOTE: the vendor indicates that there is no common or recommended scenario in which a root script would exec</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2017-13649</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2017-13649</td>
+  <td>irc</td>
+  <td><strong>5.5</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">UnrealIRCd 4.0.13 and earlier creates a PID file after dropping privileges to a non-root account, which might allow local users to kill arbitrary processes by leveraging access to this non-root account for PID file modification before a root script executes a &quot;kill `cat /pathname`&quot; command. NOTE: the vendor indicates that there is no common or recommended scenario in which a root script would exec</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2017-13649</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2015-1419</td>
+  <td>ftp</td>
+  <td><strong>5.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Unspecified vulnerability in vsftpd 3.0.2 and earlier allows remote attackers to bypass access restrictions via unknown vectors, related to deny_file parsing.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://lists.opensuse.org/opensuse-security-announce/2015-01/msg00023.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2013-1570</td>
+  <td>mysql</td>
+  <td><strong>5.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Unspecified vulnerability in Oracle MySQL 5.6.10 and earlier allows remote attackers to affect availability via unknown vectors related to MemCached.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.oracle.com/technetwork/topics/security/cpuapr2013-1899555.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2004-0679</td>
+  <td>irc</td>
+  <td><strong>5.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">The IP cloaking feature (cloak.c) in UnrealIRCd 3.2, and possibly other versions, uses a weak hashing scheme to hide IP addresses, which could allow remote attackers to use brute force methods to gain other user&#x27;s IP addresses.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.securityfocus.com/bid/10663</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2006-1214</td>
+  <td>irc</td>
+  <td><strong>5.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">UnrealIRCd 3.2.3 allows remote attackers to cause an unspecified denial of service by causing a linked server to send malformed TKL Q:Line commands, as demonstrated by &quot;TKL - q\x08Q *\x08PoC.&quot;</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://forums.unrealircd.com/viewtopic.php?t=2985</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2013-6413</td>
+  <td>irc</td>
+  <td><strong>5.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Use-after-free vulnerability in UnrealIRCd 3.2.10 before 3.2.10.2 allows remote attackers to cause a denial of service (crash) via unspecified vectors.  NOTE: this identifier was SPLIT per ADT2 due to different vulnerability types. CVE-2013-7384 was assigned for the NULL pointer dereference.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://forums.unrealircd.com/viewtopic.php?f=2&amp;t=8221</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2013-7384</td>
+  <td>irc</td>
+  <td><strong>5.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">UnrealIRCd 3.2.10 before 3.2.10.2 allows remote attackers to cause a denial of service (NULL pointer dereference and crash) via unspecified vectors, related to SSL.  NOTE: this issue was SPLIT from CVE-2013-6413 per ADT2 due to different vulnerability types.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://forums.unrealircd.com/viewtopic.php?f=2&amp;t=8221</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2004-0679</td>
+  <td>irc</td>
+  <td><strong>5.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">The IP cloaking feature (cloak.c) in UnrealIRCd 3.2, and possibly other versions, uses a weak hashing scheme to hide IP addresses, which could allow remote attackers to use brute force methods to gain other user&#x27;s IP addresses.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.securityfocus.com/bid/10663</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2006-1214</td>
+  <td>irc</td>
+  <td><strong>5.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">UnrealIRCd 3.2.3 allows remote attackers to cause an unspecified denial of service by causing a linked server to send malformed TKL Q:Line commands, as demonstrated by &quot;TKL - q\x08Q *\x08PoC.&quot;</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://forums.unrealircd.com/viewtopic.php?t=2985</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2013-6413</td>
+  <td>irc</td>
+  <td><strong>5.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Use-after-free vulnerability in UnrealIRCd 3.2.10 before 3.2.10.2 allows remote attackers to cause a denial of service (crash) via unspecified vectors.  NOTE: this identifier was SPLIT per ADT2 due to different vulnerability types. CVE-2013-7384 was assigned for the NULL pointer dereference.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://forums.unrealircd.com/viewtopic.php?f=2&amp;t=8221</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2013-7384</td>
+  <td>irc</td>
+  <td><strong>5.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">UnrealIRCd 3.2.10 before 3.2.10.2 allows remote attackers to cause a denial of service (NULL pointer dereference and crash) via unspecified vectors, related to SSL.  NOTE: this issue was SPLIT from CVE-2013-6413 per ADT2 due to different vulnerability types.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://forums.unrealircd.com/viewtopic.php?f=2&amp;t=8221</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2001-0590</td>
+  <td>http</td>
+  <td><strong>5.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Apache Software Foundation Tomcat Servlet prior to 3.2.2 allows a remote attacker to read the source code to arbitrary &#x27;jsp&#x27; files via a malformed URL request which does not end with an HTTP protocol specification (i.e. HTTP/1.0).</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://archives.neohapsis.com/archives/bugtraq/2001-04/0031.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2000-1210</td>
+  <td>http</td>
+  <td><strong>5.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Directory traversal vulnerability in source.jsp of Apache Tomcat before 3.1 allows remote attackers to read arbitrary files via a .. (dot dot) in the argument to source.jsp.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.iss.net/security_center/static/4205.php</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2008-0128</td>
+  <td>http</td>
+  <td><strong>5.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">The SingleSignOn Valve (org.apache.catalina.authenticator.SingleSignOn) in Apache Tomcat before 5.5.21 does not set the secure flag for the JSESSIONIDSSO cookie in an https session, which can cause the cookie to be sent in http requests and make it easier for remote attackers to capture this cookie.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://issues.apache.org/bugzilla/show_bug.cgi?id=41217</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2012-0583</td>
+  <td>mysql</td>
+  <td><strong>4.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Unspecified vulnerability in the MySQL Server component in Oracle MySQL 5.1.60 and earlier, and 5.5.19 and earlier, allows remote authenticated users to affect availability, related to MyISAM.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2012-0583</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2012-1696</td>
+  <td>mysql</td>
+  <td><strong>4.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Unspecified vulnerability in the MySQL Server component in Oracle MySQL 5.5.19 and earlier allows remote authenticated users to affect availability via unknown vectors related to Server Optimizer.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2012-1696</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2012-3144</td>
+  <td>mysql</td>
+  <td><strong>4.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Unspecified vulnerability in the MySQL Server component in Oracle MySQL 5.5.26 and earlier allows remote authenticated users to affect availability via unknown vectors related to Server.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://www.oracle.com/technetwork/topics/security/cpuoct2012-1515893.html</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2013-3795</td>
+  <td>mysql</td>
+  <td><strong>4.0</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Unspecified vulnerability in the MySQL Server component in Oracle MySQL 5.6.11 and earlier allows remote authenticated users to affect availability via unknown vectors related to Data Manipulation Language.</td>
+  <td style="color:#1D9E75;font-size:12px">Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2013-3795</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2015-4000</td>
+  <td>smtp</td>
+  <td><strong>3.7</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">Logjam: TLS DHE_EXPORT downgrade allows MITM to break 512-bit export DH encryption.</td>
+  <td style="color:#1D9E75;font-size:12px">Disable DHE_EXPORT ciphers. Use 2048-bit+ DH groups. Upgrade TLS libraries.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2014-3566</td>
+  <td>smtp</td>
+  <td><strong>3.4</strong></td>
+  <td><span class="risk-pill" style="background:#378ADD22;color:#378ADD">MEDIUM</span></td>
+  <td style="color:#57606a">SSL POODLE: SSLv3 CBC padding oracle allows MITM plaintext recovery.</td>
+  <td style="color:#1D9E75;font-size:12px">Disable SSLv3. Enforce TLS 1.2+. Apply vendor patches.</td>
+</tr><tr>
+  <td style="font-family:monospace;font-weight:700;color:#388bfd">CVE-2000-1247</td>
+  <td>ajp13</td>
+  <td><strong>2.1</strong></td>
+  <td><span class="risk-pill" style="background:#1D9E7522;color:#1D9E75">LOW</span></td>
+  <td style="color:#57606a">The default configuration of the jserv-status handler in jserv.conf in Apache JServ 1.1.2 includes an &quot;allow from 127.0.0.1&quot; line, which allows local users to discover JDBC passwords or other sensitive information via a direct request to the jserv/ URI.</td>
+  <td style="color:#1D9E75;font-size:12px">Apply vendor patch. See: http://archive.apache.org/dist/java/java.apache.org-www.tar.gz</td>
+</tr></tbody>
+</table>
+  
+
+  <!-- Defensive guidance -->
+  <h2>Defensive Guidance</h2>
+  <div class="guidance-list"><div class="guidance-item"><span class="guidance-arrow">→</span><span>Upgrade FTP to the latest stable version immediately.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Replace FTP with SFTP. FTP credentials are sent in plaintext.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>If FTP must run, restrict to a specific IP range.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Remove vsftpd 2.3.4 immediately. Deploy vsftpd 3.0.5+.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Enable strict TLS SNI. Upgrade to vsftpd 3.0.5.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Upgrade SSH to the latest stable version immediately.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Disable root SSH login (set PermitRootLogin no in sshd_config).</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Use SSH key-based authentication instead of passwords.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Restrict SSH access by IP using AllowUsers or firewall rules.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-1999-0661</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2000-0525</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Disable Telnet immediately — it transmits all data including passwords in plaintext.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Replace with SSH.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2021-27171</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Disable DHE_EXPORT ciphers. Use 2048-bit+ DH groups. Upgrade TLS libraries.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Disable SSLv3. Enforce TLS 1.2+. Apply vendor patches.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Upgrade DOMAIN to the latest stable version immediately.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Restrict DNS zone transfers to authorised secondary servers only.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Enable DNSSEC for DNS integrity.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Rate-limit DNS queries to mitigate amplification attacks.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2008-0122</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2012-1667</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Upgrade HTTP to the latest stable version immediately.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Redirect all HTTP traffic to HTTPS.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Review the web application for OWASP Top 10 vulnerabilities.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Remove server version banners from HTTP response headers.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Apply vendor patch. See: http://httpd.apache.org/security/vulnerabilities_20.html</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Apache 2.2 is EOL. Upgrade to Apache 2.4.26 or later immediately.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Apply KB4551762. Disable SMBv3 compression as interim mitigation.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2012-1182</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Upgrade to Samba 4.6.4, 4.5.10, 4.4.14+. Add &#x27;nt pipe support = no&#x27; as workaround.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Disable RMI registry. Restrict port 1099 with firewall. Upgrade to Java 7u2+.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Disable telnet immediately. Replace with SSH.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Apply vendor patch. See: http://bugs.proftpd.org/show_bug.cgi?id=4372</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Apply vendor patch. See: http://bugs.proftpd.org/show_bug.cgi?id=3711</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Upgrade MYSQL to the latest stable version immediately.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Bind MySQL to localhost or internal IP only (not 0.0.0.0).</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Disable remote root login. Use application-specific DB accounts.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Enable MySQL audit logging.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Upgrade to MySQL 5.5.24 or later.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Apply vendor patch. See: http://www.oracle.com/technetwork/topics/security/cpuapr2013-1899555.html</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Port 3306 should not be publicly accessible. Restrict via firewall to authorised hosts only.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Upgrade distcc to version &gt; 3.1. Restrict distccd access with --allow firewall rules.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2016-5423</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2016-0773</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Port 5432 should not be publicly accessible. Restrict via firewall to authorised hosts only.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Apply vendor patch. See: http://archives.neohapsis.com/archives/bugtraq/2002-04/0327.html</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2006-4309</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: See https://nvd.nist.gov/vuln/detail/CVE-2010-2075</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Apply vendor patch. See: https://forums.unrealircd.org/viewtopic.php?f=1&amp;t=8588</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Apply vendor patch. See: http://secunia.com/advisories/40169</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Check vendor advisory at https://nvd.nist.gov/vuln/detail/CVE-2020-1938</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Apply vendor patch. See: http://archive.apache.org/dist/java/java.apache.org-www.tar.gz</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Apply Microsoft Exchange cumulative update patches from March 2021.</span></div><div class="guidance-item"><span class="guidance-arrow">→</span><span>Patch: Apply vendor patch. See: http://seclists.org/oss-sec/2016/q4/502</span></div></div>
+
+  <div class="footer">
+    Generated by ScanWise AI v1.0 &nbsp;|&nbsp;
+    For defensive security assessment only &nbsp;|&nbsp;
+    2026-05-16 14:35:44
+  </div>
+</div>
+
+<script>
+const D = {"risk": [15, 5, 3, 7], "cve_svcs": {"ftp": 13, "ssh": 10, "domain": 10, "http": 20, "rpcbind": 17, "netbios-ssn": 20, "java-rmi": 2, "nfs": 7, "vnc": 10, "irc": 18, "status": 11, "mountd": 7, "nlockmgr": 7, "telnet": 1, "ajp13": 2, "distccd": 1, "postgresql": 10, "mysql": 10, "smtp": 2}};
+
+// Risk distribution doughnut
+new Chart(document.getElementById('riskChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Critical','High','Medium','Low'],
+    datasets: [{
+      data: D.risk,
+      backgroundColor: ['#E24B4A','#EF9F27','#378ADD','#1D9E75'],
+      borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'right', labels: { font: { size: 11 } } } }
+  }
+});
+
+// CVE per service bar
+const svcs = D.cve_svcs;
+new Chart(document.getElementById('cveChart'), {
+  type: 'bar',
+  data: {
+    labels: Object.keys(svcs).map(s=>s.toUpperCase()),
+    datasets: [{
+      data: Object.values(svcs),
+      backgroundColor: '#E24B4A88',
+      borderColor: '#E24B4A',
+      borderWidth: 1
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+  }
+});
+</script>
+</body>
+</html>

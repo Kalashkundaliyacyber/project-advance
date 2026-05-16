@@ -1,0 +1,135 @@
+<!-- ═══════════════════════════════════════════════════════
+     help.html — Help & Documentation page
+     ═══════════════════════════════════════════════════════ -->
+
+<div class="page" id="page-help" style="flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch">
+
+  <div class="help-header">
+    <button class="btn btn-sec" onclick="Router.showPage('scan')" style="height:36px;padding:0 14px;font-size:13px">← Back</button>
+    <h2 style="font-size:17px;font-weight:700">📖 ScanWise AI — Help &amp; Guide</h2>
+  </div>
+
+  <div class="help-body">
+
+    <div class="help-card">
+      <div class="help-card-icon">🎯</div>
+      <div class="help-card-content">
+        <h3>How to Scan</h3>
+        <ol>
+          <li>Enter a target IP address or hostname in the <strong>Target</strong> field (e.g. <code>192.168.1.10</code>)</li>
+          <li>Select a <strong>Scan Type</strong> from the dropdown</li>
+          <li>Click <strong>▶ Scan</strong> to start</li>
+          <li>Watch the progress bar — results appear automatically when done</li>
+        </ol>
+        <div class="help-tip">💡 Use <strong>Service Detection</strong> for your first scan — it finds open ports and identifies what's running.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-icon">📊</div>
+      <div class="help-card-content">
+        <h3>How to Read Results</h3>
+        <p>After a scan, results appear in the right panel tabs:</p>
+        <ul>
+          <li><strong>Risk</strong> — ports scored 0–10 by severity</li>
+          <li><strong>CVE</strong> — known vulnerabilities matched to services</li>
+          <li><strong>Findings</strong> — all open ports with version info</li>
+          <li><strong>Next Steps</strong> — recommended follow-up scans</li>
+          <li><strong>AI</strong> — AI-generated plain-English analysis</li>
+        </ul>
+        <div class="help-tip">🔴 Critical / 🟠 High → act immediately &nbsp;|&nbsp; 🔵 Medium / 🟢 Low → lower priority</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-icon">🛡</div>
+      <div class="help-card-content">
+        <h3>What is a CVE?</h3>
+        <p>CVE stands for <strong>Common Vulnerabilities and Exposures</strong>. Each CVE is a unique identifier (e.g. <code>CVE-2023-38408</code>) for a publicly known security vulnerability.</p>
+        <ul>
+          <li><strong>CVSS Score</strong> — severity rating from 0 to 10</li>
+          <li><strong>Description</strong> — what the vulnerability does</li>
+          <li><strong>Patch</strong> — how to fix it (upgrade, config change, etc.)</li>
+        </ul>
+        <div class="help-tip">💡 ScanWise AI only shows CVE descriptions and patch advice — never exploit instructions.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-icon">📈</div>
+      <div class="help-card-content">
+        <h3>How to Use Graphs</h3>
+        <p>Click <strong>📊 Dashboard</strong> in the nav bar to see two graph views:</p>
+        <ul>
+          <li><strong>Graph (Radial)</strong> — Chart.js charts showing risk distribution, CVE severity, services discovered</li>
+          <li><strong>Graph (OSINT)</strong> — Interactive D3 horizontal tree. Root = Host, branches = Ports → CVEs → Details</li>
+        </ul>
+        <p style="margin-top:8px">In the OSINT graph:</p>
+        <ul>
+          <li><strong>Click</strong> a node to expand/collapse its children</li>
+          <li><strong>Scroll/pinch</strong> to zoom in and out</li>
+          <li><strong>Drag</strong> to pan the view</li>
+          <li>Use <strong>⊞ Expand</strong> and <strong>⊟ Collapse</strong> buttons to control all nodes</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-icon">💬</div>
+      <div class="help-card-content">
+        <h3>How to Use Chat</h3>
+        <p>The chat assistant is on the left side of the Scan page:</p>
+        <ul>
+          <li>Type any question about scanning, CVEs, or results</li>
+          <li>Use the <strong>quick question buttons</strong> for common queries</li>
+          <li>Click <strong>☰</strong> (top-left menu) → <strong>New Chat</strong> to start a fresh conversation</li>
+        </ul>
+        <div class="help-tip">💡 The chat remembers context within a session. Start a New Chat when switching to a different topic.</div>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-icon">⏹</div>
+      <div class="help-card-content">
+        <h3>Stopping a Scan</h3>
+        <p>While a scan is running, the <strong>⏹ Stop</strong> button appears next to Scan:</p>
+        <ol>
+          <li>Click <strong>⏹ Stop</strong></li>
+          <li>Confirm in the popup</li>
+          <li>The scan terminates safely — partial results are preserved</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-icon">📄</div>
+      <div class="help-card-content">
+        <h3>Exporting Reports</h3>
+        <p>Click <strong>⬇ Report</strong> after a scan completes:</p>
+        <ul>
+          <li><strong>HTML</strong> — opens in browser, use Print → Save as PDF</li>
+          <li><strong>PDF</strong> — direct PDF (requires <code>pip install reportlab</code>)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="help-card">
+      <div class="help-card-icon">🔍</div>
+      <div class="help-card-content">
+        <h3>Scan Types Explained</h3>
+        <div class="help-table">
+          <div class="ht-row"><span class="ht-key">Service Detection</span><span class="ht-val">Best first scan — finds ports + identifies services</span></div>
+          <div class="ht-row"><span class="ht-key">TCP Basic</span><span class="ht-val">Fast scan of top 1000 TCP ports</span></div>
+          <div class="ht-row"><span class="ht-key">TCP SYN</span><span class="ht-val">Stealthier scan (requires root)</span></div>
+          <div class="ht-row"><span class="ht-key">UDP Top-100</span><span class="ht-val">Scans UDP services like DNS, SNMP (requires root)</span></div>
+          <div class="ht-row"><span class="ht-key">Deep Version</span><span class="ht-val">Precisely fingerprints service versions for CVE matching</span></div>
+          <div class="ht-row"><span class="ht-key">OS Detection</span><span class="ht-val">Identifies the operating system (requires root)</span></div>
+          <div class="ht-row"><span class="ht-key">Port Range</span><span class="ht-val">Scans well-known ports 1–1024</span></div>
+          <div class="ht-row"><span class="ht-key">Script Enum</span><span class="ht-val">Runs NSE scripts for deeper service intelligence</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+

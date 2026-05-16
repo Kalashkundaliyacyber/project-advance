@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta name="theme-color" content="#0d1117"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <title>ScanWise AI</title>
+
+  <!-- ── Third-party libraries ─────────────────────────────────── -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+
+  <!-- ── Application CSS (v=3.3 forces cache bust) ─────────────── -->
+  <link rel="stylesheet" href="css/global.css?v=3.3"/>
+  <link rel="stylesheet" href="css/layout.css?v=3.3"/>
+  <link rel="stylesheet" href="css/chatbot.css?v=3.3"/>
+  <link rel="stylesheet" href="css/dashboard.css?v=3.3"/>
+  <link rel="stylesheet" href="css/responsive.css?v=3.3"/>
+  <link rel="stylesheet" href="css/fixes.css?v=1.0"/><!-- FIX16-21 -->
+</head>
+<body>
+
+  <!-- ── Navbar (topbar, drawer, status strip, nav tabs) ──────── -->
+  <div id="navbar-root"></div>
+
+  <!-- ── Page body ─────────────────────────────────────────────── -->
+  <div class="body" id="app-body">
+    <div id="page-scan-root"></div>
+    <div id="page-dash-root"></div>
+    <div id="page-hist-root"></div>
+    <div id="page-cmp-root"></div>
+    <div id="page-help-root"></div>
+  </div>
+
+  <!-- ── Global overlays (modals, toasts) ─────────────────────── -->
+  <div id="overlays-root"></div>
+
+  <!-- ── Application JS (v=3.3 forces cache bust) ─────────────── -->
+  <!-- ScanWise v5 — Modular JS utilities (load before main scripts) -->
+  <script src="js/utils/debounce.js?v=5.0"></script>
+  <script src="js/utils/requestDeduplicator.js?v=5.0"></script>
+  <script src="js/utils/apiHelpers.js?v=5.0"></script>
+  <script src="js/sessions/pollingManager.js?v=5.0"></script>
+  <script src="js/sessions/stateManager.js?v=5.0"></script>
+  <script src="js/ai/remediationClient.js?v=5.0"></script>
+  <script src="js/apiService.js?v=5.0"></script>
+  <script src="js/sessionManager.js?v=5.0"></script>
+  <script src="js/utils.js?v=5.0"></script>
+  <script src="js/graphs.js?v=5.0"></script>
+  <script src="js/dashboard.js?v=5.0"></script>
+  <script src="js/chatbot.js?v=5.0"></script>
+  <script src="js/router.js?v=5.0"></script>
+  <script src="js/app.js?v=5.0"></script>
+
+  <script>
+    /* ── Component loader + bootstrap ──────────────────────────────
+       Execution order:
+         1. Fetch all HTML components in parallel and inject into DOM.
+         2. Move .page elements into .body so existing CSS works.
+         3. Call SidebarManager.init() — #drawer and #overlay now exist.
+         4. Dispatch 'app:ready' — App._init() in app.js handles the rest.
+
+       This is the ONLY place SidebarManager.init() is called.
+       No MutationObserver. No DOMContentLoaded hacks.
+    ──────────────────────────────────────────────────────────────── */
+
+    const COMPONENTS = [
+      { id: 'navbar-root',    file: 'components/navbar.html?v=3.3' },
+      { id: 'page-scan-root', file: 'components/chatbot.html?v=3.3' },
+      { id: 'page-dash-root', file: 'components/dashboard.html?v=3.3' },
+      { id: 'page-hist-root', file: 'components/history.html?v=3.3' },
+      { id: 'page-cmp-root',  file: 'components/compare.html?v=3.3' },
+      { id: 'page-help-root', file: 'components/help.html?v=3.3' },
+      { id: 'overlays-root',  file: 'components/status-strip.html?v=3.3' },
+    ];
+
+    async function loadComponent(id, file) {
+      const res  = await fetch(file);
+      if (!res.ok) throw new Error('Failed to load ' + file + ': ' + res.status);
+      const html = await res.text();
+      document.getElementById(id).innerHTML = html;
+    }
+
+    async function bootstrap() {
+      // 1. Load all components in parallel
+      await Promise.all(COMPONENTS.map(c => loadComponent(c.id, c.file)));
+
+      // 2. Move .page elements directly into .body so CSS works
+      const body = document.getElementById('app-body');
+      document.querySelectorAll('[id$="-root"] .page').forEach(page => {
+        body.appendChild(page);
+      });
+      // Remove empty wrapper divs (keep navbar-root and overlays-root)
+      document.querySelectorAll('[id$="-root"]').forEach(el => {
+        if (!el.id.includes('navbar') && !el.id.includes('overlays')) el.remove();
+      });
+
+      // 3. Initialize sidebar — #drawer and #overlay are now in the DOM
+      if (typeof SidebarManager !== 'undefined') {
+        SidebarManager.init();
+      } else {
+        console.error('[bootstrap] SidebarManager not defined — check app.js loaded');
+      }
+
+      // 4. Signal App that everything is ready
+      document.dispatchEvent(new CustomEvent('app:ready'));
+    }
+
+    bootstrap().catch(function(err) {
+      document.body.innerHTML =
+        '<div style="padding:40px;color:#e24b4a;font-family:monospace">' +
+        '⚠️ Failed to boot ScanWise AI:<br><br>' + err.message + '<br><br>' +
+        'Make sure you are serving this from a web server (not file:///).' +
+        '</div>';
+    });
+  </script>
+
+</body>
+</html>

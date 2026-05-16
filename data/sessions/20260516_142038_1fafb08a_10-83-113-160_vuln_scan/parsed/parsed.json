@@ -1,0 +1,545 @@
+{
+  "hosts": [
+    {
+      "ip": "10.83.113.160",
+      "hostnames": [],
+      "os": null,
+      "ports": [
+        {
+          "port": 21,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "ftp",
+          "product": "vsftpd",
+          "version": "2.3.4",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "vulners",
+              "output": "\n  vsftpd 2.3.4: \n    \tPACKETSTORM:162145\t10.0\thttps://vulners.com/packetstorm/PACKETSTORM:162145\t*EXPLOIT*\n    \tEDB-ID:49757\t10.0\thttps://vulners.com/exploitdb/EDB-ID:49757\t*EXPLOIT*\n    \tE9B0AEBB-5138-50BF-8922-2D87E3C046DD\t10.0\thttps://vulners.com/githubexploit/E9B0AEBB-5138-50BF-8922-2D87E3C046DD\t*EXPLOIT*\n    \tD0DBA05F-750F-5F9B-9C69-65E8FA6977D5\t10.0\thttps://vulners.com/githubexploit/D0DBA05F-750F-5F9B-9C69-65E8FA6977D5\t*EXPLOIT*\n    \tCVE-2011-2523\t10.0\thttps://vulners.com/cve/CVE-2011-2523\n    \tCNVD-2020-46837\t10.0\thttps://vulners.com/cnvd/CNVD-2020-46837\n    \tCC3F6C15-182F-53F6-A5CC-812D37F1F047\t10.0\thttps://vulners.com/githubexploit/CC3F6C15-182F-53F6-A5CC-812D37F1F047\t*EXPLOIT*\n    \tBEE67BEA-45C2-50C0-88F3-9A2E7CC2DECE\t10.0\thttps://vulners.com/githubexploit/BEE67BEA-45C2-50C0-88F3-9A2E7CC2DECE\t*EXPLOIT*\n    \tA41B5EAD-1A4C-56A6-97C6-1C58A1CF1E3B\t10.0\thttps://vulners.com/githubexploit/A41B5EAD-1A4C-56A6-97C6-1C58A1CF1E3B\t*EXPLOIT*\n    \t9B4BA341-1CBF-59D6-AA40-33596997F23B\t10.0\thttps://vulners.com/githubexploit/9B4BA341-1CBF-59D6-AA40-33596997F23B\t*EXPLOIT*\n    \t817CD8FE-87C4-5FE8-B9B2-8CC64333A3F3\t10.0\thttps://vulners.com/githubexploit/817CD8FE-87C4-5FE8-B9B2-8CC64333A3F3\t*EXPLOIT*\n    \t63A5C9A7-C241-5E83-9EE6-ABAB44BDD270\t10.0\thttps://vulners.com/githubexploit/63A5C9A7-C241-5E83-9EE6-ABAB44BDD270\t*EXPLOIT*\n    \t5F4BCEDE-77DF-5D54-851A-0AE8B76458D9\t10.0\thttps://vulners.com/githubexploit/5F4BCEDE-77DF-5D54-851A-0AE8B76458D9\t*EXPLOIT*\n    \t59BAFDCD-5027-5C82-BC59-FC7625DD81DB\t10.0\thttps://vulners.com/githubexploit/59BAFDCD-5027-5C82-BC59-FC7625DD81DB\t*EXPLOIT*\n    \t50580586-73C4-5097-81CA-546D6591DF44\t10.0\thttps://vulners.com/githubexploit/50580586-73C4-5097-81CA-546D6591DF44\t*EXPLOIT*\n    \t4D01A3A1-75C7-5730-8C5D-B2EC1F56532F\t10.0\thttps://vulners.com/githubexploit/4D01A3A1-75C7-5730-8C5D-B2EC1F56532F\t*EXPLOIT*\n    \t322DD1ED-D331-573E-9AAC-5B6BEC2095F9\t10.0\thttps://vulners.com/githubexploit/322DD1ED-D331-573E-9AAC-5B6BEC2095F9\t*EXPLOIT*\n    \t23DBF7D8-DD32-5D15-8D18-0CF069745409\t10.0\thttps://vulners.com/githubexploit/23DBF7D8-DD32-5D15-8D18-0CF069745409\t*EXPLOIT*\n    \t09B89183-FE26-5690-A12C-7BEC34B1AAE4\t10.0\thttps://vulners.com/githubexploit/09B89183-FE26-5690-A12C-7BEC34B1AAE4\t*EXPLOIT*\n    \t1337DAY-ID-36095\t9.8\thttps://vulners.com/zdt/1337DAY-ID-36095\t*EXPLOIT*"
+            },
+            {
+              "id": "ftp-vsftpd-backdoor",
+              "output": "\n  VULNERABLE:\n  vsFTPd version 2.3.4 backdoor\n    State: VULNERABLE (Exploitable)\n    IDs:  BID:48539  CVE:CVE-2011-2523\n      vsFTPd version 2.3.4 backdoor, this was reported on 2011-07-04.\n    Disclosure date: 2011-07-03\n    Exploit results:\n      Shell command: id\n      Results: uid=0(root) gid=0(root)\n    References:\n      https://www.securityfocus.com/bid/48539\n      https://github.com/rapid7/metasploit-framework/blob/master/modules/exploits/unix/ftp/vsftpd_234_backdoor.rb\n      http://scarybeastsecurity.blogspot.com/2011/07/alert-vsftpd-download-backdoored.html\n      https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2011-2523\n"
+            }
+          ]
+        },
+        {
+          "port": 22,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "ssh",
+          "product": "OpenSSH",
+          "version": "4.7p1 Debian 8ubuntu1",
+          "extra_info": "protocol 2.0",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "vulners",
+              "output": "\n  cpe:/a:openbsd:openssh:4.7p1: \n    \tDF059135-2CF5-5441-8F22-E6EF1DEE5F6E\t10.0\thttps://vulners.com/gitee/DF059135-2CF5-5441-8F22-E6EF1DEE5F6E\t*EXPLOIT*\n    \tPACKETSTORM:173661\t9.8\thttps://vulners.com/packetstorm/PACKETSTORM:173661\t*EXPLOIT*\n    \tF0979183-AE88-53B4-86CF-3AF0523F3807\t9.8\thttps://vulners.com/githubexploit/F0979183-AE88-53B4-86CF-3AF0523F3807\t*EXPLOIT*\n    \tCVE-2023-38408\t9.8\thttps://vulners.com/cve/CVE-2023-38408\n    \tCVE-2016-1908\t9.8\thttps://vulners.com/cve/CVE-2016-1908\n    \tCEF8EC43-BFE2-5B5E-8918-54A90DA092B4\t9.8\thttps://vulners.com/githubexploit/CEF8EC43-BFE2-5B5E-8918-54A90DA092B4\t*EXPLOIT*\n    \tB8190CDB-3EB9-5631-9828-8064A1575B23\t9.8\thttps://vulners.com/githubexploit/B8190CDB-3EB9-5631-9828-8064A1575B23\t*EXPLOIT*\n    \tA2B36B85-C737-548F-8C04-9339EDCDBFF5\t9.8\thttps://vulners.com/githubexploit/A2B36B85-C737-548F-8C04-9339EDCDBFF5\t*EXPLOIT*\n    \t8FC9C5AB-3968-5F3C-825E-E8DB5379A623\t9.8\thttps://vulners.com/githubexploit/8FC9C5AB-3968-5F3C-825E-E8DB5379A623\t*EXPLOIT*\n    \t8AD01159-548E-546E-AA87-2DE89F3927EC\t9.8\thttps://vulners.com/githubexploit/8AD01159-548E-546E-AA87-2DE89F3927EC\t*EXPLOIT*\n    \t6192C35D-F78B-5C0A-AB8D-9826A79A5320\t9.8\thttps://vulners.com/githubexploit/6192C35D-F78B-5C0A-AB8D-9826A79A5320\t*EXPLOIT*\n    \t2227729D-6700-5C8F-8930-1EEAFD4B9FF0\t9.8\thttps://vulners.com/githubexploit/2227729D-6700-5C8F-8930-1EEAFD4B9FF0\t*EXPLOIT*\n    \t0221525F-07F5-5790-912D-F4B9E2D1B587\t9.8\thttps://vulners.com/githubexploit/0221525F-07F5-5790-912D-F4B9E2D1B587\t*EXPLOIT*\n    \tCVE-2015-5600\t8.5\thttps://vulners.com/cve/CVE-2015-5600\n    \tCVE-2026-35414\t8.1\thttps://vulners.com/cve/CVE-2026-35414\n    \tCVE-2026-35386\t8.1\thttps://vulners.com/cve/CVE-2026-35386\n    \tCVE-2026-35385\t8.1\thttps://vulners.com/cve/CVE-2026-35385\n    \tBA3887BD-F579-53B1-A4A4-FF49E953E1C0\t8.1\thttps://vulners.com/githubexploit/BA3887BD-F579-53B1-A4A4-FF49E953E1C0\t*EXPLOIT*\n    \t4FB01B00-F993-5CAF-BD57-D7E290D10C1F\t8.1\thttps://vulners.com/githubexploit/4FB01B00-F993-5CAF-BD57-D7E290D10C1F\t*EXPLOIT*\n    \tSSV:78173\t7.8\thttps://vulners.com/seebug/SSV:78173\t*EXPLOIT*\n    \tSSV:69983\t7.8\thttps://vulners.com/seebug/SSV:69983\t*EXPLOIT*\n    \tPACKETSTORM:98796\t7.8\thttps://vulners.com/packetstorm/PACKETSTORM:98796\t*EXPLOIT*\n    \tPACKETSTORM:94556\t7.8\thttps://vulners.com/packetstorm/PACKETSTORM:94556\t*EXPLOIT*\n    \tPACKETSTORM:140070\t7.8\thttps://vulners.com/packetstorm/PACKETSTORM:140070\t*EXPLOIT*\n    \tPACKETSTORM:101052\t7.8\thttps://vulners.com/packetstorm/PACKETSTORM:101052\t*EXPLOIT*\n    \tEXPLOITPACK:71D51B69AA2D3A74753D7A921EE79985\t7.8\thttps://vulners.com/exploitpack/EXPLOITPACK:71D51B69AA2D3A74753D7A921EE79985\t*EXPLOIT*\n    \tEXPLOITPACK:67F6569F63A082199721C069C852BBD7\t7.8\thttps://vulners.com/exploitpack/EXPLOITPACK:67F6569F63A082199721C069C852BBD7\t*EXPLOIT*\n    \tEXPLOITPACK:5BCA798C6BA71FAE29334297EC0B6A09\t7.8\thttps://vulners.com/exploitpack/EXPLOITPACK:5BCA798C6BA71FAE29334297EC0B6A09\t*EXPLOIT*\n    \tEDB-ID:40888\t7.8\thttps://vulners.com/exploitdb/EDB-ID:40888\t*EXPLOIT*\n    \tEDB-ID:15215\t7.8\thttps://vulners.com/exploitdb/EDB-ID:15215\t*EXPLOIT*\n    \tCVE-2020-15778\t7.8\thttps://vulners.com/cve/CVE-2020-15778\n    \tCVE-2016-6515\t7.8\thttps://vulners.com/cve/CVE-2016-6515\n    \tCVE-2016-10012\t7.8\thttps://vulners.com/cve/CVE-2016-10012\n    \tCVE-2015-8325\t7.8\thttps://vulners.com/cve/CVE-2015-8325\n    \tC94132FD-1FA5-5342-B6EE-0DAF45EEFFE3\t7.8\thttps://vulners.com/githubexploit/C94132FD-1FA5-5342-B6EE-0DAF45EEFFE3\t*EXPLOIT*\n    \tC892A90E-C1D1-5A54-BFAA-046266448553\t7.8\thttps://vulners.com/githubexploit/C892A90E-C1D1-5A54-BFAA-046266448553\t*EXPLOIT*\n    \t99C4CA40-30C8-5A34-B3A3-4B5E7A9E16BA\t7.8\thttps://vulners.com/githubexploit/99C4CA40-30C8-5A34-B3A3-4B5E7A9E16BA\t*EXPLOIT*\n    \t991D2CC4-0E09-5745-97A2-4917461BD6EC\t7.8\thttps://vulners.com/githubexploit/991D2CC4-0E09-5745-97A2-4917461BD6EC\t*EXPLOIT*\n    \t4F1BA9CA-CAB4-55F4-A857-3E4C94C93483\t7.8\thttps://vulners.com/githubexploit/4F1BA9CA-CAB4-55F4-A857-3E4C94C93483\t*EXPLOIT*\n    \t312165E3-7FD9-5769-BDA3-4129BE9114D6\t7.8\thttps://vulners.com/githubexploit/312165E3-7FD9-5769-BDA3-4129BE9114D6\t*EXPLOIT*\n    \t2E719186-2FED-58A8-A150-762EFBAAA523\t7.8\thttps://vulners.com/gitee/2E719186-2FED-58A8-A150-762EFBAAA523\t*EXPLOIT*\n    \t23CC97BE-7C95-513B-9E73-298C48D74432\t7.8\thttps://vulners.com/githubexploit/23CC97BE-7C95-513B-9E73-298C48D74432\t*EXPLOIT*\n    \t1337DAY-ID-26494\t7.8\thttps://vulners.com/zdt/1337DAY-ID-26494\t*EXPLOIT*\n    \t10213DBE-F683-58BB-B6D3-353173626207\t7.8\thttps://vulners.com/githubexploit/10213DBE-F683-58BB-B6D3-353173626207\t*EXPLOIT*\n    \tSSV:92579\t7.5\thttps://vulners.com/seebug/SSV:92579\t*EXPLOIT*\n    \tSSV:61450\t7.5\thttps://vulners.com/seebug/SSV:61450\t*EXPLOIT*\n    \tCVE-2016-10708\t7.5\thttps://vulners.com/cve/CVE-2016-10708\n    \tCVE-2016-10009\t7.5\thttps://vulners.com/cve/CVE-2016-10009\n    \tCVE-2014-1692\t7.5\thttps://vulners.com/cve/CVE-2014-1692\n    \tCVE-2010-4478\t7.5\thttps://vulners.com/cve/CVE-2010-4478\n    \tCF52FA19-B5DB-5D14-B50F-2411851976E2\t7.5\thttps://vulners.com/githubexploit/CF52FA19-B5DB-5D14-B50F-2411851976E2\t*EXPLOIT*\n    \t1337DAY-ID-26576\t7.5\thttps://vulners.com/zdt/1337DAY-ID-26576\t*EXPLOIT*\n    \tSSV:92582\t7.2\thttps://vulners.com/seebug/SSV:92582\t*EXPLOIT*\n    \tCVE-2016-10010\t7.0\thttps://vulners.com/cve/CVE-2016-10010\n    \tSSV:92580\t6.9\thttps://vulners.com/seebug/SSV:92580\t*EXPLOIT*\n    \tCVE-2015-6564\t6.9\thttps://vulners.com/cve/CVE-2015-6564\n    \t1337DAY-ID-26577\t6.9\thttps://vulners.com/zdt/1337DAY-ID-26577\t*EXPLOIT*\n    \tEDB-ID:46516\t6.8\thttps://vulners.com/exploitdb/EDB-ID:46516\t*EXPLOIT*\n    \tEDB-ID:46193\t6.8\thttps://vulners.com/exploitdb/EDB-ID:46193\t*EXPLOIT*\n    \tCVE-2019-6110\t6.8\thttps://vulners.com/cve/CVE-2019-6110\n    \tCVE-2019-6109\t6.8\thttps://vulners.com/cve/CVE-2019-6109\n    \t1337DAY-ID-32328\t6.8\thttps://vulners.com/zdt/1337DAY-ID-32328\t*EXPLOIT*\n    \t1337DAY-ID-32009\t6.8\thttps://vulners.com/zdt/1337DAY-ID-32009\t*EXPLOIT*\n    \tD104D2BF-ED22-588B-A9B2-3CCC562FE8C0\t6.5\thttps://vulners.com/githubexploit/D104D2BF-ED22-588B-A9B2-3CCC562FE8C0\t*EXPLOIT*\n    \tCVE-2026-35387\t6.5\thttps://vulners.com/cve/CVE-2026-35387\n    \tCVE-2023-51385\t6.5\thttps://vulners.com/cve/CVE-2023-51385\n    \tCVE-2008-1657\t6.5\thttps://vulners.com/cve/CVE-2008-1657\n    \tC07ADB46-24B8-57B7-B375-9C761F4750A2\t6.5\thttps://vulners.com/githubexploit/C07ADB46-24B8-57B7-B375-9C761F4750A2\t*EXPLOIT*\n    \tA88CDD3E-67CC-51CC-97FB-AB0CACB6B08C\t6.5\thttps://vulners.com/githubexploit/A88CDD3E-67CC-51CC-97FB-AB0CACB6B08C\t*EXPLOIT*\n    \t65B15AA1-2A8D-53C1-9499-69EBA3619F1C\t6.5\thttps://vulners.com/githubexploit/65B15AA1-2A8D-53C1-9499-69EBA3619F1C\t*EXPLOIT*\n    \t5325A9D6-132B-590C-BDEF-0CB105252732\t6.5\thttps://vulners.com/gitee/5325A9D6-132B-590C-BDEF-0CB105252732\t*EXPLOIT*\n    \t530326CF-6AB3-5643-AA16-73DC8CB44742\t6.5\thttps://vulners.com/githubexploit/530326CF-6AB3-5643-AA16-73DC8CB44742\t*EXPLOIT*\n    \tEDB-ID:40858\t6.4\thttps://vulners.com/exploitdb/EDB-ID:40858\t*EXPLOIT*\n    \tEDB-ID:40119\t6.4\thttps://vulners.com/exploitdb/EDB-ID:40119\t*EXPLOIT*\n    \tEDB-ID:39569\t6.4\thttps://vulners.com/exploitdb/EDB-ID:39569\t*EXPLOIT*\n    \tCVE-2016-3115\t6.4\thttps://vulners.com/cve/CVE-2016-3115\n    \tPACKETSTORM:181223\t5.9\thttps://vulners.com/packetstorm/PACKETSTORM:181223\t*EXPLOIT*\n    \tMSF:AUXILIARY-SCANNER-SSH-SSH_ENUMUSERS-\t5.9\thttps://vulners.com/metasploit/MSF:AUXILIARY-SCANNER-SSH-SSH_ENUMUSERS-\t*EXPLOIT*\n    \tFEF0EB06-770B-5ADF-857C-1704B7AC3FE4\t5.9\thttps://vulners.com/githubexploit/FEF0EB06-770B-5ADF-857C-1704B7AC3FE4\t*EXPLOIT*\n    \tFD2E0EBA-ED84-5304-8862-84BCDEB2F288\t5.9\thttps://vulners.com/githubexploit/FD2E0EBA-ED84-5304-8862-84BCDEB2F288\t*EXPLOIT*\n    \tEDB-ID:45939\t5.9\thttps://vulners.com/exploitdb/EDB-ID:45939\t*EXPLOIT*\n    \tEDB-ID:45233\t5.9\thttps://vulners.com/exploitdb/EDB-ID:45233\t*EXPLOIT*\n    \tEDB-ID:40136\t5.9\thttps://vulners.com/exploitdb/EDB-ID:40136\t*EXPLOIT*\n    \tEDB-ID:40113\t5.9\thttps://vulners.com/exploitdb/EDB-ID:40113\t*EXPLOIT*\n    \tCVE-2023-48795\t5.9\thttps://vulners.com/cve/CVE-2023-48795\n    \tCVE-2019-6111\t5.9\thttps://vulners.com/cve/CVE-2019-6111\n    \tCVE-2018-15473\t5.9\thttps://vulners.com/cve/CVE-2018-15473\n    \tCVE-2016-6210\t5.9\thttps://vulners.com/cve/CVE-2016-6210\n    \tA4C45A40-ADC5-50EF-8FFC-4047AA0F987B\t5.9\thttps://vulners.com/githubexploit/A4C45A40-ADC5-50EF-8FFC-4047AA0F987B\t*EXPLOIT*\n    \tA02ABE85-E4E3-5852-A59D-DF288CB8160A\t5.9\thttps://vulners.com/githubexploit/A02ABE85-E4E3-5852-A59D-DF288CB8160A\t*EXPLOIT*\n    \t721F040C-37BC-59E1-9433-01A2EAC2E755\t5.9\thttps://vulners.com/githubexploit/721F040C-37BC-59E1-9433-01A2EAC2E755\t*EXPLOIT*\n    \tSSV:61911\t5.8\thttps://vulners.com/seebug/SSV:61911\t*EXPLOIT*\n    \tEXPLOITPACK:98FE96309F9524B8C84C508837551A19\t5.8\thttps://vulners.com/exploitpack/EXPLOITPACK:98FE96309F9524B8C84C508837551A19\t*EXPLOIT*\n    \tEXPLOITPACK:5330EA02EBDE345BFC9D6DDDD97F9E97\t5.8\thttps://vulners.com/exploitpack/EXPLOITPACK:5330EA02EBDE345BFC9D6DDDD97F9E97\t*EXPLOIT*\n    \tCVE-2014-2653\t5.8\thttps://vulners.com/cve/CVE-2014-2653\n    \tCVE-2014-2532\t5.8\thttps://vulners.com/cve/CVE-2014-2532\n    \tSSV:91041\t5.5\thttps://vulners.com/seebug/SSV:91041\t*EXPLOIT*\n    \tPACKETSTORM:140019\t5.5\thttps://vulners.com/packetstorm/PACKETSTORM:140019\t*EXPLOIT*\n    \tPACKETSTORM:136251\t5.5\thttps://vulners.com/packetstorm/PACKETSTORM:136251\t*EXPLOIT*\n    \tPACKETSTORM:136234\t5.5\thttps://vulners.com/packetstorm/PACKETSTORM:136234\t*EXPLOIT*\n    \tEXPLOITPACK:F92411A645D85F05BDBD274FD222226F\t5.5\thttps://vulners.com/exploitpack/EXPLOITPACK:F92411A645D85F05BDBD274FD222226F\t*EXPLOIT*\n    \tEXPLOITPACK:9F2E746846C3C623A27A441281EAD138\t5.5\thttps://vulners.com/exploitpack/EXPLOITPACK:9F2E746846C3C623A27A441281EAD138\t*EXPLOIT*\n    \tEXPLOITPACK:1902C998CBF9154396911926B4C3B330\t5.5\thttps://vulners.com/exploitpack/EXPLOITPACK:1902C998CBF9154396911926B4C3B330\t*EXPLOIT*\n    \tCVE-2016-10011\t5.5\thttps://vulners.com/cve/CVE-2016-10011\n    \t1337DAY-ID-25388\t5.5\thttps://vulners.com/zdt/1337DAY-ID-25388\t*EXPLOIT*\n    \tFD18B68B-C0A6-562E-A8C8-781B225F15B0\t5.3\thttps://vulners.com/githubexploit/FD18B68B-C0A6-562E-A8C8-781B225F15B0\t*EXPLOIT*\n    \tE9EC0911-E2E1-52A7-B2F4-D0065C6A3057\t5.3\thttps://vulners.com/githubexploit/E9EC0911-E2E1-52A7-B2F4-D0065C6A3057\t*EXPLOIT*\n    \tCVE-2018-20685\t5.3\thttps://vulners.com/cve/CVE-2018-20685\n    \tCVE-2017-15906\t5.3\thttps://vulners.com/cve/CVE-2017-15906\n    \tCVE-2016-20012\t5.3\thttps://vulners.com/cve/CVE-2016-20012\n    \tCNVD-2018-20962\t5.3\thttps://vulners.com/cnvd/CNVD-2018-20962\n    \tCNVD-2018-20960\t5.3\thttps://vulners.com/cnvd/CNVD-2018-20960\n    \tA9E6F50E-E7FC-51D0-9C93-A43461469FA2\t5.3\thttps://vulners.com/githubexploit/A9E6F50E-E7FC-51D0-9C93-A43461469FA2\t*EXPLOIT*\n    \tA801235B-9835-5BA8-B8FE-23B7FFCABD66\t5.3\thttps://vulners.com/githubexploit/A801235B-9835-5BA8-B8FE-23B7FFCABD66\t*EXPLOIT*\n    \t8DD1D813-FD5A-5B26-867A-CE7CAC9FEEDF\t5.3\thttps://vulners.com/gitee/8DD1D813-FD5A-5B26-867A-CE7CAC9FEEDF\t*EXPLOIT*\n    \t4F2FBB06-E601-5EAD-9679-3395D24057DD\t5.3\thttps://vulners.com/githubexploit/4F2FBB06-E601-5EAD-9679-3395D24057DD\t*EXPLOIT*\n    \t486BB6BC-9C26-597F-B865-D0E904FDA984\t5.3\thttps://vulners.com/githubexploit/486BB6BC-9C26-597F-B865-D0E904FDA984\t*EXPLOIT*\n    \t2385176A-820F-5469-AB09-C340264F2B2F\t5.3\thttps://vulners.com/gitee/2385176A-820F-5469-AB09-C340264F2B2F\t*EXPLOIT*\n    \t1337DAY-ID-31730\t5.3\thttps://vulners.com/zdt/1337DAY-ID-31730\t*EXPLOIT*\n    \tSSV:60656\t5.0\thttps://vulners.com/seebug/SSV:60656\t*EXPLOIT*\n    \tSSH_ENUM\t5.0\thttps://vulners.com/canvas/SSH_ENUM\t*EXPLOIT*\n    \tPACKETSTORM:150621\t5.0\thttps://vulners.com/packetstorm/PACKETSTORM:150621\t*EXPLOIT*\n    \tEXPLOITPACK:F957D7E8A0CC1E23C3C649B764E13FB0\t5.0\thttps://vulners.com/exploitpack/EXPLOITPACK:F957D7E8A0CC1E23C3C649B764E13FB0\t*EXPLOIT*\n    \tEXPLOITPACK:EBDBC5685E3276D648B4D14B75563283\t5.0\thttps://vulners.com/exploitpack/EXPLOITPACK:EBDBC5685E3276D648B4D14B75563283\t*EXPLOIT*\n    \tCVE-2010-5107\t5.0\thttps://vulners.com/cve/CVE-2010-5107\n    \tEXPLOITPACK:802AF3229492E147A5F09C7F2B27C6DF\t4.3\thttps://vulners.com/exploitpack/EXPLOITPACK:802AF3229492E147A5F09C7F2B27C6DF\t*EXPLOIT*\n    \tEXPLOITPACK:5652DDAA7FE452E19AC0DC1CD97BA3EF\t4.3\thttps://vulners.com/exploitpack/EXPLOITPACK:5652DDAA7FE452E19AC0DC1CD97BA3EF\t*EXPLOIT*\n    \tCVE-2015-5352\t4.3\thttps://vulners.com/cve/CVE-2015-5352\n    \t1337DAY-ID-25440\t4.3\thttps://vulners.com/zdt/1337DAY-ID-25440\t*EXPLOIT*\n    \t1337DAY-ID-25438\t4.3\thttps://vulners.com/zdt/1337DAY-ID-25438\t*EXPLOIT*\n    \tCVE-2010-4755\t4.0\thttps://vulners.com/cve/CVE-2010-4755\n    \tCVE-2021-36368\t3.7\thttps://vulners.com/cve/CVE-2021-36368\n    \tCVE-2025-61985\t3.6\thttps://vulners.com/cve/CVE-2025-61985\n    \tCVE-2025-61984\t3.6\thttps://vulners.com/cve/CVE-2025-61984\n    \tB7EACB4F-A5CF-5C5A-809F-E03CCE2AB150\t3.6\thttps://vulners.com/githubexploit/B7EACB4F-A5CF-5C5A-809F-E03CCE2AB150\t*EXPLOIT*\n    \t4C6E2182-0E99-5626-83F6-1646DD648C57\t3.6\thttps://vulners.com/githubexploit/4C6E2182-0E99-5626-83F6-1646DD648C57\t*EXPLOIT*\n    \tCVE-2012-0814\t3.5\thttps://vulners.com/cve/CVE-2012-0814\n    \tCVE-2011-5000\t3.5\thttps://vulners.com/cve/CVE-2011-5000\n    \tCVE-2026-35388\t2.5\thttps://vulners.com/cve/CVE-2026-35388\n    \tSSV:92581\t2.1\thttps://vulners.com/seebug/SSV:92581\t*EXPLOIT*\n    \tCVE-2011-4327\t2.1\thttps://vulners.com/cve/CVE-2011-4327\n    \tCVE-2015-6563\t1.9\thttps://vulners.com/cve/CVE-2015-6563\n    \tCVE-2008-3259\t1.2\thttps://vulners.com/cve/CVE-2008-3259\n    \tPACKETSTORM:151227\t0.0\thttps://vulners.com/packetstorm/PACKETSTORM:151227\t*EXPLOIT*\n    \tPACKETSTORM:140261\t0.0\thttps://vulners.com/packetstorm/PACKETSTORM:140261\t*EXPLOIT*\n    \tPACKETSTORM:138006\t0.0\thttps://vulners.com/packetstorm/PACKETSTORM:138006\t*EXPLOIT*\n    \tPACKETSTORM:137942\t0.0\thttps://vulners.com/packetstorm/PACKETSTORM:137942\t*EXPLOIT*\n    \t1337DAY-ID-30937\t0.0\thttps://vulners.com/zdt/1337DAY-ID-30937\t*EXPLOIT*\n    \t1337DAY-ID-26468\t0.0\thttps://vulners.com/zdt/1337DAY-ID-26468\t*EXPLOIT*\n    \t1337DAY-ID-25391\t0.0\thttps://vulners.com/zdt/1337DAY-ID-25391\t*EXPLOIT*\n    \t1337DAY-ID-20301\t0.0\thttps://vulners.com/zdt/1337DAY-ID-20301\t*EXPLOIT*\n    \t1337DAY-ID-14373\t0.0\thttps://vulners.com/zdt/1337DAY-ID-14373\t*EXPLOIT*"
+            }
+          ]
+        },
+        {
+          "port": 23,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "telnet",
+          "product": "Linux telnetd",
+          "version": "",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed"
+        },
+        {
+          "port": 25,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "smtp",
+          "product": "Postfix smtpd",
+          "version": "",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "ssl-dh-params",
+              "output": "\n  VULNERABLE:\n  Anonymous Diffie-Hellman Key Exchange MitM Vulnerability\n    State: VULNERABLE\n      Transport Layer Security (TLS) services that use anonymous\n      Diffie-Hellman key exchange only provide protection against passive\n      eavesdropping, and are vulnerable to active man-in-the-middle attacks\n      which could completely compromise the confidentiality and integrity\n      of any data exchanged over the resulting session.\n    Check results:\n      ANONYMOUS DH GROUP 1\n            Cipher Suite: TLS_DH_anon_EXPORT_WITH_RC4_40_MD5\n            Modulus Type: Safe prime\n            Modulus Source: Unknown/Custom-generated\n            Modulus Length: 512\n            Generator Length: 8\n            Public Key Length: 512\n    References:\n      https://www.ietf.org/rfc/rfc2246.txt\n  \n  Transport Layer Security (TLS) Protocol DHE_EXPORT Ciphers Downgrade MitM (Logjam)\n    State: VULNERABLE\n    IDs:  BID:74733  CVE:CVE-2015-4000\n      The Transport Layer Security (TLS) protocol contains a flaw that is\n      triggered when handling Diffie-Hellman key exchanges defined with\n      the DHE_EXPORT cipher. This may allow a man-in-the-middle attacker\n      to downgrade the security of a TLS session to 512-bit export-grade\n      cryptography, which is significantly weaker, allowing the attacker\n      to more easily break the encryption and monitor or tamper with\n      the encrypted stream.\n    Disclosure date: 2015-5-19\n    Check results:\n      EXPORT-GRADE DH GROUP 1\n            Cipher Suite: TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA\n            Modulus Type: Safe prime\n            Modulus Source: Unknown/Custom-generated\n            Modulus Length: 512\n            Generator Length: 8\n            Public Key Length: 512\n    References:\n      https://www.securityfocus.com/bid/74733\n      https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2015-4000\n      https://weakdh.org\n  \n  Diffie-Hellman Key Exchange Insufficient Group Strength\n    State: VULNERABLE\n      Transport Layer Security (TLS) services that use Diffie-Hellman groups\n      of insufficient strength, especially those using one of a few commonly\n      shared groups, may be susceptible to passive eavesdropping attacks.\n    Check results:\n      WEAK DH GROUP 1\n            Cipher Suite: TLS_DHE_RSA_WITH_AES_128_CBC_SHA\n            Modulus Type: Safe prime\n            Modulus Source: postfix builtin\n            Modulus Length: 1024\n            Generator Length: 8\n            Public Key Length: 1024\n    References:\n      https://weakdh.org\n"
+            },
+            {
+              "id": "sslv2-drown",
+              "output": "ERROR: Script execution failed (use -d to debug)"
+            },
+            {
+              "id": "smtp-vuln-cve2010-4344",
+              "output": "\n  The SMTP server is not Exim: NOT VULNERABLE\n"
+            },
+            {
+              "id": "ssl-poodle",
+              "output": "\n  VULNERABLE:\n  SSL POODLE information leak\n    State: VULNERABLE\n    IDs:  BID:70574  CVE:CVE-2014-3566\n          The SSL protocol 3.0, as used in OpenSSL through 1.0.1i and other\n          products, uses nondeterministic CBC padding, which makes it easier\n          for man-in-the-middle attackers to obtain cleartext data via a\n          padding-oracle attack, aka the \"POODLE\" issue.\n    Disclosure date: 2014-10-14\n    Check results:\n      TLS_RSA_WITH_AES_128_CBC_SHA\n    References:\n      https://www.imperialviolet.org/2014/10/14/poodle.html\n      https://www.openssl.org/~bodo/ssl-poodle.pdf\n      https://www.securityfocus.com/bid/70574\n      https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2014-3566\n"
+            }
+          ]
+        },
+        {
+          "port": 53,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "domain",
+          "product": "ISC BIND",
+          "version": "9.4.2",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "vulners",
+              "output": "\n  cpe:/a:isc:bind:9.4.2: \n    \tSSV:2853\t10.0\thttps://vulners.com/seebug/SSV:2853\t*EXPLOIT*\n    \tCVE-2008-0122\t10.0\thttps://vulners.com/cve/CVE-2008-0122\n    \tCVE-2021-25216\t9.8\thttps://vulners.com/cve/CVE-2021-25216\n    \tCVE-2020-8616\t8.6\thttps://vulners.com/cve/CVE-2020-8616\n    \tCVE-2016-1286\t8.6\thttps://vulners.com/cve/CVE-2016-1286\n    \tCNVD-2020-34454\t8.6\thttps://vulners.com/cnvd/CNVD-2020-34454\n    \tSSV:60184\t8.5\thttps://vulners.com/seebug/SSV:60184\t*EXPLOIT*\n    \tCVE-2012-1667\t8.5\thttps://vulners.com/cve/CVE-2012-1667\n    \tSSV:60292\t7.8\thttps://vulners.com/seebug/SSV:60292\t*EXPLOIT*\n    \tPACKETSTORM:180552\t7.8\thttps://vulners.com/packetstorm/PACKETSTORM:180552\t*EXPLOIT*\n    \tPACKETSTORM:180551\t7.8\thttps://vulners.com/packetstorm/PACKETSTORM:180551\t*EXPLOIT*\n    \tPACKETSTORM:138960\t7.8\thttps://vulners.com/packetstorm/PACKETSTORM:138960\t*EXPLOIT*\n    \tPACKETSTORM:132926\t7.8\thttps://vulners.com/packetstorm/PACKETSTORM:132926\t*EXPLOIT*\n    \tMSF:AUXILIARY-DOS-DNS-BIND_TKEY-\t7.8\thttps://vulners.com/metasploit/MSF:AUXILIARY-DOS-DNS-BIND_TKEY-\t*EXPLOIT*\n    \tEXPLOITPACK:BE4F638B632EA0754155A27ECC4B3D3F\t7.8\thttps://vulners.com/exploitpack/EXPLOITPACK:BE4F638B632EA0754155A27ECC4B3D3F\t*EXPLOIT*\n    \tEXPLOITPACK:46DEBFAC850194C04C54F93E0DFF5F4F\t7.8\thttps://vulners.com/exploitpack/EXPLOITPACK:46DEBFAC850194C04C54F93E0DFF5F4F\t*EXPLOIT*\n    \tEXPLOITPACK:09762DB0197BBAAAB6FC79F24F0D2A74\t7.8\thttps://vulners.com/exploitpack/EXPLOITPACK:09762DB0197BBAAAB6FC79F24F0D2A74\t*EXPLOIT*\n    \tEDB-ID:42121\t7.8\thttps://vulners.com/exploitdb/EDB-ID:42121\t*EXPLOIT*\n    \tEDB-ID:40453\t7.8\thttps://vulners.com/exploitdb/EDB-ID:40453\t*EXPLOIT*\n    \tEDB-ID:37723\t7.8\thttps://vulners.com/exploitdb/EDB-ID:37723\t*EXPLOIT*\n    \tEDB-ID:37721\t7.8\thttps://vulners.com/exploitdb/EDB-ID:37721\t*EXPLOIT*\n    \tE183E822-9005-5F4E-B024-D9C4761AE308\t7.8\thttps://vulners.com/githubexploit/E183E822-9005-5F4E-B024-D9C4761AE308\t*EXPLOIT*\n    \tCVE-2017-3141\t7.8\thttps://vulners.com/cve/CVE-2017-3141\n    \tCVE-2016-2776\t7.8\thttps://vulners.com/cve/CVE-2016-2776\n    \tCVE-2015-5722\t7.8\thttps://vulners.com/cve/CVE-2015-5722\n    \tCVE-2015-5477\t7.8\thttps://vulners.com/cve/CVE-2015-5477\n    \tCVE-2014-8500\t7.8\thttps://vulners.com/cve/CVE-2014-8500\n    \tCVE-2012-5166\t7.8\thttps://vulners.com/cve/CVE-2012-5166\n    \tCVE-2012-4244\t7.8\thttps://vulners.com/cve/CVE-2012-4244\n    \tCVE-2012-3817\t7.8\thttps://vulners.com/cve/CVE-2012-3817\n    \tCVE-2008-4163\t7.8\thttps://vulners.com/cve/CVE-2008-4163\n    \t7459D6A0-D6CA-5CD2-A484-5DD984C0E5E4\t7.8\thttps://vulners.com/githubexploit/7459D6A0-D6CA-5CD2-A484-5DD984C0E5E4\t*EXPLOIT*\n    \t673990FE-C5D5-5501-A342-D1AEC9F2A871\t7.8\thttps://vulners.com/githubexploit/673990FE-C5D5-5501-A342-D1AEC9F2A871\t*EXPLOIT*\n    \t1337DAY-ID-25325\t7.8\thttps://vulners.com/zdt/1337DAY-ID-25325\t*EXPLOIT*\n    \t1337DAY-ID-23970\t7.8\thttps://vulners.com/zdt/1337DAY-ID-23970\t*EXPLOIT*\n    \t1337DAY-ID-23960\t7.8\thttps://vulners.com/zdt/1337DAY-ID-23960\t*EXPLOIT*\n    \t1337DAY-ID-23948\t7.8\thttps://vulners.com/zdt/1337DAY-ID-23948\t*EXPLOIT*\n    \tCVE-2010-0382\t7.6\thttps://vulners.com/cve/CVE-2010-0382\n    \tPACKETSTORM:180550\t7.5\thttps://vulners.com/packetstorm/PACKETSTORM:180550\t*EXPLOIT*\n    \tMSF:AUXILIARY-DOS-DNS-BIND_TSIG_BADTIME-\t7.5\thttps://vulners.com/metasploit/MSF:AUXILIARY-DOS-DNS-BIND_TSIG_BADTIME-\t*EXPLOIT*\n    \tMSF:AUXILIARY-DOS-DNS-BIND_TSIG-\t7.5\thttps://vulners.com/metasploit/MSF:AUXILIARY-DOS-DNS-BIND_TSIG-\t*EXPLOIT*\n    \tFBC03933-7A65-52F3-83F4-4B2253A490B6\t7.5\thttps://vulners.com/githubexploit/FBC03933-7A65-52F3-83F4-4B2253A490B6\t*EXPLOIT*\n    \tCVE-2023-50868\t7.5\thttps://vulners.com/cve/CVE-2023-50868\n    \tCVE-2023-50387\t7.5\thttps://vulners.com/cve/CVE-2023-50387\n    \tCVE-2023-4408\t7.5\thttps://vulners.com/cve/CVE-2023-4408\n    \tCVE-2023-3341\t7.5\thttps://vulners.com/cve/CVE-2023-3341\n    \tCVE-2021-25215\t7.5\thttps://vulners.com/cve/CVE-2021-25215\n    \tCVE-2020-8617\t7.5\thttps://vulners.com/cve/CVE-2020-8617\n    \tCVE-2017-3145\t7.5\thttps://vulners.com/cve/CVE-2017-3145\n    \tCVE-2017-3143\t7.5\thttps://vulners.com/cve/CVE-2017-3143\n    \tCVE-2016-9444\t7.5\thttps://vulners.com/cve/CVE-2016-9444\n    \tCVE-2016-9131\t7.5\thttps://vulners.com/cve/CVE-2016-9131\n    \tCVE-2016-8864\t7.5\thttps://vulners.com/cve/CVE-2016-8864\n    \tCVE-2016-2848\t7.5\thttps://vulners.com/cve/CVE-2016-2848\n    \tCVE-2009-0265\t7.5\thttps://vulners.com/cve/CVE-2009-0265\n    \tCNVD-2017-12537\t7.5\thttps://vulners.com/cnvd/CNVD-2017-12537\n    \t9ED8A03D-FE34-5F77-8C66-C03C9615AF07\t7.5\thttps://vulners.com/gitee/9ED8A03D-FE34-5F77-8C66-C03C9615AF07\t*EXPLOIT*\n    \t1337DAY-ID-34485\t7.5\thttps://vulners.com/zdt/1337DAY-ID-34485\t*EXPLOIT*\n    \tEXPLOITPACK:D6DDF5E24DE171DAAD71FD95FC1B67F2\t7.2\thttps://vulners.com/exploitpack/EXPLOITPACK:D6DDF5E24DE171DAAD71FD95FC1B67F2\t*EXPLOIT*\n    \tCVE-2015-8461\t7.1\thttps://vulners.com/cve/CVE-2015-8461\n    \tCVE-2015-5986\t7.1\thttps://vulners.com/cve/CVE-2015-5986\n    \tCVE-2015-8705\t7.0\thttps://vulners.com/cve/CVE-2015-8705\n    \tCVE-2016-1285\t6.8\thttps://vulners.com/cve/CVE-2016-1285\n    \tCVE-2015-8704\t6.8\thttps://vulners.com/cve/CVE-2015-8704\n    \tCVE-2009-0025\t6.8\thttps://vulners.com/cve/CVE-2009-0025\n    \tCVE-2020-8622\t6.5\thttps://vulners.com/cve/CVE-2020-8622\n    \tCVE-2018-5741\t6.5\thttps://vulners.com/cve/CVE-2018-5741\n    \tCVE-2016-6170\t6.5\thttps://vulners.com/cve/CVE-2016-6170\n    \tCVE-2010-3614\t6.4\thttps://vulners.com/cve/CVE-2010-3614\n    \tCVE-2016-2775\t5.9\thttps://vulners.com/cve/CVE-2016-2775\n    \tSSV:4636\t5.8\thttps://vulners.com/seebug/SSV:4636\t*EXPLOIT*\n    \tCVE-2022-2795\t5.3\thttps://vulners.com/cve/CVE-2022-2795\n    \tCVE-2021-25219\t5.3\thttps://vulners.com/cve/CVE-2021-25219\n    \tCVE-2017-3142\t5.3\thttps://vulners.com/cve/CVE-2017-3142\n    \tCNVD-2024-16843\t5.3\thttps://vulners.com/cnvd/CNVD-2024-16843\n    \tSSV:30099\t5.0\thttps://vulners.com/seebug/SSV:30099\t*EXPLOIT*\n    \tSSV:20595\t5.0\thttps://vulners.com/seebug/SSV:20595\t*EXPLOIT*\n    \tPACKETSTORM:157836\t5.0\thttps://vulners.com/packetstorm/PACKETSTORM:157836\t*EXPLOIT*\n    \tCVE-2015-8000\t5.0\thttps://vulners.com/cve/CVE-2015-8000\n    \tCVE-2012-1033\t5.0\thttps://vulners.com/cve/CVE-2012-1033\n    \tCVE-2011-4313\t5.0\thttps://vulners.com/cve/CVE-2011-4313\n    \tCVE-2011-1910\t5.0\thttps://vulners.com/cve/CVE-2011-1910\n    \tSSV:11919\t4.3\thttps://vulners.com/seebug/SSV:11919\t*EXPLOIT*\n    \tCVE-2010-3762\t4.3\thttps://vulners.com/cve/CVE-2010-3762\n    \tCVE-2010-0097\t4.3\thttps://vulners.com/cve/CVE-2010-0097\n    \tCVE-2009-0696\t4.3\thttps://vulners.com/cve/CVE-2009-0696\n    \tCVE-2010-0290\t4.0\thttps://vulners.com/cve/CVE-2010-0290\n    \tSSV:14986\t2.6\thttps://vulners.com/seebug/SSV:14986\t*EXPLOIT*\n    \tCVE-2009-4022\t2.6\thttps://vulners.com/cve/CVE-2009-4022\n    \tPACKETSTORM:142800\t0.0\thttps://vulners.com/packetstorm/PACKETSTORM:142800\t*EXPLOIT*\n    \t1337DAY-ID-27896\t0.0\thttps://vulners.com/zdt/1337DAY-ID-27896\t*EXPLOIT*"
+            }
+          ]
+        },
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "http",
+          "product": "Apache httpd",
+          "version": "2.2.8",
+          "extra_info": "(Ubuntu) DAV/2",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "http-dombased-xss",
+              "output": "Couldn't find any DOM based XSS."
+            },
+            {
+              "id": "http-stored-xss",
+              "output": "Couldn't find any stored XSS vulnerabilities."
+            },
+            {
+              "id": "http-enum",
+              "output": "\n  /tikiwiki/: Tikiwiki\n  /test/: Test page\n  /phpinfo.php: Possible information file\n  /phpMyAdmin/: phpMyAdmin\n  /doc/: Potentially interesting directory w/ listing on 'apache/2.2.8 (ubuntu) dav/2'\n  /icons/: Potentially interesting folder w/ directory listing\n  /index/: Potentially interesting folder\n"
+            },
+            {
+              "id": "http-csrf",
+              "output": "\nSpidering limited to: maxdepth=3; maxpagecount=20; withinhost=10.83.113.160\n  Found the following possible CSRF vulnerabilities: \n    \n    Path: http://10.83.113.160:80/dvwa/\n    Form id: \n    Form action: login.php\n    \n    Path: http://10.83.113.160:80/twiki/TWikiDocumentation.html\n    Form id: \n    Form action: http://TWiki.org/cgi-bin/passwd/TWiki/WebHome\n    \n    Path: http://10.83.113.160:80/twiki/TWikiDocumentation.html\n    Form id: \n    Form action: http://TWiki.org/cgi-bin/passwd/Main/WebHome\n    \n    Path: http://10.83.113.160:80/twiki/TWikiDocumentation.html\n    Form id: \n    Form action: http://TWiki.org/cgi-bin/edit/TWiki/\n    \n    Path: http://10.83.113.160:80/twiki/TWikiDocumentation.html\n    Form id: \n    Form action: http://TWiki.org/cgi-bin/view/TWiki/TWikiSkins\n    \n    Path: http://10.83.113.160:80/twiki/TWikiDocumentation.html\n    Form id: \n    Form action: http://TWiki.org/cgi-bin/manage/TWiki/ManagingWebs\n    \n    Path: http://10.83.113.160:80/dvwa/login.php\n    Form id: \n    Form action: login.php\n"
+            },
+            {
+              "id": "http-vuln-cve2017-1001000",
+              "output": "ERROR: Script execution failed (use -d to debug)"
+            },
+            {
+              "id": "http-server-header",
+              "output": "Apache/2.2.8 (Ubuntu) DAV/2"
+            },
+            {
+              "id": "http-slowloris-check",
+              "output": "\n  VULNERABLE:\n  Slowloris DOS attack\n    State: LIKELY VULNERABLE\n    IDs:  CVE:CVE-2007-6750\n      Slowloris tries to keep many connections to the target web server open and hold\n      them open as long as possible.  It accomplishes this by opening connections to\n      the target web server and sending a partial request. By doing so, it starves\n      the http server's resources causing Denial Of Service.\n      \n    Disclosure date: 2009-09-17\n    References:\n      http://ha.ckers.org/slowloris/\n      https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-6750\n"
+            },
+            {
+              "id": "http-sql-injection",
+              "output": "ERROR: Script execution failed (use -d to debug)"
+            },
+            {
+              "id": "http-fileupload-exploiter",
+              "output": "\n  \n    Couldn't find a file-type field."
+            },
+            {
+              "id": "vulners",
+              "output": "\n  cpe:/a:apache:http_server:2.2.8: \n    \tSSV:69341\t10.0\thttps://vulners.com/seebug/SSV:69341\t*EXPLOIT*\n    \tSSV:19282\t10.0\thttps://vulners.com/seebug/SSV:19282\t*EXPLOIT*\n    \tSSV:19236\t10.0\thttps://vulners.com/seebug/SSV:19236\t*EXPLOIT*\n    \tSSV:11999\t10.0\thttps://vulners.com/seebug/SSV:11999\t*EXPLOIT*\n    \tPACKETSTORM:86964\t10.0\thttps://vulners.com/packetstorm/PACKETSTORM:86964\t*EXPLOIT*\n    \tPACKETSTORM:180533\t10.0\thttps://vulners.com/packetstorm/PACKETSTORM:180533\t*EXPLOIT*\n    \tMSF:AUXILIARY-DOS-HTTP-APACHE_MOD_ISAPI-\t10.0\thttps://vulners.com/metasploit/MSF:AUXILIARY-DOS-HTTP-APACHE_MOD_ISAPI-\t*EXPLOIT*\n    \tHTTPD:E74B6F3660D13C4DD05DF3A83EA61631\t10.0\thttps://vulners.com/httpd/HTTPD:E74B6F3660D13C4DD05DF3A83EA61631\n    \tHTTPD:81180E4E634CDECC9784146016B4A949\t10.0\thttps://vulners.com/httpd/HTTPD:81180E4E634CDECC9784146016B4A949\n    \tEXPLOITPACK:30ED468EC8BD5B71B2CB93825A852B80\t10.0\thttps://vulners.com/exploitpack/EXPLOITPACK:30ED468EC8BD5B71B2CB93825A852B80\t*EXPLOIT*\n    \tEDB-ID:14288\t10.0\thttps://vulners.com/exploitdb/EDB-ID:14288\t*EXPLOIT*\n    \tEDB-ID:11650\t10.0\thttps://vulners.com/exploitdb/EDB-ID:11650\t*EXPLOIT*\n    \tCVE-2010-0425\t10.0\thttps://vulners.com/cve/CVE-2010-0425\n    \t3E6BA608-776F-5B1F-9BA5-589CD2A5A351\t10.0\thttps://vulners.com/gitee/3E6BA608-776F-5B1F-9BA5-589CD2A5A351\t*EXPLOIT*\n    \tPACKETSTORM:171631\t9.8\thttps://vulners.com/packetstorm/PACKETSTORM:171631\t*EXPLOIT*\n    \tHTTPD:E69E9574251973D5AF93FA9D04997FC1\t9.8\thttps://vulners.com/httpd/HTTPD:E69E9574251973D5AF93FA9D04997FC1\n    \tHTTPD:E162D3AE025639FEE2A89D5AF40ABF2F\t9.8\thttps://vulners.com/httpd/HTTPD:E162D3AE025639FEE2A89D5AF40ABF2F\n    \tHTTPD:C072933AA965A86DA3E2C9172FFC1569\t9.8\thttps://vulners.com/httpd/HTTPD:C072933AA965A86DA3E2C9172FFC1569\n    \tHTTPD:A1BBCE110E077FFBF4469D4F06DB9293\t9.8\thttps://vulners.com/httpd/HTTPD:A1BBCE110E077FFBF4469D4F06DB9293\n    \tHTTPD:A09F9CEBE0B7C39EDA0480FEAEF4FE9D\t9.8\thttps://vulners.com/httpd/HTTPD:A09F9CEBE0B7C39EDA0480FEAEF4FE9D\n    \tHTTPD:9F5406E0F4A0B007A0A4C9C92EF9813B\t9.8\thttps://vulners.com/httpd/HTTPD:9F5406E0F4A0B007A0A4C9C92EF9813B\n    \tHTTPD:9BCBE3C14201AFC4B0F36F15CB40C0F8\t9.8\thttps://vulners.com/httpd/HTTPD:9BCBE3C14201AFC4B0F36F15CB40C0F8\n    \tHTTPD:2BE0032A6ABE7CC52906DBAAFE0E448E\t9.8\thttps://vulners.com/httpd/HTTPD:2BE0032A6ABE7CC52906DBAAFE0E448E\n    \tEDB-ID:51193\t9.8\thttps://vulners.com/exploitdb/EDB-ID:51193\t*EXPLOIT*\n    \tECC3E825-EE29-59D3-BE28-1B30DB15940E\t9.8\thttps://vulners.com/githubexploit/ECC3E825-EE29-59D3-BE28-1B30DB15940E\t*EXPLOIT*\n    \tD5084D51-C8DF-5CBA-BC26-ACF2E33F8E52\t9.8\thttps://vulners.com/githubexploit/D5084D51-C8DF-5CBA-BC26-ACF2E33F8E52\t*EXPLOIT*\n    \tCVE-2026-28780\t9.8\thttps://vulners.com/cve/CVE-2026-28780\n    \tCVE-2024-38476\t9.8\thttps://vulners.com/cve/CVE-2024-38476\n    \tCVE-2022-31813\t9.8\thttps://vulners.com/cve/CVE-2022-31813\n    \tCVE-2022-22720\t9.8\thttps://vulners.com/cve/CVE-2022-22720\n    \tCVE-2021-44790\t9.8\thttps://vulners.com/cve/CVE-2021-44790\n    \tCVE-2021-39275\t9.8\thttps://vulners.com/cve/CVE-2021-39275\n    \tCVE-2018-1312\t9.8\thttps://vulners.com/cve/CVE-2018-1312\n    \tCVE-2017-7679\t9.8\thttps://vulners.com/cve/CVE-2017-7679\n    \tCVE-2017-3169\t9.8\thttps://vulners.com/cve/CVE-2017-3169\n    \tCVE-2017-3167\t9.8\thttps://vulners.com/cve/CVE-2017-3167\n    \tCNVD-2022-51061\t9.8\thttps://vulners.com/cnvd/CNVD-2022-51061\n    \tCNVD-2022-03225\t9.8\thttps://vulners.com/cnvd/CNVD-2022-03225\n    \tCNVD-2021-102386\t9.8\thttps://vulners.com/cnvd/CNVD-2021-102386\n    \tB6297446-2DDD-52BA-B508-29A748A5D2CC\t9.8\thttps://vulners.com/githubexploit/B6297446-2DDD-52BA-B508-29A748A5D2CC\t*EXPLOIT*\n    \t1337DAY-ID-38427\t9.8\thttps://vulners.com/zdt/1337DAY-ID-38427\t*EXPLOIT*\n    \t0DB60346-03B6-5FEE-93D7-FF5757D225AA\t9.8\thttps://vulners.com/gitee/0DB60346-03B6-5FEE-93D7-FF5757D225AA\t*EXPLOIT*\n    \tHTTPD:509B04B8CC51879DD0A561AC4FDBE0A6\t9.1\thttps://vulners.com/httpd/HTTPD:509B04B8CC51879DD0A561AC4FDBE0A6\n    \tHTTPD:459EB8D98503A2460C9445C5B224979E\t9.1\thttps://vulners.com/httpd/HTTPD:459EB8D98503A2460C9445C5B224979E\n    \tHTTPD:2C227652EE0B3B961706AAFCACA3D1E1\t9.1\thttps://vulners.com/httpd/HTTPD:2C227652EE0B3B961706AAFCACA3D1E1\n    \tFD2EE3A5-BAEA-5845-BA35-E6889992214F\t9.1\thttps://vulners.com/githubexploit/FD2EE3A5-BAEA-5845-BA35-E6889992214F\t*EXPLOIT*\n    \tFBC8A8BE-F00A-5B6D-832E-F99A72E7A3F7\t9.1\thttps://vulners.com/githubexploit/FBC8A8BE-F00A-5B6D-832E-F99A72E7A3F7\t*EXPLOIT*\n    \tE606D7F4-5FA2-5907-B30E-367D6FFECD89\t9.1\thttps://vulners.com/githubexploit/E606D7F4-5FA2-5907-B30E-367D6FFECD89\t*EXPLOIT*\n    \tD8A19443-2A37-5592-8955-F614504AAF45\t9.1\thttps://vulners.com/githubexploit/D8A19443-2A37-5592-8955-F614504AAF45\t*EXPLOIT*\n    \tCVE-2024-40898\t9.1\thttps://vulners.com/cve/CVE-2024-40898\n    \tCVE-2022-28615\t9.1\thttps://vulners.com/cve/CVE-2022-28615\n    \tCVE-2022-22721\t9.1\thttps://vulners.com/cve/CVE-2022-22721\n    \tCVE-2017-9788\t9.1\thttps://vulners.com/cve/CVE-2017-9788\n    \tCNVD-2022-51060\t9.1\thttps://vulners.com/cnvd/CNVD-2022-51060\n    \tCNVD-2022-41638\t9.1\thttps://vulners.com/cnvd/CNVD-2022-41638\n    \tB5E74010-A082-5ECE-AB37-623A5B33FE7D\t9.1\thttps://vulners.com/githubexploit/B5E74010-A082-5ECE-AB37-623A5B33FE7D\t*EXPLOIT*\n    \tHTTPD:1B3D546A8500818AAC5B1359FE11A7E4\t9.0\thttps://vulners.com/httpd/HTTPD:1B3D546A8500818AAC5B1359FE11A7E4\n    \tCVE-2021-40438\t9.0\thttps://vulners.com/cve/CVE-2021-40438\n    \tCNVD-2022-03224\t9.0\thttps://vulners.com/cnvd/CNVD-2022-03224\n    \tAE3EF1CC-A0C3-5CB7-A6EF-4DAAAFA59C8C\t9.0\thttps://vulners.com/githubexploit/AE3EF1CC-A0C3-5CB7-A6EF-4DAAAFA59C8C\t*EXPLOIT*\n    \t9D9B3F4D-6B5C-5377-BE39-F1C432C9E457\t9.0\thttps://vulners.com/githubexploit/9D9B3F4D-6B5C-5377-BE39-F1C432C9E457\t*EXPLOIT*\n    \t8AFB43C5-ABD4-52AD-BB19-24D7884FF2A2\t9.0\thttps://vulners.com/githubexploit/8AFB43C5-ABD4-52AD-BB19-24D7884FF2A2\t*EXPLOIT*\n    \t7F48C6CF-47B2-5AF9-B6FD-1735FB2A95B2\t9.0\thttps://vulners.com/githubexploit/7F48C6CF-47B2-5AF9-B6FD-1735FB2A95B2\t*EXPLOIT*\n    \t36618CA8-9316-59CA-B748-82F15F407C4F\t9.0\thttps://vulners.com/githubexploit/36618CA8-9316-59CA-B748-82F15F407C4F\t*EXPLOIT*\n    \tCVE-2026-24072\t8.8\thttps://vulners.com/cve/CVE-2026-24072\n    \t40379BCA-07F4-5401-B618-4640793D350D\t8.8\thttps://vulners.com/githubexploit/40379BCA-07F4-5401-B618-4640793D350D\t*EXPLOIT*\n    \tCVE-2025-58098\t8.3\thttps://vulners.com/cve/CVE-2025-58098\n    \tCNVD-2021-102387\t8.2\thttps://vulners.com/cnvd/CNVD-2021-102387\n    \tB0A9E5E8-7CCC-5984-9922-A89F11D6BF38\t8.2\thttps://vulners.com/githubexploit/B0A9E5E8-7CCC-5984-9922-A89F11D6BF38\t*EXPLOIT*\n    \tHTTPD:30E0EE442FF4843665FED4FBCA25406A\t8.1\thttps://vulners.com/httpd/HTTPD:30E0EE442FF4843665FED4FBCA25406A\n    \tCVE-2016-5387\t8.1\thttps://vulners.com/cve/CVE-2016-5387\n    \tCNVD-2016-04948\t8.1\thttps://vulners.com/cnvd/CNVD-2016-04948\n    \tSSV:72403\t7.8\thttps://vulners.com/seebug/SSV:72403\t*EXPLOIT*\n    \tSSV:2820\t7.8\thttps://vulners.com/seebug/SSV:2820\t*EXPLOIT*\n    \tSSV:26043\t7.8\thttps://vulners.com/seebug/SSV:26043\t*EXPLOIT*\n    \tSSV:20899\t7.8\thttps://vulners.com/seebug/SSV:20899\t*EXPLOIT*\n    \tSSV:11569\t7.8\thttps://vulners.com/seebug/SSV:11569\t*EXPLOIT*\n    \tPACKETSTORM:180517\t7.8\thttps://vulners.com/packetstorm/PACKETSTORM:180517\t*EXPLOIT*\n    \tPACKETSTORM:126851\t7.8\thttps://vulners.com/packetstorm/PACKETSTORM:126851\t*EXPLOIT*\n    \tPACKETSTORM:123527\t7.8\thttps://vulners.com/packetstorm/PACKETSTORM:123527\t*EXPLOIT*\n    \tPACKETSTORM:122962\t7.8\thttps://vulners.com/packetstorm/PACKETSTORM:122962\t*EXPLOIT*\n    \tMSF:AUXILIARY-DOS-HTTP-APACHE_RANGE_DOS-\t7.8\thttps://vulners.com/metasploit/MSF:AUXILIARY-DOS-HTTP-APACHE_RANGE_DOS-\t*EXPLOIT*\n    \tHTTPD:556E7FA885F1BEDB6E3D9AAB5665198F\t7.8\thttps://vulners.com/httpd/HTTPD:556E7FA885F1BEDB6E3D9AAB5665198F\n    \tEXPLOITPACK:186B5FCF5C57B52642E62C06BABC6F83\t7.8\thttps://vulners.com/exploitpack/EXPLOITPACK:186B5FCF5C57B52642E62C06BABC6F83\t*EXPLOIT*\n    \tEDB-ID:18221\t7.8\thttps://vulners.com/exploitdb/EDB-ID:18221\t*EXPLOIT*\n    \tCVE-2011-3192\t7.8\thttps://vulners.com/cve/CVE-2011-3192\n    \tC76F17FD-A21F-5E67-97D8-51A53B9594C1\t7.8\thttps://vulners.com/githubexploit/C76F17FD-A21F-5E67-97D8-51A53B9594C1\t*EXPLOIT*\n    \t4F94F3CE-6A41-5E04-A51B-4D22ED6CF210\t7.8\thttps://vulners.com/githubexploit/4F94F3CE-6A41-5E04-A51B-4D22ED6CF210\t*EXPLOIT*\n    \t1337DAY-ID-21170\t7.8\thttps://vulners.com/zdt/1337DAY-ID-21170\t*EXPLOIT*\n    \tSSV:12673\t7.5\thttps://vulners.com/seebug/SSV:12673\t*EXPLOIT*\n    \tSSV:12626\t7.5\thttps://vulners.com/seebug/SSV:12626\t*EXPLOIT*\n    \tPACKETSTORM:181038\t7.5\thttps://vulners.com/packetstorm/PACKETSTORM:181038\t*EXPLOIT*\n    \tMSF:AUXILIARY-SCANNER-HTTP-APACHE_OPTIONSBLEED-\t7.5\thttps://vulners.com/metasploit/MSF:AUXILIARY-SCANNER-HTTP-APACHE_OPTIONSBLEED-\t*EXPLOIT*\n    \tHTTPD:F1CFBC9B54DFAD0499179863D36830BB\t7.5\thttps://vulners.com/httpd/HTTPD:F1CFBC9B54DFAD0499179863D36830BB\n    \tHTTPD:C317C7138B4A8BBD54A901D6DDDCB837\t7.5\thttps://vulners.com/httpd/HTTPD:C317C7138B4A8BBD54A901D6DDDCB837\n    \tHTTPD:C1F57FDC580B58497A5EC5B7D3749F2F\t7.5\thttps://vulners.com/httpd/HTTPD:C1F57FDC580B58497A5EC5B7D3749F2F\n    \tHTTPD:C0856723C0FBF5502E1378536B484C09\t7.5\thttps://vulners.com/httpd/HTTPD:C0856723C0FBF5502E1378536B484C09\n    \tHTTPD:BEF84406F2FB3CB90F1C555BEFF774E2\t7.5\thttps://vulners.com/httpd/HTTPD:BEF84406F2FB3CB90F1C555BEFF774E2\n    \tHTTPD:B1B0A31C4AD388CC6C575931414173E2\t7.5\thttps://vulners.com/httpd/HTTPD:B1B0A31C4AD388CC6C575931414173E2\n    \tHTTPD:7DDAAFDB1FD8B2E7FD36ADABA5DB6DAA\t7.5\thttps://vulners.com/httpd/HTTPD:7DDAAFDB1FD8B2E7FD36ADABA5DB6DAA\n    \tHTTPD:5E6BCDB2F7C53E4EDCE844709D930AF5\t7.5\thttps://vulners.com/httpd/HTTPD:5E6BCDB2F7C53E4EDCE844709D930AF5\n    \tHTTPD:5227799CC4172DBFA895A4F581F74C11\t7.5\thttps://vulners.com/httpd/HTTPD:5227799CC4172DBFA895A4F581F74C11\n    \tEDB-ID:42745\t7.5\thttps://vulners.com/exploitdb/EDB-ID:42745\t*EXPLOIT*\n    \tCVE-2026-34059\t7.5\thttps://vulners.com/cve/CVE-2026-34059\n    \tCVE-2026-29169\t7.5\thttps://vulners.com/cve/CVE-2026-29169\n    \tCVE-2023-31122\t7.5\thttps://vulners.com/cve/CVE-2023-31122\n    \tCVE-2022-30556\t7.5\thttps://vulners.com/cve/CVE-2022-30556\n    \tCVE-2022-29404\t7.5\thttps://vulners.com/cve/CVE-2022-29404\n    \tCVE-2022-22719\t7.5\thttps://vulners.com/cve/CVE-2022-22719\n    \tCVE-2021-34798\t7.5\thttps://vulners.com/cve/CVE-2021-34798\n    \tCVE-2018-8011\t7.5\thttps://vulners.com/cve/CVE-2018-8011\n    \tCVE-2018-1303\t7.5\thttps://vulners.com/cve/CVE-2018-1303\n    \tCVE-2017-9798\t7.5\thttps://vulners.com/cve/CVE-2017-9798\n    \tCVE-2017-15710\t7.5\thttps://vulners.com/cve/CVE-2017-15710\n    \tCVE-2016-8743\t7.5\thttps://vulners.com/cve/CVE-2016-8743\n    \tCVE-2009-2699\t7.5\thttps://vulners.com/cve/CVE-2009-2699\n    \tCVE-2009-1955\t7.5\thttps://vulners.com/cve/CVE-2009-1955\n    \tCVE-2006-20001\t7.5\thttps://vulners.com/cve/CVE-2006-20001\n    \tCNVD-2025-30836\t7.5\thttps://vulners.com/cnvd/CNVD-2025-30836\n    \tCNVD-2025-16614\t7.5\thttps://vulners.com/cnvd/CNVD-2025-16614\n    \tCNVD-2024-20839\t7.5\thttps://vulners.com/cnvd/CNVD-2024-20839\n    \tCNVD-2023-93320\t7.5\thttps://vulners.com/cnvd/CNVD-2023-93320\n    \tCNVD-2023-80558\t7.5\thttps://vulners.com/cnvd/CNVD-2023-80558\n    \tCNVD-2022-53584\t7.5\thttps://vulners.com/cnvd/CNVD-2022-53584\n    \tCNVD-2022-41639\t7.5\thttps://vulners.com/cnvd/CNVD-2022-41639\n    \tCNVD-2022-03223\t7.5\thttps://vulners.com/cnvd/CNVD-2022-03223\n    \tCNVD-2019-41283\t7.5\thttps://vulners.com/cnvd/CNVD-2019-41283\n    \tCNVD-2017-13906\t7.5\thttps://vulners.com/cnvd/CNVD-2017-13906\n    \tCNVD-2016-13233\t7.5\thttps://vulners.com/cnvd/CNVD-2016-13233\n    \tCNVD-2016-13232\t7.5\thttps://vulners.com/cnvd/CNVD-2016-13232\n    \tCD6A79B3-8167-5CFD-9FCB-6986FDF0BE1A\t7.5\thttps://vulners.com/githubexploit/CD6A79B3-8167-5CFD-9FCB-6986FDF0BE1A\t*EXPLOIT*\n    \tA0F268C8-7319-5637-82F7-8DAF72D14629\t7.5\thttps://vulners.com/githubexploit/A0F268C8-7319-5637-82F7-8DAF72D14629\t*EXPLOIT*\n    \t857E0BF8-9A29-54C5-82EA-8D7C0798CAA6\t7.5\thttps://vulners.com/githubexploit/857E0BF8-9A29-54C5-82EA-8D7C0798CAA6\t*EXPLOIT*\n    \t45D138AD-BEC6-552A-91EA-8816914CA7F4\t7.5\thttps://vulners.com/githubexploit/45D138AD-BEC6-552A-91EA-8816914CA7F4\t*EXPLOIT*\n    \tCVE-2025-49812\t7.4\thttps://vulners.com/cve/CVE-2025-49812\n    \tCVE-2023-38709\t7.3\thttps://vulners.com/cve/CVE-2023-38709\n    \tCNVD-2024-36395\t7.3\thttps://vulners.com/cnvd/CNVD-2024-36395\n    \tSSV:11802\t7.1\thttps://vulners.com/seebug/SSV:11802\t*EXPLOIT*\n    \tSSV:11762\t7.1\thttps://vulners.com/seebug/SSV:11762\t*EXPLOIT*\n    \tHTTPD:B44AEE5F83602723E751B3341D72C01D\t7.1\thttps://vulners.com/httpd/HTTPD:B44AEE5F83602723E751B3341D72C01D\n    \tHTTPD:4D420BA542C9357A7F064936250DAEFF\t7.1\thttps://vulners.com/httpd/HTTPD:4D420BA542C9357A7F064936250DAEFF\n    \tCVE-2009-1891\t7.1\thttps://vulners.com/cve/CVE-2009-1891\n    \tCVE-2009-1890\t7.1\thttps://vulners.com/cve/CVE-2009-1890\n    \tSSV:60427\t6.9\thttps://vulners.com/seebug/SSV:60427\t*EXPLOIT*\n    \tSSV:60386\t6.9\thttps://vulners.com/seebug/SSV:60386\t*EXPLOIT*\n    \tSSV:60069\t6.9\thttps://vulners.com/seebug/SSV:60069\t*EXPLOIT*\n    \tHTTPD:D4C114070B5E7C4AA3E92FF94A57C659\t6.9\thttps://vulners.com/httpd/HTTPD:D4C114070B5E7C4AA3E92FF94A57C659\n    \tCVE-2012-0883\t6.9\thttps://vulners.com/cve/CVE-2012-0883\n    \tSSV:12447\t6.8\thttps://vulners.com/seebug/SSV:12447\t*EXPLOIT*\n    \tPACKETSTORM:127546\t6.8\thttps://vulners.com/packetstorm/PACKETSTORM:127546\t*EXPLOIT*\n    \tHTTPD:0A13DEC03E87AF57C14487550B086B51\t6.8\thttps://vulners.com/httpd/HTTPD:0A13DEC03E87AF57C14487550B086B51\n    \tCVE-2014-0226\t6.8\thttps://vulners.com/cve/CVE-2014-0226\n    \t1337DAY-ID-22451\t6.8\thttps://vulners.com/zdt/1337DAY-ID-22451\t*EXPLOIT*\n    \tSSV:11568\t6.4\thttps://vulners.com/seebug/SSV:11568\t*EXPLOIT*\n    \tHTTPD:AFA6B3F6376C54842BAFBBF24C7F44C4\t6.4\thttps://vulners.com/httpd/HTTPD:AFA6B3F6376C54842BAFBBF24C7F44C4\n    \tCVE-2009-1956\t6.4\thttps://vulners.com/cve/CVE-2009-1956\n    \tHTTPD:3E4CF20C0CAD918E98C98926264946F2\t6.1\thttps://vulners.com/httpd/HTTPD:3E4CF20C0CAD918E98C98926264946F2\n    \tCVE-2016-4975\t6.1\thttps://vulners.com/cve/CVE-2016-4975\n    \tCNVD-2018-15542\t6.1\thttps://vulners.com/cnvd/CNVD-2018-15542\n    \tCVE-2018-1302\t5.9\thttps://vulners.com/cve/CVE-2018-1302\n    \tCVE-2018-1301\t5.9\thttps://vulners.com/cve/CVE-2018-1301\n    \tCNVD-2018-06536\t5.9\thttps://vulners.com/cnvd/CNVD-2018-06536\n    \tCNVD-2018-06535\t5.9\thttps://vulners.com/cnvd/CNVD-2018-06535\n    \tVULNERLAB:967\t5.8\thttps://vulners.com/vulnerlab/VULNERLAB:967\t*EXPLOIT*\n    \tSSV:67231\t5.8\thttps://vulners.com/seebug/SSV:67231\t*EXPLOIT*\n    \tSSV:18637\t5.8\thttps://vulners.com/seebug/SSV:18637\t*EXPLOIT*\n    \tSSV:15088\t5.8\thttps://vulners.com/seebug/SSV:15088\t*EXPLOIT*\n    \tSSV:12600\t5.8\thttps://vulners.com/seebug/SSV:12600\t*EXPLOIT*\n    \tPACKETSTORM:84112\t5.8\thttps://vulners.com/packetstorm/PACKETSTORM:84112\t*EXPLOIT*\n    \tEXPLOITPACK:8B4E7E8DAE5A13C8250C6C33307CD66C\t5.8\thttps://vulners.com/exploitpack/EXPLOITPACK:8B4E7E8DAE5A13C8250C6C33307CD66C\t*EXPLOIT*\n    \tEDB-ID:10579\t5.8\thttps://vulners.com/exploitdb/EDB-ID:10579\t*EXPLOIT*\n    \tCVE-2009-3555\t5.8\thttps://vulners.com/cve/CVE-2009-3555\n    \tCNVD-2025-30835\t5.4\thttps://vulners.com/cnvd/CNVD-2025-30835\n    \tHTTPD:BAAB4065D254D64A717E8A5C847C7BCA\t5.3\thttps://vulners.com/httpd/HTTPD:BAAB4065D254D64A717E8A5C847C7BCA\n    \tHTTPD:8806CE4EFAA6A567C7FAD62778B6A46F\t5.3\thttps://vulners.com/httpd/HTTPD:8806CE4EFAA6A567C7FAD62778B6A46F\n    \tCVE-2026-34032\t5.3\thttps://vulners.com/cve/CVE-2026-34032\n    \tCVE-2026-33857\t5.3\thttps://vulners.com/cve/CVE-2026-33857\n    \tCVE-2022-37436\t5.3\thttps://vulners.com/cve/CVE-2022-37436\n    \tCVE-2022-28614\t5.3\thttps://vulners.com/cve/CVE-2022-28614\n    \tCVE-2022-28330\t5.3\thttps://vulners.com/cve/CVE-2022-28330\n    \tCNVD-2023-30859\t5.3\thttps://vulners.com/cnvd/CNVD-2023-30859\n    \tCNVD-2022-53582\t5.3\thttps://vulners.com/cnvd/CNVD-2022-53582\n    \tCNVD-2022-51059\t5.3\thttps://vulners.com/cnvd/CNVD-2022-51059\n    \tCNVD-2021-44766\t5.3\thttps://vulners.com/cnvd/CNVD-2021-44766\n    \tCNVD-2020-46278\t5.3\thttps://vulners.com/cnvd/CNVD-2020-46278\n    \tSSV:60788\t5.1\thttps://vulners.com/seebug/SSV:60788\t*EXPLOIT*\n    \tHTTPD:96CCBB8B74890DC94A45CD0955D35015\t5.1\thttps://vulners.com/httpd/HTTPD:96CCBB8B74890DC94A45CD0955D35015\n    \tCVE-2013-1862\t5.1\thttps://vulners.com/cve/CVE-2013-1862\n    \tSSV:96537\t5.0\thttps://vulners.com/seebug/SSV:96537\t*EXPLOIT*\n    \tSSV:62058\t5.0\thttps://vulners.com/seebug/SSV:62058\t*EXPLOIT*\n    \tSSV:61874\t5.0\thttps://vulners.com/seebug/SSV:61874\t*EXPLOIT*\n    \tSSV:20993\t5.0\thttps://vulners.com/seebug/SSV:20993\t*EXPLOIT*\n    \tSSV:20979\t5.0\thttps://vulners.com/seebug/SSV:20979\t*EXPLOIT*\n    \tSSV:20969\t5.0\thttps://vulners.com/seebug/SSV:20969\t*EXPLOIT*\n    \tSSV:19592\t5.0\thttps://vulners.com/seebug/SSV:19592\t*EXPLOIT*\n    \tSSV:15137\t5.0\thttps://vulners.com/seebug/SSV:15137\t*EXPLOIT*\n    \tSSV:12005\t5.0\thttps://vulners.com/seebug/SSV:12005\t*EXPLOIT*\n    \tPACKETSTORM:181059\t5.0\thttps://vulners.com/packetstorm/PACKETSTORM:181059\t*EXPLOIT*\n    \tPACKETSTORM:105672\t5.0\thttps://vulners.com/packetstorm/PACKETSTORM:105672\t*EXPLOIT*\n    \tPACKETSTORM:105591\t5.0\thttps://vulners.com/packetstorm/PACKETSTORM:105591\t*EXPLOIT*\n    \tMSF:AUXILIARY-SCANNER-HTTP-REWRITE_PROXY_BYPASS-\t5.0\thttps://vulners.com/metasploit/MSF:AUXILIARY-SCANNER-HTTP-REWRITE_PROXY_BYPASS-\t*EXPLOIT*\n    \tHTTPD:FF76CF8F03BE59B7AD0119034B0022DB\t5.0\thttps://vulners.com/httpd/HTTPD:FF76CF8F03BE59B7AD0119034B0022DB\n    \tHTTPD:DD1BEF13C172D3E8CA5D3F3906101EC9\t5.0\thttps://vulners.com/httpd/HTTPD:DD1BEF13C172D3E8CA5D3F3906101EC9\n    \tHTTPD:D1C855645E1630AE37C6F642C1D0F213\t5.0\thttps://vulners.com/httpd/HTTPD:D1C855645E1630AE37C6F642C1D0F213\n    \tHTTPD:85C24937CF85C2E1DBF78F9954817A28\t5.0\thttps://vulners.com/httpd/HTTPD:85C24937CF85C2E1DBF78F9954817A28\n    \tHTTPD:6D37F924288E2D149DC3C52135232B6E\t5.0\thttps://vulners.com/httpd/HTTPD:6D37F924288E2D149DC3C52135232B6E\n    \tHTTPD:6CA43FB8E8332E715522C8A6C24EC31E\t5.0\thttps://vulners.com/httpd/HTTPD:6CA43FB8E8332E715522C8A6C24EC31E\n    \tHTTPD:60BF8A7CCF62E24F92B3DCCA0E53F1F8\t5.0\thttps://vulners.com/httpd/HTTPD:60BF8A7CCF62E24F92B3DCCA0E53F1F8\n    \tHTTPD:423307886E19F2012B809EEB1E9C6846\t5.0\thttps://vulners.com/httpd/HTTPD:423307886E19F2012B809EEB1E9C6846\n    \tHTTPD:371AA87DEAE292D8E6ACC01309CA723A\t5.0\thttps://vulners.com/httpd/HTTPD:371AA87DEAE292D8E6ACC01309CA723A\n    \tHTTPD:2E324CC4C6C61757E316E26EF4DCB945\t5.0\thttps://vulners.com/httpd/HTTPD:2E324CC4C6C61757E316E26EF4DCB945\n    \tHTTPD:2C06F6E938AADE21D7C59CED65A985E6\t5.0\thttps://vulners.com/httpd/HTTPD:2C06F6E938AADE21D7C59CED65A985E6\n    \tHTTPD:1DC50F4C723B9143E9713B27031C6043\t5.0\thttps://vulners.com/httpd/HTTPD:1DC50F4C723B9143E9713B27031C6043\n    \tHTTPD:1069F9C369A2B2B1C4F8A1AC73589169\t5.0\thttps://vulners.com/httpd/HTTPD:1069F9C369A2B2B1C4F8A1AC73589169\n    \tEXPLOITPACK:C8C256BE0BFF5FE1C0405CB0AA9C075D\t5.0\thttps://vulners.com/exploitpack/EXPLOITPACK:C8C256BE0BFF5FE1C0405CB0AA9C075D\t*EXPLOIT*\n    \tEXPLOITPACK:460143F0ACAE117DD79BD75EDFDA154B\t5.0\thttps://vulners.com/exploitpack/EXPLOITPACK:460143F0ACAE117DD79BD75EDFDA154B\t*EXPLOIT*\n    \tEDB-ID:17969\t5.0\thttps://vulners.com/exploitdb/EDB-ID:17969\t*EXPLOIT*\n    \tCVE-2015-3183\t5.0\thttps://vulners.com/cve/CVE-2015-3183\n    \tCVE-2015-0228\t5.0\thttps://vulners.com/cve/CVE-2015-0228\n    \tCVE-2014-0231\t5.0\thttps://vulners.com/cve/CVE-2014-0231\n    \tCVE-2014-0098\t5.0\thttps://vulners.com/cve/CVE-2014-0098\n    \tCVE-2013-6438\t5.0\thttps://vulners.com/cve/CVE-2013-6438\n    \tCVE-2013-5704\t5.0\thttps://vulners.com/cve/CVE-2013-5704\n    \tCVE-2011-3368\t5.0\thttps://vulners.com/cve/CVE-2011-3368\n    \tCVE-2010-1623\t5.0\thttps://vulners.com/cve/CVE-2010-1623\n    \tCVE-2010-1452\t5.0\thttps://vulners.com/cve/CVE-2010-1452\n    \tCVE-2010-0408\t5.0\thttps://vulners.com/cve/CVE-2010-0408\n    \tCVE-2009-3720\t5.0\thttps://vulners.com/cve/CVE-2009-3720\n    \tCVE-2009-3560\t5.0\thttps://vulners.com/cve/CVE-2009-3560\n    \tCVE-2009-3095\t5.0\thttps://vulners.com/cve/CVE-2009-3095\n    \tCVE-2008-2364\t5.0\thttps://vulners.com/cve/CVE-2008-2364\n    \tCVE-2007-6750\t5.0\thttps://vulners.com/cve/CVE-2007-6750\n    \tCNVD-2015-01691\t5.0\thttps://vulners.com/cnvd/CNVD-2015-01691\n    \t1337DAY-ID-28573\t5.0\thttps://vulners.com/zdt/1337DAY-ID-28573\t*EXPLOIT*\n    \tSSV:11668\t4.9\thttps://vulners.com/seebug/SSV:11668\t*EXPLOIT*\n    \tSSV:11501\t4.9\thttps://vulners.com/seebug/SSV:11501\t*EXPLOIT*\n    \tHTTPD:05AF7B1B11654BC6892C02003A12DE06\t4.9\thttps://vulners.com/httpd/HTTPD:05AF7B1B11654BC6892C02003A12DE06\n    \tCVE-2009-1195\t4.9\thttps://vulners.com/cve/CVE-2009-1195\n    \tEA6ADD14-D80B-5DC2-9991-1F9663E2D09F\t4.8\thttps://vulners.com/githubexploit/EA6ADD14-D80B-5DC2-9991-1F9663E2D09F\t*EXPLOIT*\n    \tCVE-2026-33006\t4.8\thttps://vulners.com/cve/CVE-2026-33006\n    \tSSV:30024\t4.6\thttps://vulners.com/seebug/SSV:30024\t*EXPLOIT*\n    \tHTTPD:FB0DB72A0946D2AA25FA9FA21ADB2CE1\t4.6\thttps://vulners.com/httpd/HTTPD:FB0DB72A0946D2AA25FA9FA21ADB2CE1\n    \tCVE-2012-0031\t4.6\thttps://vulners.com/cve/CVE-2012-0031\n    \t1337DAY-ID-27465\t4.6\thttps://vulners.com/zdt/1337DAY-ID-27465\t*EXPLOIT*\n    \tSSV:23169\t4.4\thttps://vulners.com/seebug/SSV:23169\t*EXPLOIT*\n    \tHTTPD:6309ABD03BB1B29C82E941636515010E\t4.4\thttps://vulners.com/httpd/HTTPD:6309ABD03BB1B29C82E941636515010E\n    \tCVE-2011-3607\t4.4\thttps://vulners.com/cve/CVE-2011-3607\n    \t1337DAY-ID-27473\t4.4\thttps://vulners.com/zdt/1337DAY-ID-27473\t*EXPLOIT*\n    \tSSV:60905\t4.3\thttps://vulners.com/seebug/SSV:60905\t*EXPLOIT*\n    \tSSV:60657\t4.3\thttps://vulners.com/seebug/SSV:60657\t*EXPLOIT*\n    \tSSV:60653\t4.3\thttps://vulners.com/seebug/SSV:60653\t*EXPLOIT*\n    \tSSV:60345\t4.3\thttps://vulners.com/seebug/SSV:60345\t*EXPLOIT*\n    \tSSV:4786\t4.3\thttps://vulners.com/seebug/SSV:4786\t*EXPLOIT*\n    \tSSV:3804\t4.3\thttps://vulners.com/seebug/SSV:3804\t*EXPLOIT*\n    \tSSV:30094\t4.3\thttps://vulners.com/seebug/SSV:30094\t*EXPLOIT*\n    \tSSV:30056\t4.3\thttps://vulners.com/seebug/SSV:30056\t*EXPLOIT*\n    \tSSV:24250\t4.3\thttps://vulners.com/seebug/SSV:24250\t*EXPLOIT*\n    \tSSV:20555\t4.3\thttps://vulners.com/seebug/SSV:20555\t*EXPLOIT*\n    \tSSV:19320\t4.3\thttps://vulners.com/seebug/SSV:19320\t*EXPLOIT*\n    \tSSV:11558\t4.3\thttps://vulners.com/seebug/SSV:11558\t*EXPLOIT*\n    \tPACKETSTORM:109284\t4.3\thttps://vulners.com/packetstorm/PACKETSTORM:109284\t*EXPLOIT*\n    \tHTTPD:FD1CC7EACBC758C451BA5B8D25FCB6DD\t4.3\thttps://vulners.com/httpd/HTTPD:FD1CC7EACBC758C451BA5B8D25FCB6DD\n    \tHTTPD:C730B9155CAC64B44A77E253B3135FE5\t4.3\thttps://vulners.com/httpd/HTTPD:C730B9155CAC64B44A77E253B3135FE5\n    \tHTTPD:B90E2A3B47C473DD04F25ECBDA96D6CE\t4.3\thttps://vulners.com/httpd/HTTPD:B90E2A3B47C473DD04F25ECBDA96D6CE\n    \tHTTPD:B07D6585013819446B5017BD7E358E6F\t4.3\thttps://vulners.com/httpd/HTTPD:B07D6585013819446B5017BD7E358E6F\n    \tHTTPD:AC5C28237AB3E52EF4D366EB0CD6D4AF\t4.3\thttps://vulners.com/httpd/HTTPD:AC5C28237AB3E52EF4D366EB0CD6D4AF\n    \tHTTPD:A49ADFA68FCEB939DA0E2BE13CA74CB9\t4.3\thttps://vulners.com/httpd/HTTPD:A49ADFA68FCEB939DA0E2BE13CA74CB9\n    \tHTTPD:49F10A242AB057B651259425C3E680F4\t4.3\thttps://vulners.com/httpd/HTTPD:49F10A242AB057B651259425C3E680F4\n    \tHTTPD:3D474EEBC8F5BC66AE37F523DD259829\t4.3\thttps://vulners.com/httpd/HTTPD:3D474EEBC8F5BC66AE37F523DD259829\n    \tHTTPD:2A661E9492CCEF999508BD8503884E30\t4.3\thttps://vulners.com/httpd/HTTPD:2A661E9492CCEF999508BD8503884E30\n    \tHTTPD:1E858A305C3DEA1B5E9A23EE1352B1B3\t4.3\thttps://vulners.com/httpd/HTTPD:1E858A305C3DEA1B5E9A23EE1352B1B3\n    \tHTTPD:0F6B8D022A5D1C68540812E406264625\t4.3\thttps://vulners.com/httpd/HTTPD:0F6B8D022A5D1C68540812E406264625\n    \tHTTPD:0D2952537BF45B77447EF90EAD31D8C9\t4.3\thttps://vulners.com/httpd/HTTPD:0D2952537BF45B77447EF90EAD31D8C9\n    \tEXPLOITPACK:FDCB3D93694E48CD5EE27CE55D6801DE\t4.3\thttps://vulners.com/exploitpack/EXPLOITPACK:FDCB3D93694E48CD5EE27CE55D6801DE\t*EXPLOIT*\n    \tEDB-ID:35738\t4.3\thttps://vulners.com/exploitdb/EDB-ID:35738\t*EXPLOIT*\n    \tCVE-2016-8612\t4.3\thttps://vulners.com/cve/CVE-2016-8612\n    \tCVE-2014-0118\t4.3\thttps://vulners.com/cve/CVE-2014-0118\n    \tCVE-2013-1896\t4.3\thttps://vulners.com/cve/CVE-2013-1896\n    \tCVE-2012-4558\t4.3\thttps://vulners.com/cve/CVE-2012-4558\n    \tCVE-2012-3499\t4.3\thttps://vulners.com/cve/CVE-2012-3499\n    \tCVE-2012-0053\t4.3\thttps://vulners.com/cve/CVE-2012-0053\n    \tCVE-2011-4317\t4.3\thttps://vulners.com/cve/CVE-2011-4317\n    \tCVE-2011-3639\t4.3\thttps://vulners.com/cve/CVE-2011-3639\n    \tCVE-2011-0419\t4.3\thttps://vulners.com/cve/CVE-2011-0419\n    \tCVE-2010-0434\t4.3\thttps://vulners.com/cve/CVE-2010-0434\n    \tCVE-2009-0023\t4.3\thttps://vulners.com/cve/CVE-2009-0023\n    \tCVE-2008-2939\t4.3\thttps://vulners.com/cve/CVE-2008-2939\n    \tCVE-2008-0455\t4.3\thttps://vulners.com/cve/CVE-2008-0455\n    \tCVE-2007-6420\t4.3\thttps://vulners.com/cve/CVE-2007-6420\n    \t67D5C133-2D28-56DF-B3FF-FA397606547D\t4.3\thttps://vulners.com/gitee/67D5C133-2D28-56DF-B3FF-FA397606547D\t*EXPLOIT*\n    \tSSV:12628\t2.6\thttps://vulners.com/seebug/SSV:12628\t*EXPLOIT*\n    \tHTTPD:AA860ED739944CC66DCA320985CEC190\t2.6\thttps://vulners.com/httpd/HTTPD:AA860ED739944CC66DCA320985CEC190\n    \tHTTPD:A79620D4A49D1F0D9BE6A18FD0CA234C\t2.6\thttps://vulners.com/httpd/HTTPD:A79620D4A49D1F0D9BE6A18FD0CA234C\n    \tCVE-2012-2687\t2.6\thttps://vulners.com/cve/CVE-2012-2687\n    \tCVE-2009-3094\t2.6\thttps://vulners.com/cve/CVE-2009-3094\n    \tCVE-2008-0456\t2.6\thttps://vulners.com/cve/CVE-2008-0456\n    \tSSV:60250\t1.2\thttps://vulners.com/seebug/SSV:60250\t*EXPLOIT*\n    \tCVE-2011-4415\t1.2\thttps://vulners.com/cve/CVE-2011-4415\n    \t1337DAY-ID-9602\t0.0\thttps://vulners.com/zdt/1337DAY-ID-9602\t*EXPLOIT*\n    \t1337DAY-ID-21346\t0.0\thttps://vulners.com/zdt/1337DAY-ID-21346\t*EXPLOIT*\n    \t1337DAY-ID-17257\t0.0\thttps://vulners.com/zdt/1337DAY-ID-17257\t*EXPLOIT*\n    \t1337DAY-ID-16843\t0.0\thttps://vulners.com/zdt/1337DAY-ID-16843\t*EXPLOIT*\n    \t1337DAY-ID-13268\t0.0\thttps://vulners.com/zdt/1337DAY-ID-13268\t*EXPLOIT*\n    \t1337DAY-ID-11185\t0.0\thttps://vulners.com/zdt/1337DAY-ID-11185\t*EXPLOIT*"
+            },
+            {
+              "id": "http-trace",
+              "output": "TRACE is enabled"
+            }
+          ]
+        },
+        {
+          "port": 111,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "rpcbind",
+          "product": "",
+          "version": "2",
+          "extra_info": "RPC #100000",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "rpcinfo",
+              "output": "\n  program version    port/proto  service\n  100000  2            111/tcp   rpcbind\n  100000  2            111/udp   rpcbind\n  100003  2,3,4       2049/tcp   nfs\n  100003  2,3,4       2049/udp   nfs\n  100005  1,2,3      37548/udp   mountd\n  100005  1,2,3      43990/tcp   mountd\n  100021  1,3,4      38442/udp   nlockmgr\n  100021  1,3,4      45361/tcp   nlockmgr\n  100024  1          37740/tcp   status\n  100024  1          57369/udp   status\n"
+            }
+          ]
+        },
+        {
+          "port": 139,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "netbios-ssn",
+          "product": "Samba smbd",
+          "version": "3.X - 4.X",
+          "extra_info": "workgroup: WORKGROUP",
+          "confidence": 10,
+          "method": "probed"
+        },
+        {
+          "port": 445,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "netbios-ssn",
+          "product": "Samba smbd",
+          "version": "3.X - 4.X",
+          "extra_info": "workgroup: WORKGROUP",
+          "confidence": 10,
+          "method": "probed"
+        },
+        {
+          "port": 512,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "exec",
+          "product": "netkit-rsh rexecd",
+          "version": "",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed"
+        },
+        {
+          "port": 513,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "login",
+          "product": "OpenBSD or Solaris rlogind",
+          "version": "",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed"
+        },
+        {
+          "port": 514,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "tcpwrapped",
+          "product": "",
+          "version": "",
+          "extra_info": "",
+          "confidence": 8,
+          "method": "probed"
+        },
+        {
+          "port": 1099,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "java-rmi",
+          "product": "GNU Classpath grmiregistry",
+          "version": "",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "rmi-vuln-classloader",
+              "output": "\n  VULNERABLE:\n  RMI registry default configuration remote code execution vulnerability\n    State: VULNERABLE\n      Default configuration of RMI registry allows loading classes from remote URLs which can lead to remote code execution.\n      \n    References:\n      https://github.com/rapid7/metasploit-framework/blob/master/modules/exploits/multi/misc/java_rmi_server.rb\n"
+            }
+          ]
+        },
+        {
+          "port": 1524,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "bindshell",
+          "product": "Metasploitable root shell",
+          "version": "",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed"
+        },
+        {
+          "port": 2049,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "nfs",
+          "product": "",
+          "version": "2-4",
+          "extra_info": "RPC #100003",
+          "confidence": 10,
+          "method": "probed"
+        },
+        {
+          "port": 2121,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "ftp",
+          "product": "ProFTPD",
+          "version": "1.3.1",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "vulners",
+              "output": "\n  cpe:/a:proftpd:proftpd:1.3.1: \n    \tSAINT:FD1752E124A72FD3A26EEB9B315E8382\t10.0\thttps://vulners.com/saint/SAINT:FD1752E124A72FD3A26EEB9B315E8382\t*EXPLOIT*\n    \tSAINT:950EB68D408A40399926A4CCAD3CC62E\t10.0\thttps://vulners.com/saint/SAINT:950EB68D408A40399926A4CCAD3CC62E\t*EXPLOIT*\n    \tSAINT:63FB77B9136D48259E4F0D4CDA35E957\t10.0\thttps://vulners.com/saint/SAINT:63FB77B9136D48259E4F0D4CDA35E957\t*EXPLOIT*\n    \tSAINT:1B08F4664C428B180EEC9617B41D9A2C\t10.0\thttps://vulners.com/saint/SAINT:1B08F4664C428B180EEC9617B41D9A2C\t*EXPLOIT*\n    \tPROFTPD_MOD_COPY\t10.0\thttps://vulners.com/canvas/PROFTPD_MOD_COPY\t*EXPLOIT*\n    \tPACKETSTORM:162777\t10.0\thttps://vulners.com/packetstorm/PACKETSTORM:162777\t*EXPLOIT*\n    \tPACKETSTORM:132218\t10.0\thttps://vulners.com/packetstorm/PACKETSTORM:132218\t*EXPLOIT*\n    \tPACKETSTORM:131567\t10.0\thttps://vulners.com/packetstorm/PACKETSTORM:131567\t*EXPLOIT*\n    \tPACKETSTORM:131555\t10.0\thttps://vulners.com/packetstorm/PACKETSTORM:131555\t*EXPLOIT*\n    \tPACKETSTORM:131505\t10.0\thttps://vulners.com/packetstorm/PACKETSTORM:131505\t*EXPLOIT*\n    \tMSF:EXPLOIT-UNIX-FTP-PROFTPD_MODCOPY_EXEC-\t10.0\thttps://vulners.com/metasploit/MSF:EXPLOIT-UNIX-FTP-PROFTPD_MODCOPY_EXEC-\t*EXPLOIT*\n    \tEDB-ID:49908\t10.0\thttps://vulners.com/exploitdb/EDB-ID:49908\t*EXPLOIT*\n    \tEDB-ID:37262\t10.0\thttps://vulners.com/exploitdb/EDB-ID:37262\t*EXPLOIT*\n    \tBC7F9971-F233-5C1A-AA5E-DAA7587C7DED\t10.0\thttps://vulners.com/githubexploit/BC7F9971-F233-5C1A-AA5E-DAA7587C7DED\t*EXPLOIT*\n    \t6BF3AE83-7AD0-5378-B7C9-C05B81007195\t10.0\thttps://vulners.com/gitee/6BF3AE83-7AD0-5378-B7C9-C05B81007195\t*EXPLOIT*\n    \t1EEE27D9-DFF4-517B-9EAB-CCDECA6EF254\t10.0\thttps://vulners.com/githubexploit/1EEE27D9-DFF4-517B-9EAB-CCDECA6EF254\t*EXPLOIT*\n    \t1337DAY-ID-36298\t10.0\thttps://vulners.com/zdt/1337DAY-ID-36298\t*EXPLOIT*\n    \t1337DAY-ID-23720\t10.0\thttps://vulners.com/zdt/1337DAY-ID-23720\t*EXPLOIT*\n    \t1337DAY-ID-23544\t10.0\thttps://vulners.com/zdt/1337DAY-ID-23544\t*EXPLOIT*\n    \t0D531276-4E46-5C77-95C9-278B5AD82984\t10.0\thttps://vulners.com/githubexploit/0D531276-4E46-5C77-95C9-278B5AD82984\t*EXPLOIT*\n    \tCVE-2019-12815\t9.8\thttps://vulners.com/cve/CVE-2019-12815\n    \tSSV:26016\t9.0\thttps://vulners.com/seebug/SSV:26016\t*EXPLOIT*\n    \tSSV:24282\t9.0\thttps://vulners.com/seebug/SSV:24282\t*EXPLOIT*\n    \tCVE-2011-4130\t9.0\thttps://vulners.com/cve/CVE-2011-4130\n    \tCVE-2026-44331\t8.1\thttps://vulners.com/cve/CVE-2026-44331\n    \tSSV:96525\t7.5\thttps://vulners.com/seebug/SSV:96525\t*EXPLOIT*\n    \tCVE-2024-48651\t7.5\thttps://vulners.com/cve/CVE-2024-48651\n    \tCVE-2023-51713\t7.5\thttps://vulners.com/cve/CVE-2023-51713\n    \tCVE-2021-46854\t7.5\thttps://vulners.com/cve/CVE-2021-46854\n    \tCVE-2020-9272\t7.5\thttps://vulners.com/cve/CVE-2020-9272\n    \tCVE-2019-19272\t7.5\thttps://vulners.com/cve/CVE-2019-19272\n    \tCVE-2019-19271\t7.5\thttps://vulners.com/cve/CVE-2019-19271\n    \tCVE-2019-19270\t7.5\thttps://vulners.com/cve/CVE-2019-19270\n    \tCVE-2019-18217\t7.5\thttps://vulners.com/cve/CVE-2019-18217\n    \tCVE-2016-3125\t7.5\thttps://vulners.com/cve/CVE-2016-3125\n    \tCNVD-2020-14677\t7.5\thttps://vulners.com/cnvd/CNVD-2020-14677\n    \tCNVD-2019-44557\t7.5\thttps://vulners.com/cnvd/CNVD-2019-44557\n    \tSSV:20226\t7.1\thttps://vulners.com/seebug/SSV:20226\t*EXPLOIT*\n    \tPACKETSTORM:95517\t7.1\thttps://vulners.com/packetstorm/PACKETSTORM:95517\t*EXPLOIT*\n    \tCVE-2010-3867\t7.1\thttps://vulners.com/cve/CVE-2010-3867\n    \tSSV:12447\t6.8\thttps://vulners.com/seebug/SSV:12447\t*EXPLOIT*\n    \tSSV:11950\t6.8\thttps://vulners.com/seebug/SSV:11950\t*EXPLOIT*\n    \tEDB-ID:33128\t6.8\thttps://vulners.com/exploitdb/EDB-ID:33128\t*EXPLOIT*\n    \tCVE-2010-4652\t6.8\thttps://vulners.com/cve/CVE-2010-4652\n    \tCVE-2009-0543\t6.8\thttps://vulners.com/cve/CVE-2009-0543\n    \tFD2E0EBA-ED84-5304-8862-84BCDEB2F288\t5.9\thttps://vulners.com/githubexploit/FD2E0EBA-ED84-5304-8862-84BCDEB2F288\t*EXPLOIT*\n    \tCVE-2023-48795\t5.9\thttps://vulners.com/cve/CVE-2023-48795\n    \t721F040C-37BC-59E1-9433-01A2EAC2E755\t5.9\thttps://vulners.com/githubexploit/721F040C-37BC-59E1-9433-01A2EAC2E755\t*EXPLOIT*\n    \tSSV:12523\t5.8\thttps://vulners.com/seebug/SSV:12523\t*EXPLOIT*\n    \tCVE-2009-3639\t5.8\thttps://vulners.com/cve/CVE-2009-3639\n    \tCVE-2017-7418\t5.5\thttps://vulners.com/cve/CVE-2017-7418\n    \tCVE-2011-1137\t5.0\thttps://vulners.com/cve/CVE-2011-1137\n    \tCVE-2019-19269\t4.9\thttps://vulners.com/cve/CVE-2019-19269\n    \tCVE-2008-7265\t4.0\thttps://vulners.com/cve/CVE-2008-7265\n    \tCVE-2012-6095\t1.2\thttps://vulners.com/cve/CVE-2012-6095"
+            }
+          ]
+        },
+        {
+          "port": 3306,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "mysql",
+          "product": "MySQL",
+          "version": "5.0.51a-3ubuntu5",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "ssl-ccs-injection",
+              "output": "No reply from server (TIMEOUT)"
+            },
+            {
+              "id": "vulners",
+              "output": "\n  cpe:/a:mysql:mysql:5.0.51a-3ubuntu5: \n    \tSSV:19118\t8.5\thttps://vulners.com/seebug/SSV:19118\t*EXPLOIT*\n    \tCVE-2017-15945\t7.8\thttps://vulners.com/cve/CVE-2017-15945\n    \tSSV:15006\t6.8\thttps://vulners.com/seebug/SSV:15006\t*EXPLOIT*\n    \tCVE-2009-4028\t6.8\thttps://vulners.com/cve/CVE-2009-4028\n    \tSSV:15004\t6.0\thttps://vulners.com/seebug/SSV:15004\t*EXPLOIT*\n    \tCVE-2010-1621\t5.0\thttps://vulners.com/cve/CVE-2010-1621\n    \tCVE-2015-2575\t4.9\thttps://vulners.com/cve/CVE-2015-2575\n    \tSSV:3280\t4.6\thttps://vulners.com/seebug/SSV:3280\t*EXPLOIT*\n    \tCVE-2008-2079\t4.6\thttps://vulners.com/cve/CVE-2008-2079\n    \tCVE-2010-3682\t4.0\thttps://vulners.com/cve/CVE-2010-3682\n    \tCVE-2010-3677\t4.0\thttps://vulners.com/cve/CVE-2010-3677\n    \tCVE-2009-0819\t4.0\thttps://vulners.com/cve/CVE-2009-0819\n    \tCVE-2007-5925\t4.0\thttps://vulners.com/cve/CVE-2007-5925\n    \tCVE-2010-1626\t3.6\thttps://vulners.com/cve/CVE-2010-1626"
+            }
+          ]
+        },
+        {
+          "port": 3632,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "distccd",
+          "product": "distccd",
+          "version": "v1",
+          "extra_info": "(GNU) 4.2.4 (Ubuntu 4.2.4-1ubuntu4)",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "distcc-cve2004-2687",
+              "output": "\n  VULNERABLE:\n  distcc Daemon Command Execution\n    State: VULNERABLE (Exploitable)\n    IDs:  CVE:CVE-2004-2687\n    Risk factor: High  CVSSv2: 9.3 (HIGH) (AV:N/AC:M/Au:N/C:C/I:C/A:C)\n      Allows executing of arbitrary commands on systems running distccd 3.1 and\n      earlier. The vulnerability is the consequence of weak service configuration.\n      \n    Disclosure date: 2002-02-01\n    Extra information:\n      \n    uid=1(daemon) gid=1(daemon) groups=1(daemon)\n  \n    References:\n      https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2004-2687\n      https://distcc.github.io/security.html\n      https://nvd.nist.gov/vuln/detail/CVE-2004-2687\n"
+            }
+          ]
+        },
+        {
+          "port": 5432,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "postgresql",
+          "product": "PostgreSQL DB",
+          "version": "8.3.0 - 8.3.7",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "ssl-ccs-injection",
+              "output": "\n  VULNERABLE:\n  SSL/TLS MITM vulnerability (CCS Injection)\n    State: VULNERABLE\n    Risk factor: High\n      OpenSSL before 0.9.8za, 1.0.0 before 1.0.0m, and 1.0.1 before 1.0.1h\n      does not properly restrict processing of ChangeCipherSpec messages,\n      which allows man-in-the-middle attackers to trigger use of a zero\n      length master key in certain OpenSSL-to-OpenSSL communications, and\n      consequently hijack sessions or obtain sensitive information, via\n      a crafted TLS handshake, aka the \"CCS Injection\" vulnerability.\n          \n    References:\n      http://www.openssl.org/news/secadv_20140605.txt\n      https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2014-0224\n      http://www.cvedetails.com/cve/2014-0224\n"
+            },
+            {
+              "id": "vulners",
+              "output": "\n  cpe:/a:postgresql:postgresql:8.3: \n    \tSSV:60718\t10.0\thttps://vulners.com/seebug/SSV:60718\t*EXPLOIT*\n    \tCVE-2013-1903\t10.0\thttps://vulners.com/cve/CVE-2013-1903\n    \tCVE-2013-1902\t10.0\thttps://vulners.com/cve/CVE-2013-1902\n    \tPACKETSTORM:216218\t9.9\thttps://vulners.com/packetstorm/PACKETSTORM:216218\t*EXPLOIT*\n    \tPOSTGRESQL:CVE-2019-10211\t9.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2019-10211\n    \tPOSTGRESQL:CVE-2018-16850\t9.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2018-16850\n    \tPOSTGRESQL:CVE-2017-7546\t9.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2017-7546\n    \tPOSTGRESQL:CVE-2015-3166\t9.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2015-3166\n    \tPOSTGRESQL:CVE-2015-0244\t9.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2015-0244\n    \tPACKETSTORM:189316\t9.8\thttps://vulners.com/packetstorm/PACKETSTORM:189316\t*EXPLOIT*\n    \tCVE-2019-10211\t9.8\thttps://vulners.com/cve/CVE-2019-10211\n    \tCVE-2015-3166\t9.8\thttps://vulners.com/cve/CVE-2015-3166\n    \tCVE-2015-0244\t9.8\thttps://vulners.com/cve/CVE-2015-0244\n    \tCNVD-2020-02196\t9.8\thttps://vulners.com/cnvd/CNVD-2020-02196\n    \tCNVD-2017-26577\t9.8\thttps://vulners.com/cnvd/CNVD-2017-26577\n    \tB675EF91-A407-518F-9D46-5325ACF11AAC\t9.8\thttps://vulners.com/githubexploit/B675EF91-A407-518F-9D46-5325ACF11AAC\t*EXPLOIT*\n    \t1337DAY-ID-39921\t9.8\thttps://vulners.com/zdt/1337DAY-ID-39921\t*EXPLOIT*\n    \tPOSTGRESQL:CVE-2016-7048\t9.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2016-7048\n    \tCVE-2016-7048\t9.3\thttps://vulners.com/cve/CVE-2016-7048\n    \tCNVD-2020-02193\t9.3\thttps://vulners.com/cnvd/CNVD-2020-02193\n    \tPOSTGRESQL:CVE-2018-1115\t9.1\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2018-1115\n    \tPOSTGRESQL:CVE-2016-3065\t9.1\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2016-3065\n    \tCVE-2018-1115\t9.1\thttps://vulners.com/cve/CVE-2018-1115\n    \tCNVD-2018-13765\t9.1\thttps://vulners.com/cnvd/CNVD-2018-13765\n    \tPOSTGRESQL:CVE-2019-10164\t9.0\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2019-10164\n    \tCVE-2019-10164\t9.0\thttps://vulners.com/cve/CVE-2019-10164\n    \tPOSTGRESQL:CVE-2026-6637\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-6637\n    \tPOSTGRESQL:CVE-2026-6477\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-6477\n    \tPOSTGRESQL:CVE-2026-6475\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-6475\n    \tPOSTGRESQL:CVE-2026-6473\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-6473\n    \tPOSTGRESQL:CVE-2026-2006\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-2006\n    \tPOSTGRESQL:CVE-2026-2005\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-2005\n    \tPOSTGRESQL:CVE-2026-2004\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-2004\n    \tPOSTGRESQL:CVE-2025-8715\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2025-8715\n    \tPOSTGRESQL:CVE-2025-8714\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2025-8714\n    \tPOSTGRESQL:CVE-2024-7348\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2024-7348\n    \tPOSTGRESQL:CVE-2024-10979\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2024-10979\n    \tPOSTGRESQL:CVE-2023-5869\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2023-5869\n    \tPOSTGRESQL:CVE-2023-39417\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2023-39417\n    \tPOSTGRESQL:CVE-2022-1552\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2022-1552\n    \tPOSTGRESQL:CVE-2021-32027\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2021-32027\n    \tPOSTGRESQL:CVE-2020-25695\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2020-25695\n    \tPOSTGRESQL:CVE-2019-10208\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2019-10208\n    \tPOSTGRESQL:CVE-2019-10127\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2019-10127\n    \tPOSTGRESQL:CVE-2018-1058\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2018-1058\n    \tPOSTGRESQL:CVE-2017-7547\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2017-7547\n    \tPOSTGRESQL:CVE-2015-0243\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2015-0243\n    \tPOSTGRESQL:CVE-2015-0242\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2015-0242\n    \tPOSTGRESQL:CVE-2015-0241\t8.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2015-0241\n    \tF271E10E-74F6-5C2A-953B-E052B8E053FC\t8.8\thttps://vulners.com/githubexploit/F271E10E-74F6-5C2A-953B-E052B8E053FC\t*EXPLOIT*\n    \tCVE-2022-1552\t8.8\thttps://vulners.com/cve/CVE-2022-1552\n    \tCVE-2021-32027\t8.8\thttps://vulners.com/cve/CVE-2021-32027\n    \tCVE-2020-25695\t8.8\thttps://vulners.com/cve/CVE-2020-25695\n    \tCVE-2019-10127\t8.8\thttps://vulners.com/cve/CVE-2019-10127\n    \tCVE-2015-0243\t8.8\thttps://vulners.com/cve/CVE-2015-0243\n    \tCVE-2015-0242\t8.8\thttps://vulners.com/cve/CVE-2015-0242\n    \tCVE-2015-0241\t8.8\thttps://vulners.com/cve/CVE-2015-0241\n    \tCNVD-2017-26578\t8.8\thttps://vulners.com/cnvd/CNVD-2017-26578\n    \tB49600A6-B130-55AB-BBE9-5FF0474D9BD2\t8.8\thttps://vulners.com/githubexploit/B49600A6-B130-55AB-BBE9-5FF0474D9BD2\t*EXPLOIT*\n    \t89EA5F2E-7042-5C6B-87AE-439E3F41312B\t8.8\thttps://vulners.com/githubexploit/89EA5F2E-7042-5C6B-87AE-439E3F41312B\t*EXPLOIT*\n    \t751B640D-0553-5C7C-8078-DF916AE09578\t8.8\thttps://vulners.com/githubexploit/751B640D-0553-5C7C-8078-DF916AE09578\t*EXPLOIT*\n    \t6585F25A-D705-53D3-ADAC-BC4390959601\t8.8\thttps://vulners.com/githubexploit/6585F25A-D705-53D3-ADAC-BC4390959601\t*EXPLOIT*\n    \tSSV:30015\t8.5\thttps://vulners.com/seebug/SSV:30015\t*EXPLOIT*\n    \tSSV:19652\t8.5\thttps://vulners.com/seebug/SSV:19652\t*EXPLOIT*\n    \tPOSTGRESQL:CVE-2018-10915\t8.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2018-10915\n    \tPOSTGRESQL:CVE-2013-1900\t8.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2013-1900\n    \tPOSTGRESQL:CVE-2010-1169\t8.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2010-1169\n    \tCVE-2010-1447\t8.5\thttps://vulners.com/cve/CVE-2010-1447\n    \tCVE-2010-1169\t8.5\thttps://vulners.com/cve/CVE-2010-1169\n    \tCNVD-2020-02199\t8.5\thttps://vulners.com/cnvd/CNVD-2020-02199\n    \tPOSTGRESQL:CVE-2016-5423\t8.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2016-5423\n    \tCVE-2016-5423\t8.3\thttps://vulners.com/cve/CVE-2016-5423\n    \tPOSTGRESQL:CVE-2026-2007\t8.2\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-2007\n    \tPOSTGRESQL:CVE-2025-1094\t8.1\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2025-1094\n    \tPOSTGRESQL:CVE-2021-23214\t8.1\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2021-23214\n    \tPOSTGRESQL:CVE-2020-25694\t8.1\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2020-25694\n    \tPOSTGRESQL:CVE-2018-10925\t8.1\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2018-10925\n    \tPOSTGRESQL:CVE-2017-15098\t8.1\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2017-15098\n    \tFC1D41BA-69D2-5303-B8A5-BD03641263C8\t8.1\thttps://vulners.com/githubexploit/FC1D41BA-69D2-5303-B8A5-BD03641263C8\t*EXPLOIT*\n    \tD0DF9BE5-0FD0-55AD-8B78-C13D7E73820A\t8.1\thttps://vulners.com/githubexploit/D0DF9BE5-0FD0-55AD-8B78-C13D7E73820A\t*EXPLOIT*\n    \tCVE-2021-23214\t8.1\thttps://vulners.com/cve/CVE-2021-23214\n    \tCVE-2020-25694\t8.1\thttps://vulners.com/cve/CVE-2020-25694\n    \tCNVD-2020-63992\t8.1\thttps://vulners.com/cnvd/CNVD-2020-63992\n    \tCNVD-2020-02195\t8.1\thttps://vulners.com/cnvd/CNVD-2020-02195\n    \t7B12EAF5-EBAC-5606-A1F6-EDF65F8B168D\t8.1\thttps://vulners.com/githubexploit/7B12EAF5-EBAC-5606-A1F6-EDF65F8B168D\t*EXPLOIT*\n    \t53C2CAF7-EEAD-5529-8250-EACEA16708FA\t8.1\thttps://vulners.com/githubexploit/53C2CAF7-EEAD-5529-8250-EACEA16708FA\t*EXPLOIT*\n    \t45CBB37E-6F66-58F4-ABB7-AD79A4446CD8\t8.1\thttps://vulners.com/githubexploit/45CBB37E-6F66-58F4-ABB7-AD79A4446CD8\t*EXPLOIT*\n    \t1E2D7847-DCA6-5603-988F-CCEEF6558320\t8.1\thttps://vulners.com/githubexploit/1E2D7847-DCA6-5603-988F-CCEEF6558320\t*EXPLOIT*\n    \tPOSTGRESQL:CVE-2024-0985\t8.0\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2024-0985\n    \tPOSTGRESQL:CVE-2022-2625\t8.0\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2022-2625\n    \tCVE-2022-2625\t8.0\thttps://vulners.com/cve/CVE-2022-2625\n    \tPOSTGRESQL:CVE-2019-3466\t7.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2019-3466\n    \tPOSTGRESQL:CVE-2019-10128\t7.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2019-10128\n    \tCVE-2019-10128\t7.8\thttps://vulners.com/cve/CVE-2019-10128\n    \tPOSTGRESQL:CVE-2020-25696\t7.6\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2020-25696\n    \tCVE-2020-25696\t7.6\thttps://vulners.com/cve/CVE-2020-25696\n    \tPOSTGRESQL:CVE-2026-6479\t7.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-6479\n    \tPOSTGRESQL:CVE-2017-7548\t7.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2017-7548\n    \tPOSTGRESQL:CVE-2017-7486\t7.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2017-7486\n    \tPOSTGRESQL:CVE-2017-7484\t7.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2017-7484\n    \tPOSTGRESQL:CVE-2016-2193\t7.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2016-2193\n    \tPOSTGRESQL:CVE-2016-0773\t7.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2016-0773\n    \tPOSTGRESQL:CVE-2015-3167\t7.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2015-3167\n    \tCVE-2017-7484\t7.5\thttps://vulners.com/cve/CVE-2017-7484\n    \tCVE-2016-0773\t7.5\thttps://vulners.com/cve/CVE-2016-0773\n    \tCVE-2016-0768\t7.5\thttps://vulners.com/cve/CVE-2016-0768\n    \tCVE-2015-3167\t7.5\thttps://vulners.com/cve/CVE-2015-3167\n    \tCNVD-2017-26579\t7.5\thttps://vulners.com/cnvd/CNVD-2017-26579\n    \tCNVD-2017-22338\t7.5\thttps://vulners.com/cnvd/CNVD-2017-22338\n    \tCNVD-2017-06930\t7.5\thttps://vulners.com/cnvd/CNVD-2017-06930\n    \tPOSTGRESQL:CVE-2020-14350\t7.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2020-14350\n    \tPOSTGRESQL:CVE-2020-10733\t7.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2020-10733\n    \tEDB-ID:45184\t7.3\thttps://vulners.com/exploitdb/EDB-ID:45184\t*EXPLOIT*\n    \tCVE-2020-14350\t7.3\thttps://vulners.com/cve/CVE-2020-14350\n    \tCVE-2020-10733\t7.3\thttps://vulners.com/cve/CVE-2020-10733\n    \tCVE-2017-14798\t7.3\thttps://vulners.com/cve/CVE-2017-14798\n    \tPOSTGRESQL:CVE-2026-6476\t7.2\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-6476\n    \tPOSTGRESQL:CVE-2023-2454\t7.2\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2023-2454\n    \tPOSTGRESQL:CVE-2017-12172\t7.2\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2017-12172\n    \tCVE-2023-2454\t7.2\thttps://vulners.com/cve/CVE-2023-2454\n    \tPOSTGRESQL:CVE-2020-14349\t7.1\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2020-14349\n    \tPOSTGRESQL:CVE-2016-5424\t7.1\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2016-5424\n    \tCVE-2020-14349\t7.1\thttps://vulners.com/cve/CVE-2020-14349\n    \tCVE-2016-5424\t7.1\thttps://vulners.com/cve/CVE-2016-5424\n    \tCNVD-2020-64266\t7.1\thttps://vulners.com/cnvd/CNVD-2020-64266\n    \tPOSTGRESQL:CVE-2019-10210\t7.0\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2019-10210\n    \tPOSTGRESQL:CVE-2018-1053\t7.0\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2018-1053\n    \tCVE-2019-10210\t7.0\thttps://vulners.com/cve/CVE-2019-10210\n    \tPACKETSTORM:148884\t6.9\thttps://vulners.com/packetstorm/PACKETSTORM:148884\t*EXPLOIT*\n    \tEXPLOITPACK:6F8D33BC4F1C65AE0911D23B5E6EB665\t6.9\thttps://vulners.com/exploitpack/EXPLOITPACK:6F8D33BC4F1C65AE0911D23B5E6EB665\t*EXPLOIT*\n    \t1337DAY-ID-30875\t6.9\thttps://vulners.com/zdt/1337DAY-ID-30875\t*EXPLOIT*\n    \tSSV:30152\t6.8\thttps://vulners.com/seebug/SSV:30152\t*EXPLOIT*\n    \tPOSTGRESQL:CVE-2013-0255\t6.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2013-0255\n    \tPOSTGRESQL:CVE-2012-0868\t6.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2012-0868\n    \tPOSTGRESQL:CVE-2009-3231\t6.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2009-3231\n    \tCVE-2013-0255\t6.8\thttps://vulners.com/cve/CVE-2013-0255\n    \tCVE-2012-0868\t6.8\thttps://vulners.com/cve/CVE-2012-0868\n    \tCVE-2009-3231\t6.8\thttps://vulners.com/cve/CVE-2009-3231\n    \tSSV:62083\t6.5\thttps://vulners.com/seebug/SSV:62083\t*EXPLOIT*\n    \tSSV:62016\t6.5\thttps://vulners.com/seebug/SSV:62016\t*EXPLOIT*\n    \tSSV:61543\t6.5\thttps://vulners.com/seebug/SSV:61543\t*EXPLOIT*\n    \tSSV:60720\t6.5\thttps://vulners.com/seebug/SSV:60720\t*EXPLOIT*\n    \tSSV:19018\t6.5\thttps://vulners.com/seebug/SSV:19018\t*EXPLOIT*\n    \tSSV:15153\t6.5\thttps://vulners.com/seebug/SSV:15153\t*EXPLOIT*\n    \tSSV:15097\t6.5\thttps://vulners.com/seebug/SSV:15097\t*EXPLOIT*\n    \tSSV:15095\t6.5\thttps://vulners.com/seebug/SSV:15095\t*EXPLOIT*\n    \tPOSTGRESQL:CVE-2026-6478\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-6478\n    \tPOSTGRESQL:CVE-2021-3677\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2021-3677\n    \tPOSTGRESQL:CVE-2021-32029\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2021-32029\n    \tPOSTGRESQL:CVE-2021-32028\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2021-32028\n    \tPOSTGRESQL:CVE-2020-1720\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2020-1720\n    \tPOSTGRESQL:CVE-2019-10129\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2019-10129\n    \tPOSTGRESQL:CVE-2018-1052\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2018-1052\n    \tPOSTGRESQL:CVE-2017-15099\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2017-15099\n    \tPOSTGRESQL:CVE-2014-0065\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2014-0065\n    \tPOSTGRESQL:CVE-2014-0064\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2014-0064\n    \tPOSTGRESQL:CVE-2014-0063\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2014-0063\n    \tPOSTGRESQL:CVE-2014-0061\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2014-0061\n    \tPOSTGRESQL:CVE-2013-1899\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2013-1899\n    \tPOSTGRESQL:CVE-2012-3489\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2012-3489\n    \tPOSTGRESQL:CVE-2012-0866\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2012-0866\n    \tPOSTGRESQL:CVE-2010-4015\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2010-4015\n    \tPOSTGRESQL:CVE-2009-4136\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2009-4136\n    \tPOSTGRESQL:CVE-2009-3230\t6.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2009-3230\n    \tPACKETSTORM:180960\t6.5\thttps://vulners.com/packetstorm/PACKETSTORM:180960\t*EXPLOIT*\n    \tMSF:AUXILIARY-SCANNER-POSTGRES-POSTGRES_DBNAME_FLAG_INJECTION-\t6.5\thttps://vulners.com/metasploit/MSF:AUXILIARY-SCANNER-POSTGRES-POSTGRES_DBNAME_FLAG_INJECTION-\t*EXPLOIT*\n    \tCVE-2021-3677\t6.5\thttps://vulners.com/cve/CVE-2021-3677\n    \tCVE-2021-32029\t6.5\thttps://vulners.com/cve/CVE-2021-32029\n    \tCVE-2021-32028\t6.5\thttps://vulners.com/cve/CVE-2021-32028\n    \tCVE-2014-0065\t6.5\thttps://vulners.com/cve/CVE-2014-0065\n    \tCVE-2014-0064\t6.5\thttps://vulners.com/cve/CVE-2014-0064\n    \tCVE-2014-0063\t6.5\thttps://vulners.com/cve/CVE-2014-0063\n    \tCVE-2014-0061\t6.5\thttps://vulners.com/cve/CVE-2014-0061\n    \tCVE-2012-3489\t6.5\thttps://vulners.com/cve/CVE-2012-3489\n    \tCVE-2012-0866\t6.5\thttps://vulners.com/cve/CVE-2012-0866\n    \tCVE-2010-4015\t6.5\thttps://vulners.com/cve/CVE-2010-4015\n    \tCVE-2010-0442\t6.5\thttps://vulners.com/cve/CVE-2010-0442\n    \tPOSTGRESQL:CVE-2015-5289\t6.4\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2015-5289\n    \tPOSTGRESQL:CVE-2015-5288\t6.4\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2015-5288\n    \tCVE-2015-5288\t6.4\thttps://vulners.com/cve/CVE-2015-5288\n    \tPOSTGRESQL:CVE-2010-3433\t6.0\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2010-3433\n    \tPOSTGRESQL:CVE-2010-1170\t6.0\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2010-1170\n    \tCVE-2010-3433\t6.0\thttps://vulners.com/cve/CVE-2010-3433\n    \tCVE-2010-1170\t6.0\thttps://vulners.com/cve/CVE-2010-1170\n    \tPOSTGRESQL:CVE-2025-4207\t5.9\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2025-4207\n    \tPOSTGRESQL:CVE-2025-12818\t5.9\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2025-12818\n    \tPOSTGRESQL:CVE-2021-23222\t5.9\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2021-23222\n    \tPOSTGRESQL:CVE-2017-7485\t5.9\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2017-7485\n    \tCVE-2021-23222\t5.9\thttps://vulners.com/cve/CVE-2021-23222\n    \tCNVD-2017-06931\t5.9\thttps://vulners.com/cnvd/CNVD-2017-06931\n    \tSSV:15154\t5.8\thttps://vulners.com/seebug/SSV:15154\t*EXPLOIT*\n    \tSSV:15096\t5.8\thttps://vulners.com/seebug/SSV:15096\t*EXPLOIT*\n    \tPOSTGRESQL:CVE-2009-4034\t5.8\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2009-4034\n    \tSSV:19669\t5.5\thttps://vulners.com/seebug/SSV:19669\t*EXPLOIT*\n    \tPOSTGRESQL:CVE-2010-1975\t5.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2010-1975\n    \tCVE-2010-1975\t5.5\thttps://vulners.com/cve/CVE-2010-1975\n    \tPOSTGRESQL:CVE-2026-6472\t5.4\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-6472\n    \tPOSTGRESQL:CVE-2024-10976\t5.4\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2024-10976\n    \tPOSTGRESQL:CVE-2023-2455\t5.4\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2023-2455\n    \tCVE-2023-2455\t5.4\thttps://vulners.com/cve/CVE-2023-2455\n    \tCVE-2011-2483\t5.0\thttps://vulners.com/cve/CVE-2011-2483\n    \tSSV:61546\t4.9\thttps://vulners.com/seebug/SSV:61546\t*EXPLOIT*\n    \tSSV:60334\t4.9\thttps://vulners.com/seebug/SSV:60334\t*EXPLOIT*\n    \tPOSTGRESQL:CVE-2014-0062\t4.9\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2014-0062\n    \tPOSTGRESQL:CVE-2012-3488\t4.9\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2012-3488\n    \tCVE-2014-0062\t4.9\thttps://vulners.com/cve/CVE-2014-0062\n    \tCVE-2012-3488\t4.9\thttps://vulners.com/cve/CVE-2012-3488\n    \tSSV:61544\t4.6\thttps://vulners.com/seebug/SSV:61544\t*EXPLOIT*\n    \tPOSTGRESQL:CVE-2014-0067\t4.6\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2014-0067\n    \tCVE-2014-0067\t4.6\thttps://vulners.com/cve/CVE-2014-0067\n    \tPOSTGRESQL:CVE-2023-5870\t4.4\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2023-5870\n    \tPOSTGRESQL:CVE-2026-6575\t4.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-6575\n    \tPOSTGRESQL:CVE-2026-6474\t4.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-6474\n    \tPOSTGRESQL:CVE-2026-2003\t4.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-2003\n    \tPOSTGRESQL:CVE-2024-4317\t4.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2024-4317\n    \tPOSTGRESQL:CVE-2023-5868\t4.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2023-5868\n    \tPOSTGRESQL:CVE-2023-39418\t4.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2023-39418\n    \tPOSTGRESQL:CVE-2021-3393\t4.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2021-3393\n    \tPOSTGRESQL:CVE-2021-20229\t4.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2021-20229\n    \tPOSTGRESQL:CVE-2019-10130\t4.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2019-10130\n    \tPOSTGRESQL:CVE-2015-3165\t4.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2015-3165\n    \tPOSTGRESQL:CVE-2014-8161\t4.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2014-8161\n    \tPOSTGRESQL:CVE-2012-2143\t4.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2012-2143\n    \tPOSTGRESQL:CVE-2012-0867\t4.3\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2012-0867\n    \tCVE-2021-3393\t4.3\thttps://vulners.com/cve/CVE-2021-3393\n    \tCVE-2021-20229\t4.3\thttps://vulners.com/cve/CVE-2021-20229\n    \tCVE-2015-3165\t4.3\thttps://vulners.com/cve/CVE-2015-3165\n    \tCVE-2014-8161\t4.3\thttps://vulners.com/cve/CVE-2014-8161\n    \tCVE-2012-2143\t4.3\thttps://vulners.com/cve/CVE-2012-2143\n    \t8B99F26F-7E4B-52DB-AEE3-1D5FC0D160CD\t4.3\thttps://vulners.com/gitee/8B99F26F-7E4B-52DB-AEE3-1D5FC0D160CD\t*EXPLOIT*\n    \t06D0C38D-C4BF-53FB-A3AF-F6F83A71A24A\t4.3\thttps://vulners.com/gitee/06D0C38D-C4BF-53FB-A3AF-F6F83A71A24A\t*EXPLOIT*\n    \tPOSTGRESQL:CVE-2024-10978\t4.2\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2024-10978\n    \tSSV:61547\t4.0\thttps://vulners.com/seebug/SSV:61547\t*EXPLOIT*\n    \tSSV:61545\t4.0\thttps://vulners.com/seebug/SSV:61545\t*EXPLOIT*\n    \tSSV:60719\t4.0\thttps://vulners.com/seebug/SSV:60719\t*EXPLOIT*\n    \tSSV:60335\t4.0\thttps://vulners.com/seebug/SSV:60335\t*EXPLOIT*\n    \tSSV:60186\t4.0\thttps://vulners.com/seebug/SSV:60186\t*EXPLOIT*\n    \tSSV:4928\t4.0\thttps://vulners.com/seebug/SSV:4928\t*EXPLOIT*\n    \tPOSTGRESQL:CVE-2014-0066\t4.0\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2014-0066\n    \tPOSTGRESQL:CVE-2014-0060\t4.0\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2014-0060\n    \tPOSTGRESQL:CVE-2013-1901\t4.0\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2013-1901\n    \tPOSTGRESQL:CVE-2012-2655\t4.0\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2012-2655\n    \tPOSTGRESQL:CVE-2009-3229\t4.0\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2009-3229\n    \tPOSTGRESQL:CVE-2009-0922\t4.0\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2009-0922\n    \tCVE-2014-0066\t4.0\thttps://vulners.com/cve/CVE-2014-0066\n    \tCVE-2014-0060\t4.0\thttps://vulners.com/cve/CVE-2014-0060\n    \tCVE-2012-2655\t4.0\thttps://vulners.com/cve/CVE-2012-2655\n    \tCVE-2009-3229\t4.0\thttps://vulners.com/cve/CVE-2009-3229\n    \tPOSTGRESQL:CVE-2026-6638\t3.7\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2026-6638\n    \tPOSTGRESQL:CVE-2024-10977\t3.7\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2024-10977\n    \tPOSTGRESQL:CVE-2022-41862\t3.7\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2022-41862\n    \tCVE-2022-41862\t3.7\thttps://vulners.com/cve/CVE-2022-41862\n    \tSSV:19322\t3.5\thttps://vulners.com/seebug/SSV:19322\t*EXPLOIT*\n    \tPOSTGRESQL:CVE-2019-10209\t3.5\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2019-10209\n    \tPACKETSTORM:127092\t3.5\thttps://vulners.com/packetstorm/PACKETSTORM:127092\t*EXPLOIT*\n    \tCVE-2010-0733\t3.5\thttps://vulners.com/cve/CVE-2010-0733\n    \tPOSTGRESQL:CVE-2025-8713\t3.1\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2025-8713\n    \tPOSTGRESQL:CVE-2025-12817\t3.1\thttps://vulners.com/postgresql/POSTGRESQL:CVE-2025-12817"
+            },
+            {
+              "id": "ssl-poodle",
+              "output": "\n  VULNERABLE:\n  SSL POODLE information leak\n    State: VULNERABLE\n    IDs:  BID:70574  CVE:CVE-2014-3566\n          The SSL protocol 3.0, as used in OpenSSL through 1.0.1i and other\n          products, uses nondeterministic CBC padding, which makes it easier\n          for man-in-the-middle attackers to obtain cleartext data via a\n          padding-oracle attack, aka the \"POODLE\" issue.\n    Disclosure date: 2014-10-14\n    Check results:\n      TLS_RSA_WITH_AES_128_CBC_SHA\n    References:\n      https://www.imperialviolet.org/2014/10/14/poodle.html\n      https://www.openssl.org/~bodo/ssl-poodle.pdf\n      https://www.securityfocus.com/bid/70574\n      https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2014-3566\n"
+            },
+            {
+              "id": "ssl-dh-params",
+              "output": "\n  VULNERABLE:\n  Diffie-Hellman Key Exchange Insufficient Group Strength\n    State: VULNERABLE\n      Transport Layer Security (TLS) services that use Diffie-Hellman groups\n      of insufficient strength, especially those using one of a few commonly\n      shared groups, may be susceptible to passive eavesdropping attacks.\n    Check results:\n      WEAK DH GROUP 1\n            Cipher Suite: TLS_DHE_RSA_WITH_AES_128_CBC_SHA\n            Modulus Type: Safe prime\n            Modulus Source: Unknown/Custom-generated\n            Modulus Length: 1024\n            Generator Length: 8\n            Public Key Length: 1024\n    References:\n      https://weakdh.org\n"
+            }
+          ]
+        },
+        {
+          "port": 5900,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "vnc",
+          "product": "VNC",
+          "version": "",
+          "extra_info": "protocol 3.3",
+          "confidence": 10,
+          "method": "probed"
+        },
+        {
+          "port": 6000,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "X11",
+          "product": "",
+          "version": "",
+          "extra_info": "access denied",
+          "confidence": 10,
+          "method": "probed"
+        },
+        {
+          "port": 6667,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "irc",
+          "product": "UnrealIRCd",
+          "version": "",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "irc-unrealircd-backdoor",
+              "output": "Looks like trojaned version of unrealircd. See http://seclists.org/fulldisclosure/2010/Jun/277"
+            },
+            {
+              "id": "irc-botnet-channels",
+              "output": "\n  ERROR: Closing Link: [10.83.113.58] (Too many unknown connections from your IP)\n"
+            }
+          ]
+        },
+        {
+          "port": 6697,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "irc",
+          "product": "UnrealIRCd",
+          "version": "",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "ssl-ccs-injection",
+              "output": "No reply from server (TIMEOUT)"
+            },
+            {
+              "id": "irc-botnet-channels",
+              "output": "\n  ERROR: Closing Link: [10.83.113.58] (Too many unknown connections from your IP)\n"
+            }
+          ]
+        },
+        {
+          "port": 8009,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "ajp13",
+          "product": "Apache Jserv",
+          "version": "",
+          "extra_info": "Protocol v1.3",
+          "confidence": 10,
+          "method": "probed"
+        },
+        {
+          "port": 8180,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "http",
+          "product": "Apache Tomcat/Coyote JSP engine",
+          "version": "1.1",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "http-enum",
+              "output": "\n  /admin/: Possible admin folder\n  /admin/index.html: Possible admin folder\n  /admin/login.html: Possible admin folder\n  /admin/admin.html: Possible admin folder\n  /admin/account.html: Possible admin folder\n  /admin/admin_login.html: Possible admin folder\n  /admin/home.html: Possible admin folder\n  /admin/admin-login.html: Possible admin folder\n  /admin/adminLogin.html: Possible admin folder\n  /admin/controlpanel.html: Possible admin folder\n  /admin/cp.html: Possible admin folder\n  /admin/index.jsp: Possible admin folder\n  /admin/login.jsp: Possible admin folder\n  /admin/admin.jsp: Possible admin folder\n  /admin/home.jsp: Possible admin folder\n  /admin/controlpanel.jsp: Possible admin folder\n  /admin/admin-login.jsp: Possible admin folder\n  /admin/cp.jsp: Possible admin folder\n  /admin/account.jsp: Possible admin folder\n  /admin/admin_login.jsp: Possible admin folder\n  /admin/adminLogin.jsp: Possible admin folder\n  /manager/html/upload: Apache Tomcat (401 Unauthorized)\n  /manager/html: Apache Tomcat (401 Unauthorized)\n  /admin/view/javascript/fckeditor/editor/filemanager/connectors/test.html: OpenCart/FCKeditor File upload\n  /admin/includes/FCKeditor/editor/filemanager/upload/test.html: ASP Simple Blog / FCKeditor File Upload\n  /admin/jscript/upload.html: Lizard Cart/Remote File upload\n  /webdav/: Potentially interesting folder\n"
+            },
+            {
+              "id": "http-dombased-xss",
+              "output": "Couldn't find any DOM based XSS."
+            },
+            {
+              "id": "http-stored-xss",
+              "output": "Couldn't find any stored XSS vulnerabilities."
+            },
+            {
+              "id": "http-cookie-flags",
+              "output": "\n  /admin/: \n    JSESSIONID: \n      httponly flag not set\n  /admin/index.html: \n    JSESSIONID: \n      httponly flag not set\n  /admin/login.html: \n    JSESSIONID: \n      httponly flag not set\n  /admin/admin.html: \n    JSESSIONID: \n      httponly flag not set\n  /admin/account.html: \n    JSESSIONID: \n      httponly flag not set\n  /admin/admin_login.html: \n    JSESSIONID: \n      httponly flag not set\n  /admin/home.html: \n    JSESSIONID: \n      httponly flag not set\n  /admin/admin-login.html: \n    JSESSIONID: \n      httponly flag not set\n  /admin/adminLogin.html: \n    JSESSIONID: \n      httponly flag not set\n  /admin/controlpanel.html: \n    JSESSIONID: \n      httponly flag not set\n  /admin/cp.html: \n    JSESSIONID: \n      httponly flag not set\n  /admin/index.jsp: \n    JSESSIONID: \n      httponly flag not set\n  /admin/login.jsp: \n    JSESSIONID: \n      httponly flag not set\n  /admin/admin.jsp: \n    JSESSIONID: \n      httponly flag not set\n  /admin/home.jsp: \n    JSESSIONID: \n      httponly flag not set\n  /admin/controlpanel.jsp: \n    JSESSIONID: \n      httponly flag not set\n  /admin/admin-login.jsp: \n    JSESSIONID: \n      httponly flag not set\n  /admin/cp.jsp: \n    JSESSIONID: \n      httponly flag not set\n  /admin/account.jsp: \n    JSESSIONID: \n      httponly flag not set\n  /admin/admin_login.jsp: \n    JSESSIONID: \n      httponly flag not set\n  /admin/adminLogin.jsp: \n    JSESSIONID: \n      httponly flag not set\n  /admin/view/javascript/fckeditor/editor/filemanager/connectors/test.html: \n    JSESSIONID: \n      httponly flag not set\n  /admin/includes/FCKeditor/editor/filemanager/upload/test.html: \n    JSESSIONID: \n      httponly flag not set\n  /admin/jscript/upload.html: \n    JSESSIONID: \n      httponly flag not set"
+            },
+            {
+              "id": "http-sql-injection",
+              "output": "ERROR: Script execution failed (use -d to debug)"
+            },
+            {
+              "id": "http-server-header",
+              "output": "Apache-Coyote/1.1"
+            },
+            {
+              "id": "http-csrf",
+              "output": "\nSpidering limited to: maxdepth=3; maxpagecount=20; withinhost=10.83.113.160\n  Found the following possible CSRF vulnerabilities: \n    \n    Path: http://10.83.113.160:8180/admin/\n    Form id: username\n    Form action: j_security_check;jsessionid=3CCDD5E9BD1E7F5789D2A3B3942DF5B8\n"
+            }
+          ]
+        },
+        {
+          "port": 8787,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "drb",
+          "product": "Ruby DRb RMI",
+          "version": "",
+          "extra_info": "Ruby 1.8; path /usr/lib/ruby/1.8/drb",
+          "confidence": 10,
+          "method": "probed"
+        },
+        {
+          "port": 37740,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "status",
+          "product": "",
+          "version": "1",
+          "extra_info": "RPC #100024",
+          "confidence": 10,
+          "method": "probed"
+        },
+        {
+          "port": 41535,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "java-rmi",
+          "product": "GNU Classpath grmiregistry",
+          "version": "",
+          "extra_info": "",
+          "confidence": 10,
+          "method": "probed",
+          "scripts": [
+            {
+              "id": "rmi-vuln-classloader",
+              "output": "\n  VULNERABLE:\n  RMI registry default configuration remote code execution vulnerability\n    State: VULNERABLE\n      Default configuration of RMI registry allows loading classes from remote URLs which can lead to remote code execution.\n      \n    References:\n      https://github.com/rapid7/metasploit-framework/blob/master/modules/exploits/multi/misc/java_rmi_server.rb\n"
+            }
+          ]
+        },
+        {
+          "port": 43990,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "mountd",
+          "product": "",
+          "version": "1-3",
+          "extra_info": "RPC #100005",
+          "confidence": 10,
+          "method": "probed"
+        },
+        {
+          "port": 45361,
+          "protocol": "tcp",
+          "state": "open",
+          "service": "nlockmgr",
+          "product": "",
+          "version": "1-4",
+          "extra_info": "RPC #100021",
+          "confidence": 10,
+          "method": "probed"
+        }
+      ],
+      "mac": "00:0C:29:18:E5:6E",
+      "vendor": "VMware"
+    }
+  ],
+  "scan_summary": {
+    "elapsed": "474.76",
+    "summary": "Nmap done at Sat May 16 14:28:33 2026; 1 IP address (1 host up) scanned in 474.76 seconds",
+    "hosts_up": "1",
+    "hosts_total": "1"
+  },
+  "raw_length": 280292,
+  "simulated": false
+}
