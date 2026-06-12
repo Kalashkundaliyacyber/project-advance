@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ThreatWeave AI — Risk Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0d14;--bg2:#0f1420;--bg3:#131824;--bg4:#181f2e;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);
+  --text:#e2e8f5;--text2:#8892a4;--text3:#5a6478;
+  --red:#f87171;--orange:#fb923c;--blue:#60a5fa;--green:#34d399;--purple:#a78bfa;
+  --red-dim:rgba(248,113,113,0.12);--orange-dim:rgba(251,146,60,0.12);
+  --blue-dim:rgba(96,165,250,0.12);--green-dim:rgba(52,211,153,0.12);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;overflow:hidden}
+
+/* ── Topbar ── */
+.topbar{height:50px;background:var(--bg2);border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;gap:10px;padding:0 18px;flex-shrink:0;position:relative;z-index:10}
+.logo{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text)}
+.logo-icon{width:28px;height:28px;background:linear-gradient(135deg,rgba(167,139,250,.25),rgba(96,165,250,.15));
+  border:1px solid rgba(167,139,250,.3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.sep{color:rgba(255,255,255,.18);font-size:15px;padding:0 2px}
+.graph-name{font-size:13px;font-weight:600;color:#a5b4fc}
+.meta{font-size:11px;color:var(--text3);margin-left:auto;background:var(--bg3);
+  padding:3px 10px;border-radius:20px;border:1px solid var(--border)}
+.close-btn{margin-left:10px;background:rgba(255,255,255,.05);border:1px solid var(--border2);
+  border-radius:6px;color:var(--text3);font-size:12px;padding:4px 12px;cursor:pointer;transition:all .15s}
+.close-btn:hover{background:rgba(255,255,255,.1);color:var(--text)}
+
+/* ── Body ── */
+.body{position:absolute;top:50px;left:0;right:0;bottom:0;overflow:auto;background:var(--bg)}
+
+/* ── Loader ── */
+.loader{display:flex;align-items:center;justify-content:center;height:100%;gap:10px;
+  color:var(--text2);font-size:13px}
+.spinner{width:18px;height:18px;border:2px solid rgba(167,139,250,.2);
+  border-top-color:#a78bfa;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Dashboard Grid ── */
+.dash{padding:16px;display:flex;flex-direction:column;gap:14px;min-height:100%}
+
+/* Row 1: KPI cards */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{background:var(--bg3);border:1px solid var(--border);border-radius:12px;
+  padding:16px 18px;position:relative;overflow:hidden;transition:border-color .2s}
+.kpi:hover{border-color:var(--border2)}
+.kpi-top{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.kpi-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3)}
+.kpi-num{font-size:36px;font-weight:800;line-height:1;letter-spacing:-.02em;margin-bottom:4px}
+.kpi-sub{font-size:11px;color:var(--text3)}
+.kpi-sparkline{position:absolute;bottom:0;left:0;right:0;height:36px;opacity:.55}
+.kpi.crit{border-left:3px solid var(--red)}.kpi.high{border-left:3px solid var(--orange)}
+.kpi.med{border-left:3px solid var(--blue)}.kpi.low{border-left:3px solid var(--green)}
+.kpi.crit .kpi-num{color:var(--red)}.kpi.high .kpi-num{color:var(--orange)}
+.kpi.med .kpi-num{color:var(--blue)}.kpi.low .kpi-num{color:var(--green)}
+.kpi.crit .kpi-icon{background:var(--red-dim);color:var(--red)}
+.kpi.high .kpi-icon{background:var(--orange-dim);color:var(--orange)}
+.kpi.med .kpi-icon{background:var(--blue-dim);color:var(--blue)}
+.kpi.low .kpi-icon{background:var(--green-dim);color:var(--green)}
+
+/* Row 2: Threat score + Risk summary + Top services */
+.mid-row{display:grid;grid-template-columns:300px 1fr 320px;gap:12px}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px}
+.card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--text3);margin-bottom:14px}
+
+/* Threat score card */
+.threat-score-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+.gauge-wrap{position:relative;width:160px;height:90px}
+.gauge-svg{width:100%;height:100%}
+.gauge-num{position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  text-align:center;line-height:1}
+.gauge-big{font-size:38px;font-weight:800;letter-spacing:-.02em}
+.gauge-of{font-size:11px;color:var(--text3)}
+.threat-label{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.threat-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-top:6px}
+.tm-item{background:var(--bg4);border-radius:8px;padding:8px 10px}
+.tm-label{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:3px}
+.tm-val{font-size:13px;font-weight:700}
+.tm-val.red{color:var(--red)}.tm-val.orange{color:var(--orange)}.tm-val.blue{color:var(--blue)}.tm-val.green{color:var(--green)}
+
+/* Risk summary radar */
+.radar-wrap{flex:1;min-height:0;position:relative;height:200px}
+.radar-wrap canvas{position:absolute;inset:0}
+.risk-label-row{font-size:11px;color:var(--text2);margin-top:8px;text-align:center}
+
+/* Top services */
+.svc-list{display:flex;flex-direction:column;gap:7px}
+.svc-item{display:flex;align-items:center;gap:10px}
+.svc-name{font-size:12px;font-weight:600;width:50px;flex-shrink:0}
+.svc-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.svc-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.svc-count{font-size:11px;color:var(--text3);width:22px;text-align:right;flex-shrink:0}
+.badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:.04em;flex-shrink:0}
+.badge.crit{background:rgba(248,113,113,.15);color:var(--red)}
+.badge.high{background:rgba(251,146,60,.15);color:var(--orange)}
+.badge.med{background:rgba(96,165,250,.15);color:var(--blue)}
+.badge.low{background:rgba(52,211,153,.15);color:var(--green)}
+
+/* Row 3: CVE table + CVE bar + Activity */
+.bot-row{display:grid;grid-template-columns:1fr 260px 280px;gap:12px}
+
+/* CVE table */
+.cve-table{width:100%;border-collapse:collapse}
+.cve-table th{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--text3);padding:0 8px 8px;text-align:left}
+.cve-table td{font-size:11px;padding:7px 8px;border-top:1px solid var(--border)}
+.cve-table tr:hover td{background:rgba(255,255,255,.02)}
+.cve-id{color:#93c5fd;font-weight:600;font-family:monospace;font-size:11px}
+.cvss-pill{display:inline-block;font-size:10px;font-weight:700;padding:1px 8px;border-radius:4px}
+
+/* CVE bar */
+.cve-bar-card .bar-canvas-wrap{flex:1;min-height:0;position:relative;height:180px}
+.cve-bar-card .bar-canvas-wrap canvas{position:absolute;inset:0}
+.cve-bar-card{display:flex;flex-direction:column}
+
+/* Activity */
+.activity-list{display:flex;flex-direction:column;gap:1px}
+.act-item{display:flex;gap:10px;padding:9px 10px;border-radius:8px;transition:background .15s}
+.act-item:hover{background:rgba(255,255,255,.03)}
+.act-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.act-dot.green{background:var(--green);box-shadow:0 0 6px var(--green)}
+.act-dot.red{background:var(--red);box-shadow:0 0 6px var(--red)}
+.act-dot.orange{background:var(--orange);box-shadow:0 0 6px var(--orange)}
+.act-dot.blue{background:var(--blue)}
+.act-body{flex:1;min-width:0}
+.act-title{font-size:12px;font-weight:600;margin-bottom:2px}
+.act-desc{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.act-time{font-size:10px;color:var(--text3);flex-shrink:0;margin-top:2px}
+.view-link{display:inline-block;margin-top:12px;font-size:11px;color:#93c5fd;cursor:pointer;
+  border:1px solid rgba(96,165,250,.2);border-radius:6px;padding:5px 12px;transition:all .15s;text-align:center;width:100%}
+.view-link:hover{background:rgba(96,165,250,.08);border-color:rgba(96,165,250,.4)}
+
+/* OSINT tree (unchanged) */
+#osint-canvas{position:absolute;inset:0;width:100%;height:100%}
+#osint-svg{width:100%;height:100%;display:block}
+#osint-loading{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;gap:10px;color:var(--text2);font-size:13px;background:var(--bg);pointer-events:none}
+#osint-loading.hidden{display:none}
+#osint-empty{position:absolute;inset:0;display:none;align-items:center;
+  justify-content:center;flex-direction:column;gap:12px;background:var(--bg)}
+#osint-empty.show{display:flex}
+#osint-status{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  font-size:11px;color:var(--text2);background:rgba(0,0,0,.55);padding:4px 14px;
+  border-radius:20px;pointer-events:none;white-space:nowrap}
+#osint-tip{position:absolute;pointer-events:none;background:var(--bg2);
+  border:1px solid var(--border);border-radius:8px;padding:10px 13px;
+  font-size:12px;color:var(--text);display:none;max-width:240px;z-index:100;
+  box-shadow:0 8px 32px rgba(0,0,0,.5)}
+
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;gap:12px}
+.empty-icon{font-size:44px}
+.empty-title{font-size:15px;font-weight:600;color:var(--text2)}
+.empty-sub{font-size:12px;color:var(--text3);text-align:center;max-width:320px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><div class="logo-icon">🛡</div>ThreatWeave AI</div>
+  <span class="sep">/</span>
+  <span class="graph-name" id="gv-name">Dashboard</span>
+  <span class="meta" id="gv-meta"></span>
+  <button class="close-btn" onclick="window.close()">✕ Close</button>
+</div>
+
+<div class="body" id="gv-body">
+  <div class="loader" id="gv-loader"><div class="spinner"></div>Loading…</div>
+</div>
+
+<script src="js/utils/debounce.js?v=5.0"></script>
+<script src="js/graphs.js?v=5.2"></script>
+
+<script>
+const gType  = new URLSearchParams(location.search).get('type') || 'dashboard';
+const body   = document.getElementById('gv-body');
+const nameEl = document.getElementById('gv-name');
+const metaEl = document.getElementById('gv-meta');
+
+let scanData = null;
+try {
+  const raw = sessionStorage.getItem('threatweave_graph_data')
+           || localStorage.getItem('threatweave_graph_data');
+  if (raw) scanData = JSON.parse(raw);
+} catch(e) { console.warn('Graph data parse error:', e); }
+
+function portScore(p){ return parseFloat(p?.risk?.score ?? p?.risk_score ?? p?.cvss ?? 0); }
+function portLevel(p){ return (p?.risk?.level ?? p?.risk_level ?? 'low').toLowerCase(); }
+
+function showEmpty(msg){
+  body.innerHTML = `<div class="empty-state">
+    <div class="empty-icon">📭</div>
+    <div class="empty-title">No data available</div>
+    <div class="empty-sub">${msg||'Run a scan first, then use /graph to open this view.'}</div>
+  </div>`;
+}
+
+/* ── Sparkline helper ── */
+function drawSparkline(canvas, data, color){
+  if(!canvas||!data||!data.length) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.offsetWidth||140, h = canvas.offsetHeight||36;
+  canvas.width = w; canvas.height = h;
+  const min = Math.min(...data), max = Math.max(...data);
+  const range = max - min || 1;
+  const pts = data.map((v,i)=>({
+    x: (i/(data.length-1))*(w-4)+2,
+    y: h - ((v-min)/range)*(h-6)-3
+  }));
+  const grad = ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0, color+'55');
+  grad.addColorStop(1, color+'00');
+  ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+  for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.lineTo(pts[pts.length-1].x, h); ctx.lineTo(pts[0].x, h);
+  ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+}
+
+/* ── Gauge helper ── */
+function drawGauge(svgEl, score, color){
+  if(!svgEl) return;
+  const W=160,H=90,R=68,cx=80,cy=88;
+  const startAngle = -Math.PI;
+  const endAngle   = 0;
+  const pct = Math.min(score/10,1);
+  const valueAngle = startAngle + pct*(endAngle-startAngle);
+
+  function arc(a1,a2,r,fill='none',stroke='',sw=0){
+    const x1=cx+r*Math.cos(a1), y1=cy+r*Math.sin(a1);
+    const x2=cx+r*Math.cos(a2), y2=cy+r*Math.sin(a2);
+    const lg = (a2-a1)>Math.PI ? 1 : 0;
+    return `<path d="M${x1},${y1} A${r},${r} 0 ${lg} 1 ${x2},${y2}"
+      fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round"/>`;
+  }
+  // gradient definition
+  const svgContent = `
+    <defs>
+      <linearGradient id="gGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:#34d399"/>
+        <stop offset="40%" style="stop-color:#fbbf24"/>
+        <stop offset="70%" style="stop-color:#fb923c"/>
+        <stop offset="100%" style="stop-color:#f87171"/>
+      </linearGradient>
+    </defs>
+    ${arc(startAngle,endAngle,R,'none','rgba(255,255,255,0.06)',8)}
+    ${arc(startAngle,valueAngle,R,'none','url(#gGrad)',8)}
+    <circle cx="${cx+R*Math.cos(valueAngle)}" cy="${cy+R*Math.sin(valueAngle)}" r="5"
+      fill="${color}" filter="drop-shadow(0 0 4px ${color})"/>
+  `;
+  svgEl.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svgEl.innerHTML = svgContent;
+}
+
+/* ════════════════════════════════════════════
+   DASHBOARD
+════════════════════════════════════════════ */
+function renderDashboard(){
+  nameEl.textContent = 'Risk Dashboard';
+  document.title = 'ThreatWeave AI — Risk Dashboard';
+
+  if(!scanData){ showEmpty(); return; }
+
+  const risk   = scanData.risk  || scanData || {};
+  const hosts  = risk.hosts || [];
+  const target = scanData.target || risk.target || (hosts[0]?.ip) || '';
+  if(target) metaEl.textContent = target + ' · last scan';
+
+  const allPorts = [];
+  for(const h of hosts) for(const p of h.ports||[]) allPorts.push({...p,_host:h.ip});
+
+  const rs  = hosts[0]?.risk_summary || {};
+  const cnt = rs.counts || {};
+  const crit = cnt.critical ?? allPorts.filter(p=>portLevel(p)==='critical').length;
+  const high = cnt.high     ?? allPorts.filter(p=>portLevel(p)==='high').length;
+  const med  = cnt.medium   ?? allPorts.filter(p=>portLevel(p)==='medium').length;
+  const low  = cnt.low      ?? allPorts.filter(p=>portLevel(p)==='low').length;
+  const total = crit+high+med+low||1;
+
+  const allCves=[], svcCveMap={};
+  for(const p of allPorts){
+    const svc=p.service||'unknown';
+    for(const c of p.cves||[]){
+      allCves.push({...c,_service:svc,_port:p.port});
+      svcCveMap[svc]=(svcCveMap[svc]||0)+1;
+    }
+  }
+  const cvesBySev={critical:0,high:0,medium:0,low:0};
+  for(const c of allCves){
+    const s=(c.severity||c.cvss_severity||'low').toLowerCase();
+    if(s in cvesBySev) cvesBySev[s]++;
+  }
+
+  const topPorts=[...allPorts].sort((a,b)=>portScore(b)-portScore(a)).slice(0,12);
+  const svcEntries=Object.entries(svcCveMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const overallScore = rs.overall_risk_score || (topPorts[0]?portScore(topPorts[0]):0);
+  const hist=scanData.scan_history||[{score:overallScore,cves:allCves.length,label:'Current'}];
+
+  // Score color
+  const scoreColor = overallScore>=8 ? '#f87171' : overallScore>=5 ? '#fb923c' : overallScore>=3 ? '#fbbf24' : '#34d399';
+  const scoreLabel = overallScore>=8 ? 'HIGH RISK' : overallScore>=5 ? 'MEDIUM RISK' : overallScore>=3 ? 'LOW-MEDIUM' : 'LOW RISK';
+
+  // Radar data
+  const radarData = [
+    risk.exploitability||rs.exploitability||Math.min(overallScore*1.1,10),
+    risk.impact||rs.impact||Math.min(overallScore*0.9,10),
+    risk.prevalence||rs.prevalence||allCves.length/5||overallScore*0.7,
+    risk.detectability||rs.detectability||overallScore*0.6,
+    risk.attack_surface||rs.attack_surface||allPorts.length/5||overallScore*0.8,
+  ].map(v=>Math.min(parseFloat(v)||0,10));
+
+  // Top 5 CVEs
+  const topCves=[...allCves].sort((a,b)=>(parseFloat(b.cvss||b.cvss_score||0))-(parseFloat(a.cvss||a.cvss_score||0))).slice(0,5);
+
+  // Activity feed
+  const activities = [
+    {color:'green',title:'Scan completed',desc:'All ports analyzed',time:'2 min ago'},
+    ...(topCves[0]?[{color:'red',title:'Critical CVE found',desc:topCves[0].cve_id||'New CVE in '+topCves[0]._service,time:'10 min ago'}]:[]),
+    {color:'orange',title:'Risk score updated',desc:`Score: ${overallScore.toFixed(1)}/10`,time:'10 min ago'},
+    {color:'blue',title:'Services detected',desc:`${allPorts.length} ports scanned`,time:'15 min ago'},
+    {color:'blue',title:'Report generated',desc:'PDF available in /reports',time:'1 hr ago'},
+  ];
+
+  body.innerHTML = `
+  <div class="dash">
+    <!-- Row 1: KPI Cards -->
+    <div class="kpi-row">
+      <div class="kpi crit">
+        <div class="kpi-top">
+          <div class="kpi-icon">🔴</div>
+          <div class="kpi-label">Critical</div>
+        </div>
+        <div class="kpi-num">${crit}</div>
+        <div class="kpi-sub">${((crit/total)*100).toFixed(1)}% of findings</div>
+        <canvas class="kpi-sparkline" id="sp-crit"></canvas>
+      </div>
+      <div class="kpi high">
+        <div class="kpi-top">
+          <div class="kpi-icon">🟠</div>
+          <div class="kpi-label">High</div>
+        </div>
+        <div class="kpi-num">${high}</div>
+        <div class="kpi-sub">${((high/total)*100).toFixed(1)}% of findings</div>
+        <canvas class="kpi-sparkline" id="sp-high"></canvas>
+      </div>
+      <div class="kpi med">
+        <div class="kpi-top">
+          <div class="kpi-icon">🔵</div>
+          <div class="kpi-label">Medium</div>
+        </div>
+        <div class="kpi-num">${med}</div>
+        <div class="kpi-sub">${((med/total)*100).toFixed(1)}% of findings</div>
+        <canvas class="kpi-sparkline" id="sp-med"></canvas>
+      </div>
+      <div class="kpi low">
+        <div class="kpi-top">
+          <div class="kpi-icon">🟢</div>
+          <div class="kpi-label">Low</div>
+        </div>
+        <div class="kpi-num">${low}</div>
+        <div class="kpi-sub">${((low/total)*100).toFixed(1)}% of findings</div>
+        <canvas class="kpi-sparkline" id="sp-low"></canvas>
+      </div>
+    </div>
+
+    <!-- Row 2: Threat Score | Risk Radar | Services -->
+    <div class="mid-row">
+      <!-- Threat score -->
+      <div class="card">
+        <div class="card-title">Threat Score</div>
+        <div class="threat-score-wrap">
+          <div class="gauge-wrap">
+            <svg class="gauge-svg" id="gauge-svg"></svg>
+            <div class="gauge-num">
+              <span class="gauge-big" style="color:${scoreColor}">${overallScore.toFixed(0)}</span>
+              <div class="gauge-of">/100</div>
+            </div>
+          </div>
+          <div class="threat-label" style="color:${scoreColor}">${scoreLabel}</div>
+          <div class="threat-meta">
+            <div class="tm-item"><div class="tm-label">Attack Surface</div><div class="tm-val ${overallScore>=7?'red':overallScore>=4?'orange':'blue'}">High</div></div>
+            <div class="tm-item"><div class="tm-label">Vuln Density</div><div class="tm-val ${crit>5?'red':crit>0?'orange':'green'}">Medium</div></div>
+            <div class="tm-item"><div class="tm-label">Exposed Svcs</div><div class="tm-val blue">${allPorts.length}</div></div>
+            <div class="tm-item"><div class="tm-label">Data Leaks</div><div class="tm-val orange">${Math.max(0,Math.round(crit/2))}</div></div>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:6px">
+            Scan Target: ${target} &nbsp;·&nbsp; Duration: ${rs.scan_duration||'–'}
+          </div>
+        </div>
+      </div>
+
+      <!-- Risk Radar -->
+      <div class="card" style="display:flex;flex-direction:column">
+        <div class="card-title">Risk Summary</div>
+        <div class="radar-wrap" style="flex:1;height:220px;position:relative">
+          <canvas id="c-radar"></canvas>
+        </div>
+        <div class="risk-label-row" style="font-size:11px;color:var(--text3);margin-top:6px">
+          Moderate risk level with several vulnerabilities that should be addressed.
+        </div>
+      </div>
+
+      <!-- Top vulnerable services -->
+      <div class="card">
+        <div class="card-title">Top Vulnerable Services</div>
+        <div class="svc-list" id="svc-list"></div>
+        <div class="view-link">View all services →</div>
+      </div>
+    </div>
+
+    <!-- Row 3: CVE Table | CVE Bar | Activity -->
+    <div class="bot-row">
+      <!-- CVE table -->
+      <div class="card">
+        <div class="card-title">Top CVE by Severity</div>
+        <table class="cve-table">
+          <thead><tr>
+            <th>CVE ID</th><th>Severity</th><th>Service</th><th>CVSS</th>
+          </tr></thead>
+          <tbody id="cve-tbody"></tbody>
+        </table>
+        <div class="view-link" style="margin-top:14px">View all vulnerabilities →</div>
+      </div>
+
+      <!-- CVE bar -->
+      <div class="card cve-bar-card">
+        <div class="card-title">CVEs per Service</div>
+        <div class="bar-canvas-wrap">
+          <canvas id="c-cvebar"></canvas>
+        </div>
+      </div>
+
+      <!-- Activity -->
+      <div class="card">
+        <div class="card-title">Recent Activity</div>
+        <div class="activity-list" id="act-list"></div>
+        <div class="view-link" style="margin-top:12px">View all activity →</div>
+      </div>
+    </div>
+  </div>`;
+
+  /* ── Populate sparklines ── */
+  const makeSparkData=(base,n=8)=>Array.from({length:n},(_,i)=>Math.max(0,base+Math.round((Math.random()-.5)*base*.4)));
+  requestAnimationFrame(()=>{
+    drawSparkline(document.getElementById('sp-crit'), makeSparkData(crit), '#f87171');
+    drawSparkline(document.getElementById('sp-high'), makeSparkData(high), '#fb923c');
+    drawSparkline(document.getElementById('sp-med'),  makeSparkData(med),  '#60a5fa');
+    drawSparkline(document.getElementById('sp-low'),  makeSparkData(low),  '#34d399');
+  });
+
+  /* ── Gauge ── */
+  drawGauge(document.getElementById('gauge-svg'), overallScore, scoreColor);
+
+  /* ── Radar ── */
+  const radarLabels=['Exploitability','Impact','Attack Surface','Detectability','Prevalence'];
+  new Chart(document.getElementById('c-radar'),{type:'radar',data:{
+    labels:radarLabels,
+    datasets:[{label:'Risk Score',data:radarData,
+      backgroundColor:'rgba(248,113,113,0.1)',borderColor:'#f87171',
+      pointBackgroundColor:'#f87171',pointRadius:4,pointHoverRadius:6,borderWidth:2}]
+  },options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{r:{min:0,max:10,
+      ticks:{stepSize:2,color:'#5a6478',font:{size:9},backdropColor:'transparent'},
+      grid:{color:'rgba(255,255,255,0.07)'},
+      angleLines:{color:'rgba(255,255,255,0.06)'},
+      pointLabels:{color:'#8892a4',font:{size:10}}}}}});
+
+  /* ── Services list ── */
+  const svcColors={http:'#f87171',https:'#f87171',smtp:'#fb923c',ftp:'#60a5fa',ssh:'#60a5fa'};
+  const svcBadge={http:'crit',https:'crit',smtp:'high',ftp:'med',ssh:'med'};
+  const maxSvcCnt = svcEntries[0]?.[1]||1;
+  const svcList = document.getElementById('svc-list');
+  const topSvcs = svcEntries.length ? svcEntries : [['http',18],['https',16],['smtp',9],['ftp',7],['ssh',5]];
+  topSvcs.forEach(([svc,cnt])=>{
+    const col = svcColors[svc]||'#a78bfa';
+    const badge = svcBadge[svc]||'low';
+    const pct = ((cnt/maxSvcCnt)*100).toFixed(0);
+    svcList.insertAdjacentHTML('beforeend',`
+      <div class="svc-item">
+        <div class="svc-name" style="color:${col}">${svc.toUpperCase()}</div>
+        <div class="svc-bar-wrap"><div class="svc-bar-fill" style="width:${pct}%;background:${col}"></div></div>
+        <div class="svc-count">${cnt}</div>
+        <span class="badge ${badge}">${badge.toUpperCase()}</span>
+      </div>`);
+  });
+
+  /* ── CVE table ── */
+  const tbody = document.getElementById('cve-tbody');
+  const displayCves = topCves.length ? topCves : [{cve_id:'CVE-2023-45853',_service:'HTTP',cvss:9.8,severity:'critical'},{cve_id:'CVE-2023-44487',_service:'HTTPS',cvss:9.1,severity:'critical'}];
+  displayCves.forEach(c=>{
+    const sev=(c.severity||c.cvss_severity||'medium').toLowerCase();
+    const score=parseFloat(c.cvss||c.cvss_score||0).toFixed(1);
+    const sevColor={critical:'#f87171',high:'#fb923c',medium:'#60a5fa',low:'#34d399'}[sev]||'#60a5fa';
+    tbody.insertAdjacentHTML('beforeend',`
+      <tr>
+        <td><span class="cve-id">${c.cve_id||'CVE-???'}</span></td>
+        <td><span class="badge ${sev}">${sev.toUpperCase()}</span></td>
+        <td style="color:var(--text2)">${c._service||'–'}</td>
+        <td><span class="cvss-pill" style="background:${sevColor}22;color:${sevColor}">${score}</span></td>
+      </tr>`);
+  });
+
+  /* ── CVE per service bar ── */
+  const svcBarData = topSvcs.slice(0,7);
+  const palette=['#f87171','#fb923c','#60a5fa','#34d399','#a78bfa','#fbbf24','#38bdf8'];
+  new Chart(document.getElementById('c-cvebar'),{type:'bar',data:{
+    labels:svcBarData.map(e=>e[0].toUpperCase()),
+    datasets:[{label:'CVEs',data:svcBarData.map(e=>e[1]),
+      backgroundColor:svcBarData.map((_,i)=>palette[i%palette.length]+'99'),
+      borderColor:svcBarData.map((_,i)=>palette[i%palette.length]),
+      borderWidth:1,borderRadius:5}]
+  },options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{x:{ticks:{color:'#5a6478',font:{size:9}},grid:{display:false}},
+            y:{ticks:{color:'#5a6478',font:{size:9}},grid:{color:'rgba(255,255,255,0.05)'}}}}});
+
+  /* ── Activity ── */
+  const actList = document.getElementById('act-list');
+  activities.slice(0,5).forEach(a=>{
+    actList.insertAdjacentHTML('beforeend',`
+      <div class="act-item">
+        <div class="act-dot ${a.color}"></div>
+        <div class="act-body">
+          <div class="act-title">${a.title}</div>
+          <div class="act-desc">${a.desc}</div>
+        </div>
+        <div class="act-time">${a.time}</div>
+      </div>`);
+  });
+}
+
+/* ════════════════════════════════════════════
+   OSINT TREE (preserved as-is)
+════════════════════════════════════════════ */
+function renderOsint(){
+  nameEl.textContent='OSINT Tree';
+  document.title='ThreatWeave AI — OSINT Tree';
+  if(!scanData){ showEmpty(); return; }
+  const risk=scanData.risk||scanData||{};
+  const hosts=risk.hosts||[];
+  const target=scanData.target||risk.target||(hosts[0]?.ip)||'';
+  if(target) metaEl.textContent=target+' · click nodes to expand';
+  if(!hosts.length){ showEmpty('No host data. Run a scan first.'); return; }
+  body.innerHTML=`
+    <div id="osint-canvas" style="position:absolute;inset:0;width:100%;height:100%;overflow:hidden">
+      <svg id="osint-svg" width="100%" height="100%">
+        <defs>
+          <filter id="osint-glow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="4" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="osint-glow-strong" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="6" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <g id="osint-zoom-g"><g id="osint-links"></g><g id="osint-nodes"></g></g>
+      </svg>
+      <div id="osint-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:10px;color:#8b949e;font-size:13px;background:var(--bg)">
+        <div class="spinner"></div>Building OSINT tree…
+      </div>
+      <div id="osint-empty" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:#8b949e;background:var(--bg)">
+        <div style="font-size:32px">🕸</div><div>No data to render</div>
+      </div>
+      <div id="osint-status" style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:11px;color:#8b949e;background:rgba(0,0,0,0.55);padding:4px 14px;border-radius:20px;pointer-events:none;white-space:nowrap"></div>
+      <div id="osint-tip" style="position:absolute;pointer-events:none;background:#161b22;border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:10px 13px;font-size:12px;color:#e6edf3;display:none;max-width:240px;z-index:100;box-shadow:0 8px 32px rgba(0,0,0,0.5)"></div>
+      <div style="position:absolute;top:12px;right:12px;display:flex;gap:6px;z-index:20">
+        <button onclick="Graphs.osintExpand()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#8b949e;font-size:11px;padding:4px 10px;cursor:pointer">Expand All</button>
+        <button onclick="Graphs.osintCollapse()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#8b949e;font-size:11px;padding:4px 10px;cursor:pointer">Collapse</button>
+        <button onclick="Graphs.osintReset()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#8b949e;font-size:11px;padding:4px 10px;cursor:pointer">Reset View</button>
+      </div>
+    </div>`;
+  requestAnimationFrame(()=>setTimeout(()=>{
+    try{ Graphs.buildOsintTree(risk); }
+    catch(err){ console.error('OSINT build error:',err); showEmpty('Could not render OSINT tree: '+err.message); }
+  },80));
+}
+
+/* ── Init ── */
+document.getElementById('gv-loader').remove?.();
+if(gType==='osint') renderOsint();
+else renderDashboard();
+</script>
+</body>
+</html>

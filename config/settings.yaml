@@ -1,0 +1,91 @@
+ThreatWeave_ai:
+  version: "4.0.0"
+  name: "ThreatWeave"
+
+server:
+  host: "0.0.0.0"
+  port: 3332
+  reload: true
+
+# ── AI Model Stack (Phase 3) ──────────────────────────────────────────────────
+ai:
+  model_stack:
+    primary:
+      name: "Qwen 2.5 7B Instruct"
+      model_id: "qwen2.5:7b"
+      use_case: "Chatbot + reasoning"
+      env: "QWEN_MODEL"
+    fast_chat:
+      name: "Llama 3.2 3B"
+      model_id: "llama3.2:3b"
+      use_case: "Fast local chatbot"
+      env: "LLAMA_CHAT_MODEL"
+    general:
+      name: "Llama 3.1 8B"
+      model_id: "llama3.1:8b"
+      use_case: "General purpose analysis"
+      env: "LLAMA_GEN_MODEL"
+    security:
+      name: "DeepSeek R1 8B Distill"
+      model_id: "deepseek-r1:8b"
+      use_case: "Security analysis (CVE, exploits, risk)"
+      env: "DEEPSEEK_MODEL"
+    emergency:
+      name: "Rule Engine"
+      use_case: "No AI offline fallback"
+
+  routing:
+    security_tasks:    ["deepseek", "qwen", "llama"]
+    general_tasks:     ["qwen", "llama", "deepseek"]
+    fast_chat:         ["llama", "qwen"]
+    advanced_chat:     ["qwen", "deepseek", "llama"]
+
+  cache:
+    enabled: true
+    ttl_hours: 24
+    max_entries: 5000
+
+scanner:
+  timeout_seconds: 300
+  use_simulation_if_no_nmap: true
+
+cve:
+  mode: "local"
+  nvd_api_key: ""
+  local_db_path: "data/cve_db"
+  cache_ttl_days: 7
+
+patch_kb:
+  path: "data/patch_kb"
+  confidence:
+    vendor: 100
+    nvd: 90
+    ai: 70
+
+files:
+  sessions_dir: "data/sessions"
+  db_path: "data/ThreatWeave.db"
+  max_sessions: 1000
+
+logging:
+  level: "INFO"
+  file: "data/logs/ThreatWeave.log"
+
+safety:
+  allowed_scan_types:
+    - tcp_basic
+    - tcp_syn
+    - udp_scan
+    - service_detect
+    - version_deep
+    - os_detect
+    - port_range
+    - enum_scripts
+  shell_execution: false
+  allow_arbitrary_commands: false
+
+risk_weights:
+  cvss:        0.40
+  criticality: 0.25
+  version:     0.20
+  exposure:    0.15

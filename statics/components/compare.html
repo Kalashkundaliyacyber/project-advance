@@ -1,0 +1,57 @@
+<!-- ═══════════════════════════════════════════════════════
+     compare.html — AI vs Rule-Based Comparison page
+     FIX2: Fully wired compare tab with side-by-side layout,
+     agreement/disagreement highlights, confidence overlaps.
+     Content is rendered dynamically by Dashboard.renderCompare()
+     ═══════════════════════════════════════════════════════ -->
+
+<div class="page" id="page-cmp" style="flex-direction:column">
+  <div id="cmp-result" style="flex:1;overflow-y:auto;padding:14px;gap:14px;display:flex;flex-direction:column">
+
+    <!-- Empty state — replaced by renderCompare() after a scan -->
+    <div class="cmp-box cmp-empty-state" id="cmp-empty">
+      <div style="text-align:center;padding:32px 16px">
+        <div style="font-size:48px;margin-bottom:12px">🤖</div>
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:8px">AI vs Rule-Based Comparison</h3>
+        <p style="font-size:13px;color:var(--text2);max-width:360px;margin:0 auto 16px">
+          Score Claude AI against the deterministic rule engine across
+          5 research dimensions: correctness, explainability, usefulness,
+          conciseness, and recommendation quality.
+        </p>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <div style="background:var(--bg3);border-radius:6px;padding:8px 14px;font-size:12px">
+            ⚙️ <strong>Rule-Based</strong><br>
+            <span style="color:var(--text3)">Deterministic · Fast · Consistent</span>
+          </div>
+          <div style="background:var(--bg3);border-radius:6px;padding:8px 14px;font-size:12px">
+            🤖 <strong>AI Analysis</strong><br>
+            <span style="color:var(--text3)">Context-aware · Explanatory · Adaptive</span>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--text3);margin-top:16px">
+          Run a scan then click the <strong>🤖 Compare</strong> tab or use
+          the session 3-dot menu → <em>Compare with Current</em>
+        </p>
+        <!-- FIX14: column legend -->
+        <div class="cmp-columns" style="margin-top:18px;text-align:left">
+          <div>
+            <div class="cmp-col-header cmp-col-ai">🤖 AI Analysis</div>
+            <div class="cmp-finding ai-only">Context-aware findings</div>
+            <div class="cmp-finding ai-only">Adaptive recommendations</div>
+          </div>
+          <div>
+            <div class="cmp-col-header cmp-col-rules">⚙️ Rule-Based</div>
+            <div class="cmp-finding rb-only">Deterministic detection</div>
+            <div class="cmp-finding rb-only">Consistent results</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px;font-size:11px;color:var(--text3)">
+          <span class="cmp-agree-tag">■</span> Both detected = high confidence
+          &nbsp;·&nbsp;
+          <span class="cmp-verify-tag">■</span> One only = verification required
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

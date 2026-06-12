@@ -1,0 +1,30 @@
+<!-- ═══════════════════════════════════════════════════════
+     history.html — History page
+     Filter bar, risk/CVE trend charts, scrollable scan list
+     ═══════════════════════════════════════════════════════ -->
+
+<div class="page" id="page-hist" style="flex-direction:column">
+
+  <!-- Filter bar -->
+  <div class="hist-ctrl">
+    <input type="text" placeholder="Filter project or target…" id="h-target" style="width:180px;height:var(--touch)"/>
+    <select id="h-sev" style="width:130px;height:var(--touch)">
+      <option value="">All risks</option>
+      <option value="critical">Critical</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+    <button class="btn btn-sec" onclick="Dashboard.loadHistory()">Filter</button>
+    <button class="btn btn-sec" onclick="Dashboard.clearHistoryFilters()">Clear</button>
+  </div>
+
+  <!-- Trend charts + history list -->
+  <div class="hist-body" id="hist-body">
+    <div class="trend-box"><h3>Risk Trend</h3><canvas id="ch-trend"></canvas></div>
+    <div class="trend-box"><h3>CVE Count Trend</h3><canvas id="ch-cve-trend"></canvas></div>
+    <div id="hist-list"><div class="empty">No scans yet.</div></div>
+  </div>
+
+</div>
+

@@ -1,0 +1,82 @@
+<!-- ═══════════════════════════════════════════════════════
+     status-strip.html — Global overlays:
+       • Stop confirmation modal
+       • Report format modal
+       • Scan stopped toast
+       • Report ready toast
+     These are rendered at body level, outside .body wrapper.
+     ═══════════════════════════════════════════════════════ -->
+
+<!-- Stop confirmation modal -->
+<div class="modal-overlay" id="stop-modal">
+  <div class="modal">
+    <h3>⏹ Stop current scan?</h3>
+    <p>This will terminate the running scan immediately.<br>
+       Partial results already collected will be preserved.</p>
+    <div class="modal-btns">
+      <button class="btn btn-sec"  onclick="Utils.closeModal('stop-modal')">Cancel</button>
+      <button class="btn btn-stop" onclick="Chatbot.doStop()">Stop Scan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Report format modal — DOCX option removed -->
+<div class="modal-overlay" id="report-modal">
+  <div class="modal" style="max-width:420px">
+    <h3>📄 Export Report</h3>
+    <p>Select the format for your security report:</p>
+    <div class="fmt-options">
+      <div class="fmt-opt selected" id="fmt-html" onclick="Chatbot.selectFmt('html')">
+        <div class="fmt-icon">🌐</div>
+        <div class="fmt-label">HTML</div>
+        <div class="fmt-desc">Open in browser<br>Print to PDF</div>
+      </div>
+      <div class="fmt-opt" id="fmt-pdf" onclick="Chatbot.selectFmt('pdf')">
+        <div class="fmt-icon">📕</div>
+        <div class="fmt-label">PDF</div>
+        <div class="fmt-desc">Requires reportlab<br>Direct download</div>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-sec"     onclick="Utils.closeModal('report-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="Chatbot.doExportReport()" id="export-go-btn">Export</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scan stopped toast -->
+<div class="toast" id="stop-toast">
+  <h4>🙏 Scan stopped safely</h4>
+  <p style="font-size:12px;color:var(--text2)">The scan has been stopped safely.<br>
+     Partial results have been preserved.</p>
+  <div class="toast-btns">
+    <button class="btn btn-primary" onclick="Chatbot.startNewScan()">▶ Start New Scan</button>
+    <button class="btn btn-sec"    onclick="Utils.hideToast()">Dismiss</button>
+  </div>
+</div>
+
+<!-- Report ready toast -->
+<div class="toast" id="report-toast" style="bottom:80px">
+  <h4 id="report-toast-title">📄 Report Ready</h4>
+  <p id="report-toast-msg" style="font-size:12px;color:var(--text2)">Your report has been generated.</p>
+  <div class="toast-btns">
+    <a id="report-toast-link" href="#" target="_blank">
+      <button class="btn btn-primary">⬇ Download</button>
+    </a>
+    <button class="btn btn-sec" onclick="Utils.hideToast('report-toast')">Dismiss</button>
+  </div>
+</div>
+
+<!-- Session not found toast (replaces scary chat error message) -->
+<!-- FIX: moved to bottom:180px so it never overlaps the prompt box;
+     removed "New Chat" button that accidentally triggered new sessions when
+     users clicked near the bottom of the chat area. Dismiss is the only action. -->
+<div class="toast" id="session-not-found-toast" style="bottom:180px">
+  <h4>⚠️ Session Not Found</h4>
+  <p style="font-size:12px;color:var(--text2)">This session no longer exists on the server.<br>
+     It has been removed from your history.</p>
+  <div class="toast-btns">
+    <button class="btn btn-sec" onclick="Utils.hideToast('session-not-found-toast')">Dismiss</button>
+  </div>
+</div>
+
