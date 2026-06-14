@@ -26,9 +26,20 @@
      LIVE VULN TABLE — appears instantly, rows animate in
   ═══════════════════════════════════════════════════════ */
 
-  let _liveTableId  = null;
-  let _liveCounters = { total: 0, confirmed: 0, not_vuln: 0, unconfirmed: 0 };
-  let _liveTableEl  = null;
+  let _liveTableId      = null;
+  let _liveCounters     = { total: 0, confirmed: 0, not_vuln: 0, unconfirmed: 0 };
+  let _liveTableEl      = null;
+  let _sseReadyResolve  = null;   // set before SSE open; resolved when server sends "ready"
+  // FIX BUG 2: tracks category per port-key so port_update from NSE confirmation
+  // recategorises (moves between buckets) rather than double-incrementing the total.
+  let _rowCategories    = new Map(); // key: "port-protocol" → "CONFIRMED"|"NOT_VULNERABLE"|"UNCONFIRMED"
+
+  // ── Sequential port-by-port NSE confirmation table state ──────────────────
+  // Incremented every time _runSequentialConfirmation starts. A running loop
+  // checks its captured generation against this counter each iteration — if a
+  // newer scan has started, the old loop bails out instead of fighting over
+  // the same DOM rows / making redundant network calls.
+  let _confirmGeneration = 0;
 
   function _renderLiveVulnTable(ip) {
     const chat = document.getElementById('chat');
@@ -88,8 +99,9 @@
     });
     chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
 
-    // Reset counters
+    // Reset counters and row tracking
     _liveCounters = { total: 0, confirmed: 0, not_vuln: 0, unconfirmed: 0 };
+    _rowCategories = new Map();
     _saveRichMsg('LIVE_VULN_TABLE_START', { ip, tableId: _liveTableId });
   }
 
@@ -103,32 +115,37 @@
     if (ph) ph.remove();
 
     const vs     = portData.vuln_status || {};
-    const status = vs.status || 'UNCONFIRMED';
-    const script = vs.script_used || '—';
-    const evid   = (vs.evidence || '').slice(0, 80) || '—';
+    // Support both string status (new two-phase) and object status (legacy)
+    const status = typeof portData.vuln_status === 'string'
+      ? portData.vuln_status
+      : (vs.status || 'UNCONFIRMED');
+    const script = (typeof vs === 'object' && vs.script_used) || '—';
+    const evid   = (typeof vs === 'object' ? (vs.evidence || '') : '').slice(0, 80) || '—';
     const ver    = [portData.product, portData.version].filter(Boolean).join(' ') || '—';
 
     const statusInfo = _vulnStatusBadge(status);
 
-    _liveCounters.total++;
-    if (status === 'CONFIRMED')      _liveCounters.confirmed++;
-    else if (status === 'NOT_VULNERABLE') _liveCounters.not_vuln++;
-    else                             _liveCounters.unconfirmed++;
+    // FIX BUG 2: Do NOT count here. port_update always follows port_found for every
+    // port (both in real nmap streaming and simulation). All counting lives in
+    // _onPortUpdate so there is exactly one count increment per port, even when
+    // the NSE confirmation thread sends a second port_update for the same port.
 
-    _updateLiveCounters();
+    const rowId = _liveTableId + '-row-' + portData.port + '-' + (portData.protocol || 'tcp');
+    // Remove existing row if any (dedup)
+    const existing = document.getElementById(rowId);
+    if (existing) existing.remove();
 
-    const rowId = _liveTableId + '-row-' + portData.port;
     const tr = document.createElement('tr');
     tr.id        = rowId;
-    tr.className = 'lv-row lv-row-' + status.toLowerCase().replace('_', '-');
+    tr.className = 'lv-row lv-row-' + status.toLowerCase().replace(/_/g, '-');
     tr.innerHTML = `
       <td class="lv-mono">${portData.port}</td>
       <td>${portData.protocol || 'tcp'}</td>
       <td><span class="lv-svc">${portData.service || '—'}</span></td>
       <td class="lv-ver">${ver}</td>
-      <td class="lv-status-cell">${statusInfo.badge}</td>
-      <td class="lv-script">${script !== '—' ? `<code>${script}</code>` : '—'}</td>
-      <td class="lv-evid" title="${evid}">${evid}</td>`;
+      <td class="lv-status-cell" id="${rowId}-status">${statusInfo.badge}</td>
+      <td class="lv-script" id="${rowId}-script">${script !== '—' ? `<code>${script}</code>` : '—'}</td>
+      <td class="lv-evid" id="${rowId}-evid" title="${evid}">${evid}</td>`;
 
     tr.style.opacity   = '0';
     tr.style.transform = 'translateX(-8px)';
@@ -146,12 +163,105 @@
     }
   }
 
+  // ── NEW: port_update handler — flips a LOADING/SCANNING row to final status ──
+  function _onPortUpdate(portData) {
+    if (!_liveTableId) return;
+
+    const status = typeof portData.vuln_status === 'string'
+      ? portData.vuln_status
+      : ((portData.vuln_status || {}).status || 'UNCONFIRMED');
+
+    const vs     = portData.vuln_status || {};
+    const script = (typeof vs === 'object' && vs.script_used)
+      || (portData.confirmation_scripts || []).join(', ') || '—';
+    const evid   = ((typeof vs === 'object' ? vs.evidence : '') || '').slice(0, 80) || '—';
+    const ver    = [portData.product, portData.version].filter(Boolean).join(' ') || '—';
+
+    const rowId = _liveTableId + '-row-' + portData.port + '-' + (portData.protocol || 'tcp');
+    const rowKey = portData.port + '-' + (portData.protocol || 'tcp');
+
+    const statusCell = document.getElementById(rowId + '-status');
+    const scriptCell = document.getElementById(rowId + '-script');
+    const evidCell   = document.getElementById(rowId + '-evid');
+    const tr         = document.getElementById(rowId);
+
+    if (!tr) {
+      // Row doesn't exist yet — fall back to creating it
+      _onPortFound(portData);
+      return;
+    }
+
+    // Update status cell with flip animation
+    if (statusCell) {
+      statusCell.style.transition = 'opacity .2s';
+      statusCell.style.opacity = '0';
+      setTimeout(() => {
+        statusCell.innerHTML = _vulnStatusBadge(status).badge;
+        statusCell.style.opacity = '1';
+      }, 200);
+    }
+    if (scriptCell) scriptCell.innerHTML = script !== '—' ? `<code>${script}</code>` : '—';
+    if (evidCell)   { evidCell.textContent = evid; evidCell.title = evid; }
+
+    // Update row class
+    tr.className = 'lv-row lv-row-' + status.toLowerCase().replace(/_/g, '-');
+
+    // Pulse highlight to draw attention to the update
+    tr.classList.add('lv-row-updated');
+    setTimeout(() => tr.classList.remove('lv-row-updated'), 1200);
+
+    // FIX BUG 2: Smart counter update using _rowCategories map.
+    // - LOADING / SCANNING are intermediate states — not counted.
+    // - For a genuinely new port (first terminal status) → increment total + category.
+    // - For a port seen before (NSE confirmation updating an already-counted row)
+    //   → move it between category buckets WITHOUT changing the total.
+    //   This prevents the double-counting that occurred when both the executor
+    //   port_update and the NSE confirmation port_update incremented total.
+    if (status !== 'LOADING' && status !== 'SCANNING') {
+      const _catBucket = (s) => {
+        if (s === 'CONFIRMED')          return 'confirmed';
+        if (s === 'NOT_VULNERABLE')     return 'not_vuln';
+        return 'unconfirmed';
+      };
+
+      if (_rowCategories.has(rowKey)) {
+        // Port was already counted — recategorise without touching total
+        const oldCat = _rowCategories.get(rowKey);
+        const newCat = _catBucket(status);
+        if (oldCat !== newCat) {
+          _liveCounters[oldCat]--;
+          _liveCounters[newCat]++;
+          _rowCategories.set(rowKey, newCat);
+          _updateLiveCounters();
+        }
+      } else {
+        // First time we see a terminal status for this port — count it
+        _liveCounters.total++;
+        const newCat = _catBucket(status);
+        _liveCounters[newCat]++;
+        _rowCategories.set(rowKey, newCat);
+        _updateLiveCounters();
+      }
+    }
+
+    const chat = document.getElementById('chat');
+    if (chat && !_userScrolledUp) {
+      chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+    }
+  }
+
   function _vulnStatusBadge(status) {
     switch (status) {
       case 'CONFIRMED':
         return { badge: '<span class="lv-badge lv-confirmed">✅ CONFIRMED VULNERABLE</span>' };
       case 'NOT_VULNERABLE':
         return { badge: '<span class="lv-badge lv-not-vuln">🟢 NOT VULNERABLE</span>' };
+      case 'LOADING':
+        return { badge: '<span class="lv-badge lv-loading"><span class="lv-spinner"></span> Detecting…</span>' };
+      case 'SCANNING':
+        return { badge: '<span class="lv-badge lv-scanning"><span class="lv-spinner"></span> Confirming…</span>' };
+      case 'WAITING':
+        return { badge: '<span class="lv-badge lv-loading">⏳ Waiting…</span>' };
       default:
         return { badge: '<span class="lv-badge lv-unconfirmed">⚠️ UNCONFIRMED</span>' };
     }
@@ -172,12 +282,330 @@
     bump(_liveTableId + '-c-unconf',  _liveCounters.unconfirmed,' ⚠️ UNCONFIRMED');
   }
 
-  function _completeLiveTable() {
+  function _completeLiveTable(confirming = false) {
     if (!_liveTableId) return;
     const badge = document.getElementById(_liveTableId + '-badge');
     if (badge) {
-      badge.className = 'lv-scan-badge complete';
-      badge.innerHTML = '✔ COMPLETE';
+      if (confirming) {
+        // Scan finished but NSE confirmation is still running — show intermediate state
+        badge.className = 'lv-scan-badge confirming';
+        badge.innerHTML = '<span class="lv-badge-dot"></span>🔍 CONFIRMING…';
+      } else {
+        // All done (stream_end received) — show final complete state
+        badge.className = 'lv-scan-badge complete';
+        badge.innerHTML = '✔ COMPLETE';
+      }
+    }
+  }
+
+  /**
+   * Progressive CVE table — identical to _renderVulnTableInChat but rows
+   * are inserted one-by-one with a staggered delay so the user sees them
+   * appear live in the chatbot rather than all at once.
+   */
+  function _renderVulnTableProgressively(hosts) {
+    const allCves = [];
+    for (const h of hosts) for (const p of h.ports || []) for (const c of p.cves || [])
+      allCves.push({ ...c, port: p.port, service: p.service });
+    if (!allCves.length) return;
+    allCves.sort((a, b) => (b.cvss_score || 0) - (a.cvss_score || 0));
+
+    const tableId = 'vt-' + Date.now();
+    const chat    = document.getElementById('chat');
+    const wrap    = document.createElement('div');
+    wrap.className = 'msg msg-ai vuln-table-wrap';
+
+    // Build the shell (header + empty tbody)
+    wrap.innerHTML = `
+      <div class="vt-header">
+        <span class="vt-title">🔍 Vulnerability Intelligence</span>
+        <span class="vt-count" id="${tableId}-count">0 CVEs detected</span>
+        <button class="vd-export-btn" style="margin-left:auto" onclick="Chatbot.quickChat('/vuln')">Open Full Dashboard →</button>
+      </div>
+      <div class="vt-scroll">
+        <table class="vt-table" id="${tableId}">
+          <thead>
+            <tr>
+              <th>Port</th><th>Service</th><th>CVE</th>
+              <th>Severity</th><th>CVSS</th><th>Description</th><th>Fix</th>
+            </tr>
+          </thead>
+          <tbody id="${tableId}-body"></tbody>
+        </table>
+      </div>`;
+
+    wrap.style.opacity   = '0';
+    wrap.style.transform = 'translateY(8px)';
+    chat.appendChild(wrap);
+    requestAnimationFrame(() => {
+      wrap.style.transition = 'opacity .3s ease, transform .3s ease';
+      wrap.style.opacity    = '1';
+      wrap.style.transform  = 'translateY(0)';
+    });
+
+    const tbody    = wrap.querySelector(`#${tableId}-body`);
+    const countEl  = wrap.querySelector(`#${tableId}-count`);
+
+    // Insert rows one-by-one with a 60ms stagger — feels live
+    allCves.forEach((c, idx) => {
+      setTimeout(() => {
+        const tr = document.createElement('tr');
+        tr.className = 'vt-row';
+        tr.dataset.port      = c.port;
+        tr.dataset.service   = c.service || '';
+        tr.dataset.cve_id    = c.cve_id  || '';
+        tr.dataset.severity  = c.severity || '';
+        tr.dataset.cvss_score = c.cvss_score || 0;
+        tr.innerHTML = `
+          <td class="vt-mono">${c.port}</td>
+          <td>${c.service || '—'}</td>
+          <td class="vt-cve-cell">
+            <a class="vt-cve-link" href="https://nvd.nist.gov/vuln/detail/${c.cve_id}" target="_blank" rel="noopener">${c.cve_id}</a>
+            <button class="vt-copy-btn" onclick="navigator.clipboard.writeText('${c.cve_id}');this.textContent='✅';setTimeout(()=>this.textContent='📋',1500)">📋</button>
+          </td>
+          <td><span class="rb rb-${c.severity}">${c.severity || 'low'}</span></td>
+          <td class="vt-cvss vt-cvss-${c.severity}">${c.cvss_score}</td>
+          <td class="vt-desc">${(c.description || '—').slice(0, 80)}…</td>
+          <td><button class="vd-patch-btn" onclick="Chatbot.quickChat('/patch ${c.service} ${c.port}')">🔧</button></td>`;
+
+        tr.style.opacity   = '0';
+        tr.style.transform = 'translateX(-6px)';
+        tbody.appendChild(tr);
+        requestAnimationFrame(() => {
+          tr.style.transition = 'opacity .2s ease, transform .2s ease';
+          tr.style.opacity    = '1';
+          tr.style.transform  = 'translateX(0)';
+        });
+
+        // Update the live CVE counter as each row appears
+        if (countEl) countEl.textContent = `${idx + 1} CVE${idx + 1 !== 1 ? 's' : ''} detected`;
+
+        // Keep chat scrolled to bottom on each new row
+        if (!_userScrolledUp) chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+      }, idx * 60);   // 60ms per row — snappy but visibly progressive
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     SEQUENTIAL NSE CONFIRMATION TABLE
+     Renders one row per open port (mirrors the right-panel PORT DETAILS).
+     Ports already CONFIRMED / NOT_VULNERABLE (no CVEs) show their final
+     status immediately. Everything else starts as ⏳ WAITING, then the
+     confirmation loop below picks the best Kali NSE script for ONE port
+     at a time, sets that row to 🔄 Confirming…, awaits the result, writes
+     CONFIRMED / NOT_VULNERABLE / UNCONFIRMED + script + evidence, then
+     moves down to the next row. One nmap process at a time — never parallel.
+  ═══════════════════════════════════════════════════════ */
+
+  /** Normalise vuln_status to a plain string, whether it's a dict (from the
+   *  initial nmap parser) or already a string (from a prior confirmation). */
+  function _normalizeVS(vs) {
+    if (typeof vs === 'string') return vs || 'UNCONFIRMED';
+    if (vs && typeof vs === 'object') return vs.status || 'UNCONFIRMED';
+    return 'UNCONFIRMED';
+  }
+
+  /**
+   * Build the chatbot confirmation table for every open port found in this
+   * scan. Returns { tableId, rows, toConfirmCount } for
+   * _runSequentialConfirmation, or null if there are no open ports.
+   */
+  function _renderPortConfirmTable(ip, ports) {
+    if (!ports || !ports.length) return null;
+
+    const chat    = document.getElementById('chat');
+    const tableId = 'ct-' + Date.now();
+
+    // Decide up front which ports need a live confirmation pass and which
+    // can show their final badge immediately.
+    const rows = ports.map(p => {
+      const status  = _normalizeVS(p.vuln_status);
+      const cves    = p.cves || [];
+      // A port needs confirmation unless the initial `nmap --script vuln`
+      // run already CONFIRMED it, or it's NOT_VULNERABLE with zero CVE matches.
+      const needsConfirm = !(status === 'CONFIRMED' || (status === 'NOT_VULNERABLE' && cves.length === 0));
+      return { p, cves, needsConfirm, initialStatus: needsConfirm ? 'WAITING' : status };
+    });
+
+    const toConfirmCount = rows.filter(r => r.needsConfirm).length;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'msg msg-ai live-vuln-wrap';
+    wrap.id = tableId;
+
+    const rowsHtml = rows.map(({ p, cves, initialStatus }) => {
+      const rowKey = p.port + '-' + (p.protocol || 'tcp');
+      const rowId  = tableId + '-row-' + rowKey;
+      const ver    = [p.product, p.version].filter(Boolean).join(' ') || '—';
+      const badge  = _vulnStatusBadge(initialStatus).badge;
+
+      // CVE column — strongest CVE first, "+N more" if there are others
+      let cveCell = '—';
+      if (cves.length) {
+        const top = cves[0];
+        cveCell = `<span class="rb rb-${top.severity || 'low'}">${top.cve_id || '?'}</span>`
+          + (cves.length > 1 ? ` <span class="lv-scan-label">+${cves.length - 1} more</span>` : '');
+      }
+
+      // Ports already confirmed by the initial vuln scan carry their
+      // script_used / evidence in the vuln_status dict — show them now.
+      const vsObj    = (p.vuln_status && typeof p.vuln_status === 'object') ? p.vuln_status : {};
+      const initScript = vsObj.script_used || '—';
+      const initEvid   = (vsObj.evidence || '').slice(0, 100) || '—';
+
+      return `
+      <tr class="lv-row lv-row-${initialStatus.toLowerCase().replace(/_/g, '-')}" id="${rowId}">
+        <td class="lv-mono">${p.port}</td>
+        <td>${p.protocol || 'tcp'}</td>
+        <td><span class="lv-svc">${p.service || '—'}</span></td>
+        <td class="lv-ver">${ver}</td>
+        <td class="lv-cves">${cveCell}</td>
+        <td class="lv-status-cell" id="${rowId}-status">${badge}</td>
+        <td class="lv-script" id="${rowId}-script">${initScript !== '—' ? `<code>${initScript}</code>` : '—'}</td>
+        <td class="lv-evid" id="${rowId}-evid" title="${vsObj.evidence || ''}">${initEvid}</td>
+      </tr>`;
+    }).join('');
+
+    const badgeHtml = toConfirmCount
+      ? `<span class="lv-badge-dot"></span>🧪 NSE CONFIRMATION — 0/${toConfirmCount}`
+      : '✔ ALL CONFIRMED';
+
+    wrap.innerHTML = `
+      <div class="lv-header">
+        <div class="lv-title-row">
+          <span class="lv-scan-badge ${toConfirmCount ? 'scanning' : 'complete'}" id="${tableId}-badge">${badgeHtml}</span>
+          <span class="lv-target"><code>${ip}</code></span>
+          <span class="lv-scan-label">selecting scripts from /usr/share/nmap/scripts/</span>
+        </div>
+      </div>
+      <div class="lv-table-wrap">
+        <table class="lv-table">
+          <thead>
+            <tr>
+              <th>Port</th>
+              <th>Protocol</th>
+              <th>Service</th>
+              <th>Version</th>
+              <th>CVEs</th>
+              <th>Status</th>
+              <th>Script Used</th>
+              <th>Evidence</th>
+            </tr>
+          </thead>
+          <tbody id="${tableId}-body">${rowsHtml}</tbody>
+        </table>
+      </div>`;
+
+    wrap.style.opacity   = '0';
+    wrap.style.transform = 'translateY(8px)';
+    chat.appendChild(wrap);
+    requestAnimationFrame(() => {
+      wrap.style.transition = 'opacity .3s ease, transform .3s ease';
+      wrap.style.opacity    = '1';
+      wrap.style.transform  = 'translateY(0)';
+    });
+    if (!_userScrolledUp) chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+
+    return { tableId, rows, toConfirmCount };
+  }
+
+  /**
+   * Walks the ports that need confirmation ONE AT A TIME:
+   *   - current row  → 🔄 Confirming… (lv-scanning)
+   *   - later rows   → ⏳ Waiting… (already set by _renderPortConfirmTable)
+   *   - await ApiService.confirmPort() — a single targeted nmap run
+   *   - write back CONFIRMED / NOT_VULNERABLE / UNCONFIRMED + script + evidence
+   *   - 400ms pause, then move to the next row
+   *
+   * Fire-and-forget: does not block runScan(). If a newer scan starts,
+   * _confirmGeneration changes and this loop quietly stops.
+   */
+  async function _runSequentialConfirmation(ip, ctInfo) {
+    if (!ctInfo) return;
+    const { tableId, rows, toConfirmCount } = ctInfo;
+    const myGen = ++_confirmGeneration;
+    if (!toConfirmCount) return;
+
+    const toConfirm = rows.filter(r => r.needsConfirm);
+    const badgeEl   = document.getElementById(tableId + '-badge');
+    let done = 0;
+
+    for (const row of toConfirm) {
+      if (myGen !== _confirmGeneration) return; // superseded by a newer scan
+
+      const { p } = row;
+      const rowKey = p.port + '-' + (p.protocol || 'tcp');
+      const rowId  = tableId + '-row-' + rowKey;
+
+      const tr         = document.getElementById(rowId);
+      const statusCell = document.getElementById(rowId + '-status');
+      const scriptCell = document.getElementById(rowId + '-script');
+      const evidCell   = document.getElementById(rowId + '-evid');
+
+      // ── Mark THIS row as actively confirming; later rows stay WAITING ──
+      if (statusCell) statusCell.innerHTML = _vulnStatusBadge('SCANNING').badge;
+      if (tr) tr.className = 'lv-row lv-row-scanning';
+
+      let result;
+      try {
+        result = await ApiService.confirmPort(ip, {
+          port:     p.port,
+          protocol: p.protocol,
+          service:  p.service,
+          product:  p.product,
+          version:  p.version,
+          cves:     p.cves || [],
+        });
+      } catch (e) {
+        result = {
+          vuln_status: 'UNCONFIRMED',
+          script_used: null,
+          evidence: 'Confirmation request failed: ' + (e.message || 'unknown error'),
+        };
+      }
+
+      if (myGen !== _confirmGeneration) return; // superseded mid-request
+
+      const finalStatus = result.vuln_status || 'UNCONFIRMED';
+
+      if (statusCell) {
+        statusCell.style.transition = 'opacity .2s';
+        statusCell.style.opacity = '0';
+        setTimeout(() => {
+          statusCell.innerHTML = _vulnStatusBadge(finalStatus).badge;
+          statusCell.style.opacity = '1';
+        }, 150);
+      }
+      if (scriptCell) {
+        scriptCell.innerHTML = result.script_used ? `<code>${result.script_used}</code>` : '—';
+      }
+      if (evidCell) {
+        const evid = (result.evidence || '—').slice(0, 100);
+        evidCell.textContent = evid;       // textContent — raw NSE output may contain < > &
+        evidCell.title       = result.evidence || '';
+      }
+      if (tr) {
+        tr.className = 'lv-row lv-row-' + finalStatus.toLowerCase().replace(/_/g, '-');
+        tr.classList.add('lv-row-updated');
+        setTimeout(() => tr.classList.remove('lv-row-updated'), 1200);
+      }
+
+      done++;
+      if (badgeEl) {
+        badgeEl.innerHTML = `<span class="lv-badge-dot"></span>🧪 NSE CONFIRMATION — ${done}/${toConfirmCount}`;
+      }
+
+      const chat = document.getElementById('chat');
+      if (chat && !_userScrolledUp) chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+
+      // Breathing room — never hammer the target with back-to-back nmap runs
+      await new Promise(r => setTimeout(r, 400));
+    }
+
+    if (myGen !== _confirmGeneration) return;
+    if (badgeEl) {
+      badgeEl.className = 'lv-scan-badge complete';
+      badgeEl.innerHTML = '✔ ALL CONFIRMED';
     }
   }
 
@@ -204,17 +632,56 @@
           return;
         }
 
-        // Progress event
-        _updateProgressUI(d);
-        if (!d.running && d.status !== 'running') {
+        // ── port_update — flip LOADING/SCANNING row to final status ──
+        if (d.type === 'port_update') {
+          _onPortUpdate(d.port);
+          return;
+        }
+
+        // ── ready — SSE pipe confirmed; signal runScan it's safe to POST ──
+        if (d.type === 'ready') {
+          if (typeof _sseReadyResolve === 'function') {
+            _sseReadyResolve();
+            _sseReadyResolve = null;
+          }
+          return;
+        }
+
+        // ── stream_end — NSE confirmation thread has finished, safe to close ──
+        // This is the ONLY event that should close the EventSource now.
+        // (Previously the code closed on status:"complete" which caused all
+        //  NSE confirmation port_update events to be missed — Bug 1.)
+        if (d.type === 'stream_end') {
           es.close();
           _progressTimer = null;
-          if (d.status === 'stopped') Utils.setStatus('stopped');
-          _completeLiveTable();
+          _completeLiveTable(false);   // show "✔ COMPLETE"
+          return;
+        }
+
+        // Progress event — update the progress bar UI
+        _updateProgressUI(d);
+
+        // FIX BUG 1: Do NOT close the EventSource on status "complete".
+        // The NSE confirmation thread hasn't run yet at this point. We close
+        // on stream_end (above) or on "stopped" (below). "complete" now shows
+        // a "CONFIRMING…" badge so the user knows confirmation is in progress.
+        if (d.status === 'stopped') {
+          es.close();
+          _progressTimer = null;
+          Utils.setStatus('stopped');
+          _completeLiveTable(false);
+        } else if (d.status === 'complete' || (!d.running && d.status !== 'running')) {
+          // Initial scan finished — show confirming state while NSE thread runs
+          _completeLiveTable(true);    // show "🔍 CONFIRMING…"
         }
       } catch (e) {}
     };
     es.onerror = () => {
+      // Resolve ready on error too so runScan never hangs
+      if (typeof _sseReadyResolve === 'function') {
+        _sseReadyResolve();
+        _sseReadyResolve = null;
+      }
       es.close();
       _progressTimer = null;
       _completeLiveTable();
@@ -263,11 +730,28 @@
       if (pctEl) pctEl.textContent = '0%';
     }
     Utils.setStatus('scanning', target);
+
+    // ── RACE FIX: open SSE pipe first, wait for server's "ready" event,
+    // THEN send the POST. This guarantees no port_found events are missed
+    // in the 200-500ms window while the EventSource is connecting.
+    const _sseReadyPromise = new Promise(resolve => { _sseReadyResolve = resolve; });
     _startProgressPolling();
+    // Wait for ready, but cap at 1.5s so we never block if server is slow
+    await Promise.race([_sseReadyPromise, new Promise(r => setTimeout(r, 1500))]);
+
     const progressMsg = addMsg(`⏳ Scanning \`${target}\` — **${scan_type}**…`, 'sys');
     _saveRichMsg('SCAN_PROGRESS', { target, scan_type, started_at: new Date().toISOString() });
+
+    // Show AI "analyzing" typing indicator while the scan runs
+    let _scanTyping    = addTyping();
+    let _analyzeTyping = null;
+
     try {
       const d = await ApiService.startScan(target, scan_type, SessionManager.getProjectName());
+
+      // Replace typing indicator with "AI is processing results" message
+      if (_scanTyping) { _scanTyping.remove(); _scanTyping = null; }
+      _analyzeTyping = addTyping();
       const fill  = document.getElementById('prog-fill');
       const pctEl = document.getElementById('prog-pct');
       const lbl   = document.getElementById('prog-lbl');
@@ -311,29 +795,73 @@
       loadDrawer();
       if (progressMsg) progressMsg.remove();
 
-      // Append scan complete card
-      const _scanRichData = {
-        target, scan_type: d.scan_type, duration: d.duration,
-        summary: d.explanation?.summary || '', recommendation: d.recommendation?.reason || '',
-        risk: d.risk, ai_analysis: d.ai_analysis, explanation: d.explanation,
-      };
-      _renderScanCompleteCard(_scanRichData);
-      _saveRichMsg('SCAN_COMPLETE', _scanRichData);
+      // Remove the "analyzing" typing indicator now that results are ready
+      if (_analyzeTyping) _analyzeTyping.remove();
 
-      // Append CVE table only when new CVEs found
+      // Append scan complete card
+      try {
+        const _scanRichData = {
+          target, scan_type: d.scan_type, duration: d.duration,
+          summary: d.explanation?.summary || '', recommendation: d.recommendation?.reason || '',
+          risk: d.risk, ai_analysis: d.ai_analysis, explanation: d.explanation,
+        };
+        _renderScanCompleteCard(_scanRichData);
+        _saveRichMsg('SCAN_COMPLETE', _scanRichData);
+      } catch (scErr) {
+        console.error('[ThreatWeave] scan-complete-card render failed:', scErr);
+      }
+
+      // Append CVE table only when new CVEs found — rows reveal progressively
       const hosts   = d.risk?.hosts || [];
-      const newCves = [];
-      for (const h of hosts) for (const p of h.ports || []) for (const c of p.cves || [])
-        newCves.push({ ...c, port: p.port, service: p.service });
-      if (newCves.length > 0) {
-        _renderVulnTableInChat(hosts);
-        _saveRichMsg('VULN_TABLE', newCves);
-      } else {
-        const prevCveCount = (cumulative?.cves || []).length;
-        const noNewMsg = prevCveCount > 0
-          ? `✅ **${d.scan_type || 'Scan'} complete** on \`${target}\` — ${d.duration}s. No new CVEs found. (${prevCveCount} CVE(s) from earlier scans still tracked above.)`
-          : `✅ **Scan complete** on \`${target}\` — ${d.duration}s. No CVEs detected.\n\n${d.explanation?.summary || ''}`;
-        addMsg(noNewMsg, 'ai');
+      try {
+        const newCves = [];
+        for (const h of hosts) for (const p of h.ports || []) for (const c of p.cves || [])
+          newCves.push({ ...c, port: p.port, service: p.service });
+        if (newCves.length > 0) {
+          _renderVulnTableProgressively(hosts);
+          _saveRichMsg('VULN_TABLE', newCves);
+        } else {
+          const prevCveCount = (cumulative?.cves || []).length;
+          const noNewMsg = prevCveCount > 0
+            ? `✅ **${d.scan_type || 'Scan'} complete** on \`${target}\` — ${d.duration}s. No new CVEs found. (${prevCveCount} CVE(s) from earlier scans still tracked above.)`
+            : `✅ **Scan complete** on \`${target}\` — ${d.duration}s. No CVEs detected.\n\n${d.explanation?.summary || ''}`;
+          addMsg(noNewMsg, 'ai');
+        }
+      } catch (cveErr) {
+        console.error('[ThreatWeave] CVE table render failed:', cveErr);
+      }
+
+      // ── NSE confirmation table — one open port per row, confirmed
+      // sequentially (one nmap process at a time) using the best-matching
+      // script picked from /usr/share/nmap/scripts/ for each port's
+      // service/version/CVEs. Fire-and-forget — runs in the background
+      // while the rest of runScan() finishes normally.
+      try {
+        // Prefer this scan's own ports (`hosts`, from `d.risk.hosts`). If THIS
+        // scan came back with zero ports (e.g. nothing new this round) but the
+        // right panel still shows data, that data came from `dMerged` (current
+        // scan + cumulative history). Fall back to that same source so the chat
+        // table always matches what the right panel is displaying.
+        let portSourceHosts = hosts;
+        let allOpenPorts = [];
+        for (const h of portSourceHosts) for (const p of h.ports || []) allOpenPorts.push(p);
+
+        if (allOpenPorts.length === 0) {
+          const mergedHosts = dMerged.risk?.hosts || [];
+          for (const h of mergedHosts) for (const p of h.ports || []) allOpenPorts.push(p);
+          if (allOpenPorts.length > 0) {
+            console.log('[ThreatWeave] confirm-table: using cumulative/dMerged ports (this scan returned 0 new ports)');
+          }
+        }
+
+        if (allOpenPorts.length > 0) {
+          const ctInfo = _renderPortConfirmTable(target, allOpenPorts);
+          if (ctInfo) _runSequentialConfirmation(target, ctInfo);
+        } else {
+          console.log('[ThreatWeave] confirm-table: skipped — no open ports in d.risk.hosts or dMerged.risk.hosts');
+        }
+      } catch (ctErr) {
+        console.error('[ThreatWeave] confirm-table render failed:', ctErr);
       }
 
       if (cumulative && cumulative.scan_history.length > 1) {
@@ -355,8 +883,10 @@
         if (fill) fill.style.width = '0%';
       }, 2000);
     } catch (e) {
+      if (_scanTyping)   _scanTyping.remove();
+      if (_analyzeTyping) _analyzeTyping.remove();
       if (progressMsg) progressMsg.remove();
-      _completeLiveTable();
+      _completeLiveTable(false);
       if (!e.message?.includes('stopped')) {
         addMsg(`Scan error: ${e.message}`, 'ai');
         Utils.setStatus('error', 'Scan failed');
@@ -376,7 +906,7 @@
     await ApiService.stopScan();
     _stopProgressPolling();
     _setScanUIRunning(false);
-    _completeLiveTable();
+    _completeLiveTable(false);
     const prog = document.getElementById('prog');
     if (prog) prog.classList.remove('on');
     Utils.setStatus('stopped', 'Scan stopped by user');

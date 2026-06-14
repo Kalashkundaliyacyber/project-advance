@@ -75,22 +75,56 @@ class ScanState:
             "running":   self.running,
         }
 
-    def add_listener(self, q):
+    def add_listener(self, q, loop):
+        """Register an SSE queue along with its event loop for thread-safe puts."""
         with self._lock:
-            self._listeners.append(q)
+            self._listeners.append((q, loop))
 
     def remove_listener(self, q):
         with self._lock:
-            try: self._listeners.remove(q)
-            except ValueError: pass
+            self._listeners = [(lq, ll) for lq, ll in self._listeners if lq is not q]
+
+    def _put_threadsafe(self, q, loop, event):
+        """Put an event into an asyncio.Queue safely from any thread."""
+        try:
+            loop.call_soon_threadsafe(q.put_nowait, event)
+        except Exception:
+            pass
 
     def broadcast_port_event(self, port_data: dict):
-        """Broadcast a live port_found event (per-port, fired during scan)."""
+        """Broadcast a live port_found event — safe to call from sync threads."""
         event = {"type": "port_found", "port": port_data}
         dead = []
-        for q in list(self._listeners):
+        for q, loop in list(self._listeners):
             try:
-                q.put_nowait(event)
+                self._put_threadsafe(q, loop, event)
+            except Exception:
+                dead.append(q)
+        for q in dead:
+            self.remove_listener(q)
+
+    def broadcast_port_update(self, port_data: dict):
+        """Broadcast a port_update event — flips a LOADING row to its final status."""
+        event = {"type": "port_update", "port": port_data}
+        dead = []
+        for q, loop in list(self._listeners):
+            try:
+                self._put_threadsafe(q, loop, event)
+            except Exception:
+                dead.append(q)
+        for q in dead:
+            self.remove_listener(q)
+
+    def broadcast_stream_end(self):
+        """Broadcast stream_end — tells all SSE listeners to close gracefully.
+        Called AFTER NSE confirmation scans finish (or immediately if no ports
+        needed confirmation). This replaces 'complete' as the SSE close signal
+        so port_update events from the confirmation thread are never missed."""
+        event = {"type": "stream_end"}
+        dead = []
+        for q, loop in list(self._listeners):
+            try:
+                self._put_threadsafe(q, loop, event)
             except Exception:
                 dead.append(q)
         for q in dead:
@@ -99,9 +133,9 @@ class ScanState:
     def _broadcast(self):
         data = {"type": "progress", **self.snapshot()}
         dead = []
-        for q in list(self._listeners):
+        for q, loop in list(self._listeners):
             try:
-                q.put_nowait(data)
+                self._put_threadsafe(q, loop, data)
             except Exception:
                 dead.append(q)
         for q in dead:
@@ -204,10 +238,17 @@ async def stream_progress(request: Request):
     import asyncio
 
     queue: asyncio.Queue = asyncio.Queue(maxsize=128)
-    scan_state.add_listener(queue)
+    loop = asyncio.get_event_loop()
+    scan_state.add_listener(queue, loop)
 
     async def event_generator():
         try:
+            # FIX: Send "ready" FIRST before anything else.
+            # Frontend waits for this before firing POST /api/scan —
+            # eliminates the 200-500ms race where early port_found events
+            # arrive before the EventSource connection is fully established.
+            yield f"data: {json.dumps({'type': 'ready'})}\n\n"
+
             # Send initial state immediately
             snap = {"type": "progress", **scan_state.snapshot()}
             yield f"data: {json.dumps(snap)}\n\n"
@@ -218,9 +259,18 @@ async def stream_progress(request: Request):
                 try:
                     data = await asyncio.wait_for(queue.get(), timeout=15.0)
                     yield f"data: {json.dumps(data)}\n\n"
-                    # Stop streaming once scan is done (only on progress events)
-                    if data.get("type") == "progress" and data.get("status") in ("complete", "stopped", "idle"):
+                    # stream_end: NSE confirmation thread has finished — safe to close
+                    if data.get("type") == "stream_end":
                         break
+                    # stopped: user hit stop — close immediately, no confirmation thread
+                    if data.get("type") == "progress" and data.get("status") in ("stopped", "idle"):
+                        break
+                    # NOTE: we intentionally do NOT break on status=="complete" here.
+                    # scan_state.complete() fires before the NSE confirmation thread
+                    # starts broadcasting port_update events. Breaking on "complete"
+                    # would close the SSE and discard all confirmation results — the
+                    # bug this fix addresses. stream_end is broadcast by the
+                    # confirmation thread (or immediately if no ports need confirming).
                 except asyncio.TimeoutError:
                     # Keepalive comment so proxy doesn't close the connection
                     yield ": keepalive\n\n"

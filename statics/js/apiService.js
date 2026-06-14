@@ -61,6 +61,36 @@ const ApiService = (() => {
   async function getScanProgress() { return _request(`${BASE}/scan/progress`); }
   async function stopScan() { return _request(`${BASE}/scan/stop`, { method: 'POST' }).catch(() => null); }
 
+  /**
+   * Confirm a single port via targeted NSE scripts (Kali nmap scripts).
+   * Called SEQUENTIALLY by the chatbot — one port at a time, 400ms apart —
+   * so the system never runs parallel nmap instances.
+   *
+   * @param {string} target   - IP/hostname being scanned
+   * @param {object} portData - { port, protocol, service, product, version, cves }
+   *   `cves` may be an array of strings OR an array of {cve_id} objects — both
+   *   forms are normalised to plain CVE-ID strings before sending.
+   * @returns {Promise<{vuln_status, script_used, scripts_tried, evidence}>}
+   */
+  async function confirmPort(target, portData = {}) {
+    const cves = (portData.cves || [])
+      .map(c => (typeof c === 'string' ? c : (c.cve_id || c.id || '')))
+      .filter(Boolean);
+
+    return _request(`${BASE}/scan/confirm-port`, {
+      method: 'POST',
+      body: JSON.stringify({
+        target,
+        port:     portData.port,
+        protocol: portData.protocol || 'tcp',
+        service:  portData.service  || '',
+        product:  portData.product  || '',
+        version:  portData.version  || '',
+        cves,
+      }),
+    });
+  }
+
   /* ── Chat ─────────────────────────────────────────── */
   async function sendChatMessage(message, target = '', sessionId = '', projectName = '') {
     return _request(`${BASE}/chat`, {
@@ -246,7 +276,7 @@ const ApiService = (() => {
 
   return {
     setToken,
-    startScan, getScanProgress, stopScan,
+    startScan, getScanProgress, stopScan, confirmPort,
     getScanResults, analyzeScan,
     sendChatMessage, saveChatSession, loadChatSession,
     renameSession, deleteSession,

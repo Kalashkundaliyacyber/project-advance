@@ -71,6 +71,17 @@ class ScanRequest(BaseModel):
     message: Optional[str] = ""
     project_name: Optional[str] = ""
 
+class ConfirmPortRequest(BaseModel):
+    """Single-port NSE confirmation request — called sequentially from the
+    frontend, one port at a time, to avoid parallel nmap overload."""
+    target:   str
+    port:     int
+    protocol: str  = "tcp"
+    service:  str  = ""
+    product:  str  = ""
+    version:  str  = ""
+    cves:     list = []   # list of CVE ID strings, e.g. ["CVE-2011-2523"]
+
 class ChatRequest(BaseModel):
     message: str
     target: Optional[str] = ""
@@ -762,19 +773,66 @@ def _handle_slash(cmd: str, args: str, sid: str):
 
 # ── Auto-scan pipeline ─────────────────────────────────────────────────────────
 
+async def _analyze_scan_capped(risk: dict, budget: float = 12.0) -> dict:
+    """
+    Run analyze_scan() — the AI provider chain (DeepSeek -> Qwen -> Llama,
+    each with its OWN 60-90s internal HTTP timeout) — under a hard overall
+    time budget.
+
+    THE BUG: asyncio.gather() in _run_scan_pipeline waits for its SLOWEST
+    member. analyze_scan() only raises (which triggers ITS OWN internal
+    rule-based fallback) after ALL THREE providers individually time out —
+    90s + 60s + 60s = 210 seconds, EVERY scan, even though the result is
+    discarded and rule-based is used anyway. The entire /api/scan response —
+    and therefore every chatbot table that depends on it — was blocked for
+    3.5 minutes per scan.
+
+    THE FIX: cap analyze_scan at `budget` seconds. If it doesn't return in
+    time, return {} immediately — rule_based_analysis (computed separately
+    a few lines below, always fast, no network calls) is the data the
+    frontend already falls back to whenever ai_analysis is empty/marked
+    "rule-based-fallback". The abandoned AI call keeps running in its
+    executor thread in the background (Python can't hard-cancel a running
+    thread) but no longer blocks the user-facing response.
+    """
+    loop = asyncio.get_event_loop()
+    try:
+        return await asyncio.wait_for(
+            loop.run_in_executor(None, analyze_scan, risk),
+            timeout=budget,
+        )
+    except asyncio.TimeoutError:
+        logger.warning(
+            "analyze_scan exceeded %.0fs budget (AI providers slow/unloaded) — "
+            "returning empty ai_analysis; rule_based_analysis covers this. "
+            "(AI call continues in background thread, result discarded.)",
+            budget,
+        )
+        return {"engine": "rule-based-fallback", "fallback_reason": f"AI analysis exceeded {budget:.0f}s budget"}
+    except Exception as e:
+        logger.warning("analyze_scan raised unexpectedly: %s", e)
+        return {"engine": "rule-based-fallback", "fallback_reason": str(e)}
+
+
 async def _run_scan_pipeline(target: str, scan_type: str, project_name: str = "", session_id: str = "") -> dict:
     target    = validate_target(target)
     scan_type = validate_scan_type(scan_type)
     sid       = create_session(target, scan_type, project_name=project_name)
     cmd       = get_scan_command(scan_type, target)
 
-    raw_output, xml_output, duration = execute_scan(cmd, target, scan_type)
+    loop = asyncio.get_event_loop()
+
+    # CRITICAL: execute_scan MUST run in an executor — if called directly on the
+    # async event loop thread it blocks the loop, preventing call_soon_threadsafe
+    # SSE port_found events from being delivered until after the scan completes.
+    raw_output, xml_output, duration = await loop.run_in_executor(
+        None, execute_scan, cmd, target, scan_type
+    )
     save_raw(sid, raw_output, xml_output)
 
     parsed = parse_nmap_output(xml_output, raw_output)
     save_parsed(sid, parsed)
 
-    loop = asyncio.get_event_loop()
     versioned = await loop.run_in_executor(None, analyze_versions, parsed)
     cve_data  = await loop.run_in_executor(None, map_cves, versioned)
     # NVD enrichment: normalise local CVEs + augment with live NVD intelligence
@@ -785,7 +843,7 @@ async def _run_scan_pipeline(target: str, scan_type: str, project_name: str = ""
     recommendation, explanation, ai_analysis, charts = await asyncio.gather(
         loop.run_in_executor(None, get_recommendation, risk, scan_type),
         loop.run_in_executor(None, generate_explanation, risk, {}),
-        loop.run_in_executor(None, analyze_scan, risk),
+        _analyze_scan_capped(risk, budget=12.0),
         loop.run_in_executor(None, lambda: generate_chart_data({"risk": risk})),
     )
 
@@ -827,6 +885,28 @@ async def _run_scan_pipeline(target: str, scan_type: str, project_name: str = ""
             save_scan_context(session_id, analysis)
         except Exception as e:
             logger.warning("Failed to save scan context for %s: %s", session_id, e)
+
+    # ── NSE confirmation: handled by the frontend now ──────────────────────
+    # The chatbot's "NSE Confirmation" table (statics/chatbot/scan.js,
+    # _runSequentialConfirmation) drives confirmation itself — one targeted
+    # nmap run per port via POST /api/scan/confirm-port, sequentially, with
+    # a 400ms gap between ports. That fully replaces the old background
+    # `confirm_unconfirmed_ports` thread, which:
+    #   - crashed with `AttributeError: 'dict' object has no attribute 'lower'`
+    #     (it passed raw CVE dicts into find_scripts_for_port(), which expects
+    #     plain CVE-ID strings — see script_selector.py for the underlying fix)
+    #   - ran a second, uncontrolled NSE scan in parallel with the new
+    #     sequential one, which is exactly the "don't run them all at once"
+    #     problem the sequential table was built to avoid.
+    #
+    # All that's left to do here is signal stream_end so the legacy SSE-based
+    # live table (statics/chatbot/scan.js, _renderLiveVulnTable) closes its
+    # EventSource cleanly instead of waiting on a timeout.
+    try:
+        from app.api.scan_control import scan_state as _ss_ref
+        _ss_ref.broadcast_stream_end()
+    except Exception as _se:
+        logger.warning("stream_end broadcast failed for %s: %s", target, _se)
 
     return analysis
 
@@ -1090,6 +1170,89 @@ async def purge_blank_sessions(request: Request):
         logger.warning("purge-blank failed: %s", e)
         return {"ok": False, "error": str(e)}
 
+
+
+@router.post("/scan/confirm-port")
+async def confirm_single_port(req: ConfirmPortRequest):
+    """
+    POST /api/scan/confirm-port
+
+    Run a targeted NSE confirmation scan for ONE port and return the result.
+    The frontend calls this sequentially (one at a time, 400 ms gap between
+    calls) so we never run parallel nmap instances and never overload the system.
+
+    Flow:
+      1. find_scripts_for_port() picks the best matching Kali nmap scripts
+         from /usr/share/nmap/scripts/ for this service/version/CVE combo.
+      2. run_confirmation_scan() runs a single-port nmap with those scripts.
+      3. interpret_script_output() classifies the result.
+      4. Return {vuln_status, script_used, scripts_tried, evidence}.
+    """
+    from app.scanner.script_selector import (
+        find_scripts_for_port,
+        run_confirmation_scan,
+        interpret_script_output,
+    )
+
+    loop = asyncio.get_event_loop()
+
+    # ── Pick best Kali NSE scripts for this service ─────────────────────────
+    scripts = find_scripts_for_port(
+        service=req.service,
+        product=req.product,
+        version=req.version,
+        cves=req.cves,          # already strings: ["CVE-2011-2523", ...]
+    )
+
+    if not scripts:
+        logger.info(
+            "confirm-port: no matching scripts for %s:%d (%s %s) — marking UNCONFIRMED",
+            req.target, req.port, req.service, req.version
+        )
+        return {
+            "vuln_status":   "UNCONFIRMED",
+            "script_used":   None,
+            "scripts_tried": [],
+            "evidence":      "No matching NSE scripts found on this Kali system for the detected service/version",
+        }
+
+    logger.info(
+        "confirm-port: %s:%d — running scripts: %s",
+        req.target, req.port, ", ".join(scripts)
+    )
+
+    # ── Run the nmap confirmation scan in a thread (blocking call) ──────────
+    output = await loop.run_in_executor(
+        None,
+        run_confirmation_scan,
+        req.target, req.port, req.protocol, scripts,
+    )
+
+    final_status = interpret_script_output(output or "")
+
+    # ── Extract the most meaningful lines from the script output ────────────
+    evidence = ""
+    if output:
+        # Grab lines that actually say something useful
+        useful_keywords = [
+            "vulnerable", "not vulnerable", "state:", "evidence",
+            "exploit", "cve", "risk", "description",
+        ]
+        evidence_lines = [
+            l.strip() for l in output.split("\n")
+            if l.strip() and any(k in l.lower() for k in useful_keywords)
+        ]
+        evidence = " | ".join(evidence_lines[:3])[:400]
+        if not evidence:
+            # Fall back to first 200 chars of raw output
+            evidence = output.strip()[:200]
+
+    return {
+        "vuln_status":   final_status,
+        "script_used":   scripts[0] if scripts else None,
+        "scripts_tried": scripts,
+        "evidence":      evidence,
+    }
 
 
 @router.post("/scan/auto")

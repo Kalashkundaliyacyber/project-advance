@@ -27,6 +27,15 @@ def broadcast_port_event(port_data: dict):
         pass
 
 
+def broadcast_port_update(port_data: dict):
+    """Broadcast a port_update SSE event — flips a LOADING row to final status."""
+    try:
+        from app.api.scan_control import scan_state
+        scan_state.broadcast_port_update(port_data)
+    except Exception:
+        pass
+
+
 def analyze_port_vuln_status(port_xml_fragment: str) -> dict:
     """
     Parse a single <port>...</port> XML fragment, extract service/version/scripts,
@@ -131,19 +140,45 @@ def execute_scan(cmd: list, target: str, scan_type: str):
 
         def _read_stdout():
             nonlocal _in_port
+            _current_port_key = [None]   # tracks port currently in LOADING state
+
             for line in proc.stdout:
                 stdout_lines.append(line)
                 stripped = line.strip()
 
-                # Detect start of a <port …> block
+                # ── Phase 1: port tag opens → broadcast LOADING immediately ──
+                # This fires the moment nmap detects a port is open (during -sV)
+                # so a row appears in the chatbot table right away with a spinner.
                 if stripped.startswith("<port ") or stripped.startswith("<port\t"):
                     _in_port = True
                     _port_buf.clear()
+                    # Extract portid + protocol for the LOADING placeholder
+                    try:
+                        import re as _re
+                        _m = _re.search(r'portid="(\d+)".*protocol="(\w+)"', stripped)
+                        if _m:
+                            _pnum, _proto = _m.group(1), _m.group(2)
+                            _current_port_key[0] = f"{_pnum}/{_proto}"
+                            _loading_port = {
+                                "port": int(_pnum),
+                                "protocol": _proto,
+                                "state": "open",
+                                "service": "",
+                                "version": "",
+                                "vuln_status": "LOADING",
+                                "scripts": [],
+                                "cves": [],
+                                "target": target,
+                            }
+                            broadcast_port_event(_loading_port)
+                    except Exception:
+                        pass
 
                 if _in_port:
                     _port_buf.append(line)
 
-                # Detect end of <port> block → parse + broadcast immediately
+                # ── Phase 2: port tag closes → parse fully + broadcast UPDATE ──
+                # Scripts + CVEs are now in the buffer; real vuln_status is known.
                 if _in_port and "</port>" in stripped:
                     _in_port = False
                     fragment = "".join(_port_buf).strip()
@@ -152,9 +187,15 @@ def execute_scan(cmd: list, target: str, scan_type: str):
                         port_data = analyze_port_vuln_status(fragment)
                         if port_data:
                             port_data["target"] = target
-                            broadcast_port_event(port_data)
+                            # If we already sent a LOADING row, send port_update
+                            # so the frontend flips that row in-place.
+                            if _current_port_key[0]:
+                                broadcast_port_update(port_data)
+                            else:
+                                broadcast_port_event(port_data)
                     except Exception:
                         pass
+                    _current_port_key[0] = None
 
         def _read_stderr():
             for line in proc.stderr:
@@ -253,8 +294,10 @@ def _simulated_scan(target: str, scan_type: str):
 
 
 def _fire_simulated_port_events(target: str, xml_output: str):
-    """Parse simulated XML and broadcast a port_found event per port with a
-    small delay between each so the frontend table animates in live."""
+    """Parse simulated XML and broadcast two-phase port events per port:
+    Phase 1 → port_found with LOADING  (row appears with spinner)
+    Phase 2 → port_update with final status (row flips live after 0.9s)
+    """
     try:
         import xml.etree.ElementTree as ET
         root = ET.fromstring(xml_output.strip())
@@ -266,10 +309,28 @@ def _fire_simulated_port_events(target: str, xml_output: str):
                 try:
                     from app.parser.nmap_parser import _parse_port
                     port = _parse_port(pe)
-                    if port:
-                        port["target"] = target
-                        broadcast_port_event(port)
-                        time.sleep(0.18)  # stagger for live animation effect
+                    if not port:
+                        continue
+                    port["target"] = target
+
+                    # Phase 1 — send LOADING placeholder immediately
+                    loading = {
+                        "port": port["port"],
+                        "protocol": port.get("protocol", "tcp"),
+                        "state": "open",
+                        "service": port.get("service", ""),
+                        "version": "",
+                        "vuln_status": "LOADING",
+                        "scripts": [],
+                        "cves": [],
+                        "target": target,
+                    }
+                    broadcast_port_event(loading)
+                    time.sleep(0.7)   # simulate nmap running scripts
+
+                    # Phase 2 — send full data with real vuln_status
+                    broadcast_port_update(port)
+                    time.sleep(0.18)  # small gap before next port
                 except Exception:
                     pass
     except Exception:
@@ -325,41 +386,6 @@ def _sim_vuln(target):
 </host>
 <runstats>
   <finished elapsed="120.00" exit="success" summary="1 IP address scanned"/>
-  <hosts up="1" down="0" total="1"/>
-</runstats>
-</nmaprun>"""
-    return f"""<?xml version="1.0"?>
-<nmaprun scanner="nmap" args="nmap -sT -sV {target}" version="7.95" xmloutputversion="1.05">
-<host starttime="1720000000" endtime="1720000010">
-<status state="up" reason="echo-reply"/>
-<address addr="{target}" addrtype="ipv4"/>
-<hostnames><hostname name="{target}" type="user"/></hostnames>
-<ports>
-  <port protocol="tcp" portid="22">
-    <state state="open" reason="syn-ack"/>
-    <service name="ssh" product="OpenSSH" version="7.4" extrainfo="protocol 2.0" conf="10" method="probed"/>
-  </port>
-  <port protocol="tcp" portid="80">
-    <state state="open" reason="syn-ack"/>
-    <service name="http" product="Apache httpd" version="2.2.34" extrainfo="(Unix)" conf="10" method="probed"/>
-  </port>
-  <port protocol="tcp" portid="443">
-    <state state="open" reason="syn-ack"/>
-    <service name="https" product="Apache httpd" version="2.2.34" conf="10" method="probed"/>
-  </port>
-  <port protocol="tcp" portid="3306">
-    <state state="open" reason="syn-ack"/>
-    <service name="mysql" product="MySQL" version="5.5.62" conf="10" method="probed"/>
-  </port>
-  <port protocol="tcp" portid="21">
-    <state state="open" reason="syn-ack"/>
-    <service name="ftp" product="vsftpd" version="2.3.4" conf="10" method="probed"/>
-  </port>
-</ports>
-<times srtt="500" rttvar="250" to="100000"/>
-</host>
-<runstats>
-  <finished elapsed="10.00" exit="success" summary="1 IP address scanned"/>
   <hosts up="1" down="0" total="1"/>
 </runstats>
 </nmaprun>"""

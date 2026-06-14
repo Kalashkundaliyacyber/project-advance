@@ -4314,6 +4314,43 @@
   border: 1px solid rgba(251,191,36,0.35);
   color: #fbbf24;
 }
+/* Loading spinner badge — port detected, scripts running */
+.lv-loading {
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.35);
+  color: #a5b4fc;
+}
+/* Scanning badge — targeted confirmation NSE scripts running */
+.lv-scanning {
+  background: rgba(14,165,233,0.12);
+  border: 1px solid rgba(14,165,233,0.35);
+  color: #38bdf8;
+}
+/* Spinning dot used inside LOADING / SCANNING badges */
+.lv-spinner {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: lv-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes lv-spin {
+  to { transform: rotate(360deg); }
+}
+/* Row border for live states */
+.lv-row-loading   { border-left: 3px solid rgba(99,102,241,0.5); }
+.lv-row-scanning  { border-left: 3px solid rgba(14,165,233,0.5); }
+/* Flash highlight when a row updates from LOADING → final status */
+.lv-row-updated {
+  animation: lv-row-flash 1.2s ease-out forwards;
+}
+@keyframes lv-row-flash {
+  0%   { background: rgba(99,102,241,0.18); }
+  100% { background: transparent; }
+}
 
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 700px) {
