@@ -1317,6 +1317,7 @@ async def run_scan(req: ScanRequest, request: Request):
     try:
         analysis = await _run_scan_pipeline(target, scan_type, project_name=project_name)
     except Exception as e:
+        logger.exception("Scan pipeline failed for target=%s scan_type=%s", target, scan_type)
         raise HTTPException(status_code=500, detail=f"Scan failed: {e}")
 
     return analysis
