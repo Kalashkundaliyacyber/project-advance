@@ -30,6 +30,16 @@ from app.analysis.risk_engine import calculate_risk
 from app.recommendation.recommender import get_recommendation
 from app.explanation.explainer import generate_explanation
 from app.ai_analysis import analyze_scan, explain_cve, _rule_based_analyze
+
+# ── Warm up the CVE database at import time ────────────────────────────────
+# This seeds the SQLite DB from /usr/share/nmap/scripts/ and the hardcoded
+# CVE_NSE_MAP entries so the first confirm-port request is instant.
+try:
+    from app.scanner.cve_db import ensure_initialized as _init_cve_db
+    import threading as _warmup_thread
+    _warmup_thread.Thread(target=_init_cve_db, daemon=True, name="cve-db-warmup").start()
+except Exception as _cve_db_err:
+    pass  # Non-fatal — DB initializes lazily on first request if this fails
 from app.ai.routing.ai_router import ai_router
 from app.remediation import resolve_patch, resolve_patches_batch, get_resolution_stats
 from app.remediation.confidence import confidence_label
@@ -1177,81 +1187,106 @@ async def confirm_single_port(req: ConfirmPortRequest):
     """
     POST /api/scan/confirm-port
 
-    Run a targeted NSE confirmation scan for ONE port and return the result.
-    The frontend calls this sequentially (one at a time, 400 ms gap between
-    calls) so we never run parallel nmap instances and never overload the system.
+    CVE-first NSE confirmation for a single port.
+    Called sequentially by the chatbot (one port at a time, 400ms gaps).
 
-    Flow:
-      1. find_scripts_for_port() picks the best matching Kali nmap scripts
-         from /usr/share/nmap/scripts/ for this service/version/CVE combo.
-      2. run_confirmation_scan() runs a single-port nmap with those scripts.
-      3. interpret_script_output() classifies the result.
-      4. Return {vuln_status, script_used, scripts_tried, evidence}.
+    Decision tree:
+      1. Normalise CVE list.
+      2. get_confirmation_plan() → find best CVE→NSE mapping on disk.
+      3. action == "NSE"     → run script → analyze_output() → verdict.
+      4. action == "VERSION" → version in known-vulnerable range → POTENTIALLY_VULNERABLE.
+      5. action == "NONE"    → no script, no version data → NOT_VALIDATABLE.
+
+    CONFIRMED requires actual "State: VULNERABLE" / "VULNERABLE:" in NSE output.
+    "Starting Nmap..." alone → UNCONFIRMED, never CONFIRMED.
+    "State: NOT VULNERABLE" / "not Exim" / "disabled" → NOT_VULNERABLE.
     """
     from app.scanner.script_selector import (
-        find_scripts_for_port,
+        find_scripts_for_port_with_plan,
         run_confirmation_scan,
-        interpret_script_output,
     )
+    from app.scanner.cve_script_mapper import analyze_output
 
     loop = asyncio.get_event_loop()
 
-    # ── Pick best Kali NSE scripts for this service ─────────────────────────
-    scripts = find_scripts_for_port(
+    # Normalise CVEs: frontend sends plain strings ["CVE-2011-2523", ...]
+    cve_ids = [c.strip() for c in req.cves if c and c.strip()]
+
+    # ── Determine confirmation plan ─────────────────────────────────────────
+    plan = find_scripts_for_port_with_plan(
         service=req.service,
         product=req.product,
         version=req.version,
-        cves=req.cves,          # already strings: ["CVE-2011-2523", ...]
+        cves=cve_ids,
     )
 
-    if not scripts:
+    action = plan["action"]
+
+    # ── Case A: no NSE, version in vulnerable range ─────────────────────────
+    if action == "VERSION":
         logger.info(
-            "confirm-port: no matching scripts for %s:%d (%s %s) — marking UNCONFIRMED",
-            req.target, req.port, req.service, req.version
+            "confirm-port: %s:%d %s %s — POTENTIALLY_VULNERABLE via version range (CVE %s)",
+            req.target, req.port, req.service, req.version, plan["cve_id"]
         )
         return {
-            "vuln_status":   "UNCONFIRMED",
-            "script_used":   None,
-            "scripts_tried": [],
-            "evidence":      "No matching NSE scripts found on this Kali system for the detected service/version",
+            "vuln_status":    "POTENTIALLY_VULNERABLE",
+            "confidence":     plan["confidence_if_confirmed"],
+            "script_used":    None,
+            "scripts_tried":  [],
+            "cve_confirmed":  plan["cve_id"],
+            "evidence":       plan["reason"],
         }
 
+    # ── Case B: nothing matches → NOT_VALIDATABLE ───────────────────────────
+    if action == "NONE" or not plan.get("script"):
+        logger.info(
+            "confirm-port: %s:%d %s — NOT_VALIDATABLE (CVEs: %s)",
+            req.target, req.port, req.service, cve_ids[:3]
+        )
+        return {
+            "vuln_status":    "NOT_VALIDATABLE",
+            "confidence":     0,
+            "script_used":    None,
+            "scripts_tried":  [],
+            "cve_confirmed":  None,
+            "evidence":       plan["reason"],
+        }
+
+    # ── Case C: run the NSE script ──────────────────────────────────────────
+    script = plan["script"]
     logger.info(
-        "confirm-port: %s:%d — running scripts: %s",
-        req.target, req.port, ", ".join(scripts)
+        "confirm-port: %s:%d — running %s (CVE %s)",
+        req.target, req.port, script, plan["cve_id"]
     )
 
-    # ── Run the nmap confirmation scan in a thread (blocking call) ──────────
     output = await loop.run_in_executor(
         None,
         run_confirmation_scan,
-        req.target, req.port, req.protocol, scripts,
+        req.target, req.port, req.protocol, [script],
     )
 
-    final_status = interpret_script_output(output or "")
+    result = analyze_output(output or "", script, plan["cve_id"] or "")
 
-    # ── Extract the most meaningful lines from the script output ────────────
-    evidence = ""
-    if output:
-        # Grab lines that actually say something useful
-        useful_keywords = [
-            "vulnerable", "not vulnerable", "state:", "evidence",
-            "exploit", "cve", "risk", "description",
-        ]
-        evidence_lines = [
-            l.strip() for l in output.split("\n")
-            if l.strip() and any(k in l.lower() for k in useful_keywords)
-        ]
-        evidence = " | ".join(evidence_lines[:3])[:400]
-        if not evidence:
-            # Fall back to first 200 chars of raw output
-            evidence = output.strip()[:200]
+    # ── Self-learning: update confidence in DB based on real scan result ─────
+    # This is what makes the system intelligent over time — good mappings
+    # get reinforced, bad ones get flagged automatically.
+    try:
+        from app.scanner.cve_db import record_scan_result
+        if plan.get("cve_id"):
+            record_scan_result(plan["cve_id"], script, result["status"])
+    except Exception as _fb_err:
+        logger.debug("Feedback update skipped: %s", _fb_err)
+
+    final_confidence = result["confidence"] if result["status"] == "CONFIRMED" else 0
 
     return {
-        "vuln_status":   final_status,
-        "script_used":   scripts[0] if scripts else None,
-        "scripts_tried": scripts,
-        "evidence":      evidence,
+        "vuln_status":    result["status"],
+        "confidence":     final_confidence,
+        "script_used":    script,
+        "scripts_tried":  [script],
+        "cve_confirmed":  plan["cve_id"],
+        "evidence":       result["evidence"],
+        "source":         plan.get("source", ""),
     }
 
 

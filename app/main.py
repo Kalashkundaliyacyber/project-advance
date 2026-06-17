@@ -254,6 +254,32 @@ async def startup_event():
     except Exception as e:
         logger.warning("startup: failed to schedule due scans: %s", e)
 
+    # CVE intelligence database — initialize in background so it doesn't
+    # block the server from accepting requests. Seeds from:
+    #   1. 45 manual entries (CVE_NSE_MAP)
+    #   2. Auto-scan /usr/share/nmap/scripts/ → 600+ CVE→script mappings
+    # After first run this is instant (DB file already exists).
+    async def _init_cve_db():
+        try:
+            import asyncio as _asyncio
+            loop = _asyncio.get_event_loop()
+            stats = await loop.run_in_executor(None, _boot_cve_db)
+            logger.info(
+                "CVE database ready: %d total (%d manual, %d from NSE files)",
+                stats.get("total", 0), stats.get("manual", 0), stats.get("nse_parsed", 0)
+            )
+        except Exception as _e:
+            logger.warning("CVE database init failed (non-fatal): %s", _e)
+
+    def _boot_cve_db():
+        try:
+            from app.scanner.cve_db import init_db
+            return init_db()
+        except Exception:
+            return {}
+
+    asyncio.create_task(_init_cve_db())
+
 
 if __name__ == "__main__":
     uvicorn.run("app.main:app", host=HOST, port=PORT, reload=True)

@@ -240,6 +240,9 @@ echo -e "${CYAN}  → Installing all project packages...${NC}"
     "httpx==0.27.0" \
     "python-dotenv==1.0.1" \
     \
+    `# ── Gemini SDK (CVE→NSE intelligent script selector) ───────────` \
+    "google-generativeai" \
+    \
     `# ── (Add new packages above this line) ────────────────────────` \
     \
     --constraint /tmp/tw_constraints.txt \
@@ -308,6 +311,26 @@ mkdir -p \
     "$PROJECT_DIR/data/sessions" \
     "$PROJECT_DIR/data/cve_db" \
     "$PROJECT_DIR/data/version_db" \
+    "$PROJECT_DIR/data"
+
+# ── Initialize CVE intelligence database ──────────────────────────────────
+# Seeds SQLite with:
+#   • 45 manually-verified CVE→NSE mappings (confidence 90-95)
+#   • Auto-scanned /usr/share/nmap/scripts/ → 600+ CVE→script mappings
+# Subsequent runs skip re-seeding (idempotent upserts).
+echo -e "${CYAN}  → Initializing CVE intelligence database...${NC}"
+cd "$PROJECT_DIR" && "$VPY" - << 'PYDB'
+import sys, os
+sys.path.insert(0, '.')
+try:
+    from app.scanner.cve_db import init_db
+    stats = init_db()
+    print(f"  ✓ CVE database: {stats.get('total',0)} entries "
+          f"({stats.get('manual',0)} manual, {stats.get('nse_parsed',0)} from NSE files, "
+          f"{stats.get('gemini',0)} Gemini-cached)")
+except Exception as e:
+    print(f"  ⚠  CVE database init skipped: {e} (will initialize on first scan)")
+PYDB
     "$PROJECT_DIR/data/logs" \
     "$PROJECT_DIR/reports" \
     "$PROJECT_DIR/exports"
