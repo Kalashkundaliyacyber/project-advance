@@ -97,22 +97,26 @@ CVE_NSE_MAP: dict[str, dict] = {
         "notes": "Samba 3.x SMB2 request parsing vulnerability",
     },
     "CVE-2012-1182": {
-        "script": "smb-vuln-cve2009-3103",      # closest available for Samba 3.x
+        "script": "samba-vuln-cve-2012-1182",    # FIX DB-003: dedicated NSE exists; was wrong smb-vuln-cve2009-3103 (Windows SMB2 script)
         "products": ["samba"],
-        "confidence_base": 70,
-        "notes": "Samba heap-based buffer overflow; smb-vuln-cve2009-3103 covers 3.x family",
+        "confidence_base": 90,
+        "notes": "Samba heap buffer overflow < 3.6.4; samba-vuln-cve-2012-1182.nse is the correct dedicated script",
     },
-    "CVE-2012-0037": {
-        "script": "smb-vuln-ms10-054",
+    # DB-001+DB-002 FIX: CVE-2012-0037 was incorrectly mapped to smb-vuln-ms10-054.
+    # CVE-2012-0037 is an Apache Jena XML injection — unrelated to SMB.
+    # The MS10-054 SMB pool overflow is CVE-2010-2550. The Print Spooler bulletin
+    # MS10-061 is CVE-2010-2729. Both are now mapped to their correct scripts.
+    "CVE-2010-2550": {
+        "script": "smb-vuln-ms10-054",           # FIX DB-001/DB-002: was keyed as CVE-2012-0037, wrong script smb-vuln-ms10-061
         "products": ["microsoft", "windows"],
         "confidence_base": 85,
-        "notes": "SMB pool overflow (MS10-054)",
+        "notes": "MS10-054 SMB pool overflow (CVE-2010-2550); smb-vuln-ms10-054 is the correct script",
     },
-    "CVE-2010-2550": {
-        "script": "smb-vuln-ms10-061",
+    "CVE-2010-2729": {
+        "script": "smb-vuln-ms10-061",           # FIX DB-002: was keyed as CVE-2010-2550; MS10-061 Print Spooler is CVE-2010-2729
         "products": ["microsoft", "windows"],
         "confidence_base": 90,
-        "notes": "Print Spooler impersonation vulnerability",
+        "notes": "MS10-061 Print Spooler impersonation (CVE-2010-2729)",
     },
 
     # ── HTTP ─────────────────────────────────────────────────────────────────
@@ -135,10 +139,26 @@ CVE_NSE_MAP: dict[str, dict] = {
         "notes": "Apache Range header DoS (Apache Killer)",
     },
     "CVE-2017-7679": {
-        "script": "http-vuln-cve2017-7679",
+        "script": None,                           # FIX DB-007: http-vuln-cve2017-7679 does NOT exist in nmap standard scripts
         "products": ["apache"],
-        "confidence_base": 90,
-        "notes": "Apache mod_mime buffer overflow",
+        "confidence_base": 0,
+        "notes": "Apache mod_mime buffer over-read; no NSE script. Version range in KNOWN_VULNERABLE_VERSIONS.",
+    },
+    # FIX: Add CVE-2012-1823 — PHP-CGI argument injection (confirmed on port 80)
+    # http-vuln-cve2012-1823 outputs "seems vulnerable to CVE-2012-1823" and executes commands.
+    "CVE-2012-1823": {
+        "script": "http-vuln-cve2012-1823",
+        "products": ["apache", "php", "http"],
+        "confidence_base": 95,
+        "notes": "PHP-CGI argument injection RCE; script outputs 'seems vulnerable' and returns command output",
+    },
+    # FIX: Add CVE-2014-3704 — Drupalgeddon SQL injection (confirmed on port 80)
+    # http-vuln-cve2014-3704 adds an admin user when vulnerable.
+    "CVE-2014-3704": {
+        "script": "http-vuln-cve2014-3704",
+        "products": ["drupal", "apache", "http"],
+        "confidence_base": 95,
+        "notes": "Drupalgeddon SQLi; script outputs 'adding admin user' when exploitation succeeds",
     },
     "CVE-2017-5638": {
         "script": "http-vuln-cve2017-5638",
@@ -147,10 +167,10 @@ CVE_NSE_MAP: dict[str, dict] = {
         "notes": "Apache Struts2 remote code execution",
     },
     "CVE-2019-0232": {
-        "script": "http-vuln-cve2019-0232",
+        "script": None,                           # FIX DB-008: http-vuln-cve2019-0232 does NOT exist in nmap standard scripts
         "products": ["tomcat", "apache tomcat"],
-        "confidence_base": 90,
-        "notes": "Apache Tomcat CGI servlet enableCmdLineArguments RCE",
+        "confidence_base": 0,
+        "notes": "Tomcat CGI enableCmdLineArguments RCE; no NSE. Version range check only.",
     },
     "CVE-2021-41773": {
         "script": "http-vuln-cve2021-41773",
@@ -229,10 +249,10 @@ CVE_NSE_MAP: dict[str, dict] = {
         "notes": "RealVNC authentication bypass",
     },
     "CVE-2002-2088": {
-        "script": "vnc-vuln-cve2006-2369",
-        "products": ["vnc"],
-        "confidence_base": 70,
-        "notes": "VNC security weakness; using closest available NSE",
+        "script": None,                           # FIX DB-004: vnc-vuln-cve2006-2369 does NOT exist in nmap; was silently dead
+        "products": ["vnc", "realvnc"],
+        "confidence_base": 0,
+        "notes": "VNC auth weakness; no dedicated NSE. Use version range check only.",
     },
 
     # ── IRC / UnrealIRCd ─────────────────────────────────────────────────────
@@ -242,13 +262,14 @@ CVE_NSE_MAP: dict[str, dict] = {
         "confidence_base": 95,
         "notes": "UnrealIRCd 3.2.8.1 contains a deliberate backdoor",
     },
-    # CVE-2016-7144 is a different UnrealIRCd issue with no dedicated NSE.
-    # Map it to the backdoor script as a proximity check — same product family.
+    # FIX DB-005: CVE-2016-7144 is a password disclosure bug — not the 2010 backdoor.
+    # irc-unrealircd-backdoor only proves CVE-2010-2075. Setting script=None prevents
+    # a backdoor confirmation from being wrongly attributed to CVE-2016-7144.
     "CVE-2016-7144": {
-        "script": "irc-unrealircd-backdoor",
+        "script": None,                           # FIX DB-005: was irc-unrealircd-backdoor (wrong CVE for that script)
         "products": ["unrealircd", "irc"],
-        "confidence_base": 60,
-        "notes": "UnrealIRCd CVE-2016-7144; using irc-unrealircd-backdoor as service-level probe",
+        "confidence_base": 0,
+        "notes": "UnrealIRCd password disclosure; no dedicated NSE. Version range check only.",
     },
 
     # ── SMTP ─────────────────────────────────────────────────────────────────
@@ -267,10 +288,10 @@ CVE_NSE_MAP: dict[str, dict] = {
         "notes": "MS12-020 RDP remote code execution / DoS",
     },
     "CVE-2019-0708": {
-        "script": "rdp-vuln-ms12-020",        # closest, ms12-020 covers RDP stack
-        "products": ["rdp", "ms-wbt-server"],
-        "confidence_base": 60,
-        "notes": "BlueKeep; no dedicated NSE, using rdp-vuln-ms12-020 as proximity check",
+        "script": None,                           # FIX DB-006: rdp-vuln-ms12-020 tests CVE-2012-0002 (different bulletin)
+        "products": ["rdp", "ms-wbt-server"],     # A CONFIRMED result from ms12-020 would be false-positive for BlueKeep.
+        "confidence_base": 0,
+        "notes": "BlueKeep RDP pre-auth RCE; no stable NSE exists. Version range check only.",
     },
 
     # ── SNMP ─────────────────────────────────────────────────────────────────
@@ -279,6 +300,48 @@ CVE_NSE_MAP: dict[str, dict] = {
         "products": ["snmp"],
         "confidence_base": 90,
         "notes": "Cisco SNMP buffer overflow",
+    },
+
+    # ── Explicit NO-SCRIPT entries ────────────────────────────────────────────
+    # These block wrong auto-seeded DB entries (from nse_parse or Gemini) from
+    # being used on the wrong service.  script=None → always falls through to
+    # version-range check.  force=True in cve_db._seed_hardcoded ensures these
+    # override any existing high-confidence wrong entries in cve_scripts.db.
+
+    # Postfix CVE — smtp-vuln-cve2010-4344 is Exim-ONLY, never run on Postfix.
+    "CVE-2005-0337": {
+        "script": None,
+        "products": ["postfix", "smtp"],
+        "confidence_base": 0,
+        "notes": "Postfix relay CVE; no NSE. smtp-vuln-cve2010-4344 is Exim-only — must not run on Postfix.",
+    },
+    # Exchange ProxyLogon — no NSE; wrong to run http-slowloris on Tomcat/Apache.
+    "CVE-2021-26855": {
+        "script": None,
+        "products": ["exchange", "microsoft"],
+        "confidence_base": 0,
+        "notes": "MS Exchange ProxyLogon; no NSE. Exchange-specific — must not run on Apache/Tomcat.",
+    },
+    # PostgreSQL privilege escalation — ssl-poodle is for CVE-2014-3566, not this.
+    "CVE-2016-5423": {
+        "script": None,
+        "products": ["postgresql"],
+        "confidence_base": 0,
+        "notes": "PostgreSQL privilege escalation; no NSE. ssl-poodle is for SSL3 (CVE-2014-3566), not PostgreSQL privesc.",
+    },
+    # OpenSSH weakness — no dedicated NSE confirmation script.
+    "CVE-2010-4478": {
+        "script": None,
+        "products": ["openssh", "ssh"],
+        "confidence_base": 0,
+        "notes": "OpenSSH weak key exchange; no dedicated NSE. Version range check only.",
+    },
+    # telnetd — no NSE confirmation script available.
+    "CVE-2021-27171": {
+        "script": None,
+        "products": ["telnetd", "telnet"],
+        "confidence_base": 0,
+        "notes": "Linux telnetd CVE; no NSE. Version range check only.",
     },
 }
 
@@ -289,13 +352,14 @@ CVE_NSE_MAP: dict[str, dict] = {
 # ─────────────────────────────────────────────────────────────────────────────
 KNOWN_VULNERABLE_VERSIONS: dict[str, list] = {
     # Tomcat AJP Ghostcat — no reliable nmap NSE exists
+    # FIX DB-013: deduplicated overlapping tomcat ranges into per-major-version bands
     "CVE-2020-1938": [
-        ("tomcat",       "0.0.0", "9.0.30"),
-        ("tomcat",       "0.0.0", "8.5.50"),
-        ("tomcat",       "0.0.0", "7.0.99"),
-        ("jserv",        "0.0.0", "9.0.30"),   # "Apache Jserv" product string
-        ("ajp",          "0.0.0", "9.0.30"),   # AJP service name match
-        ("coyote",       "0.0.0", "9.0.30"),   # "Apache Tomcat/Coyote" product
+        ("tomcat", "7.0.0", "7.0.99"),   # 7.x: fixed in 7.0.100
+        ("tomcat", "8.5.0", "8.5.50"),   # 8.5.x: fixed in 8.5.51
+        ("tomcat", "9.0.0", "9.0.30"),   # 9.0.x: fixed in 9.0.31
+        ("jserv",  "0.0.0", "9.0.30"),   # "Apache Jserv" product string
+        ("ajp",    "0.0.0", "9.0.30"),   # AJP service name match
+        ("coyote", "0.0.0", "9.0.30"),   # "Apache Tomcat/Coyote" product
     ],
     # Tomcat Exchange-ProxyLogon (actually Exchange, but keep for awareness)
     "CVE-2021-26855": [
@@ -315,30 +379,51 @@ KNOWN_VULNERABLE_VERSIONS: dict[str, list] = {
         ("postgresql", "9.4.0", "9.4.8"),
         ("postgresql", "9.5.0", "9.5.3"),
     ],
-    # MySQL auth bypass (older range — actual version check)
+    # MySQL auth bypass
+    # FIX DB-010: added 5.0.x range (target has 5.0.51a which was previously missed);
+    # also corrected 5.5.x max from 5.5.20 → 5.5.28 (actual patch boundary)
     "CVE-2012-2122": [
+        ("mysql", "5.0.0", "5.0.96"),    # FIX DB-010: 5.0.x all vulnerable — was missing
         ("mysql", "5.1.0", "5.1.61"),
-        ("mysql", "5.5.0", "5.5.20"),
+        ("mysql", "5.5.0", "5.5.28"),    # FIX DB-010: corrected max (was 5.5.20)
     ],
     # Postfix CVE — no NSE, version check only
+    # FIX DB-012: max was "2.1.4" (the fixed version); corrected to "2.1.3"
     "CVE-2005-0337": [
-        ("postfix", "0.0.0", "2.1.4"),
+        ("postfix", "0.0.0", "2.1.3"),   # FIX DB-012: 2.1.4 is the patch; max = 2.1.3
     ],
     # Linux telnetd
     "CVE-2021-27171": [
         ("telnetd", "0.0.0", "1.999"),
-        ("telnet", "0.0.0", "1.999"),
+        ("telnet",  "0.0.0", "1.999"),
     ],
-    # NFS world-readable (misconfiguration, version-independent) — always mark as potential
+    # FIX DB-009: CVE-2020-0796 is SMBGhost (Windows SMBv3 compression RCE).
+    # It has NOTHING to do with Linux NFS/rpcbind/mountd/nlockmgr.
+    # Removed all NFS entries; replaced with correct Windows SMB3 product.
     "CVE-2020-0796": [
-        ("nfs", "0.0.0", "999.999.999"),
-        ("rpcbind", "0.0.0", "999.999.999"),
-        ("mountd", "0.0.0", "999.999.999"),
-        ("nlockmgr", "0.0.0", "999.999.999"),
+        ("smb",     "0.0.0", "10.0.19041.0"),  # Windows 10 1909 and earlier
+        ("windows", "0.0.0", "10.0.19041.0"),
     ],
-    # SSH weak config
+    # SSH weak J-PAKE key exchange
+    # FIX DB-011: max was 5.8.99 but CVE-2010-4478 was fixed in OpenSSH 5.6.
+    # Versions 5.6–5.8 were incorrectly flagged as vulnerable.
     "CVE-2010-4478": [
-        ("openssh", "0.0.0", "5.8.99"),
+        ("openssh", "0.0.0", "5.5.99"),   # FIX DB-011: was 5.8.99; fixed in 5.6
+    ],
+    # Apache mod_mime — no NSE (http-vuln-cve2017-7679 does not exist)
+    "CVE-2017-7679": [
+        ("apache", "2.2.0", "2.2.31"),
+        ("apache", "2.4.0", "2.4.24"),
+    ],
+    # BlueKeep — no NSE (rdp-vuln-ms12-020 tests different bulletin)
+    "CVE-2019-0708": [
+        ("ms-wbt-server", "0.0.0", "6.1.7601.99"),   # Windows 7 / Server 2008 R2
+        ("rdp",           "0.0.0", "6.1.7601.99"),
+    ],
+    # UnrealIRCd password disclosure (not the 2010 backdoor)
+    "CVE-2016-7144": [
+        ("unrealircd", "3.0.0", "3.2.10.5"),
+        ("irc",        "3.0.0", "3.2.10.5"),
     ],
 }
 
@@ -563,6 +648,27 @@ def analyze_output(output: str, script: str = "", cve_id: str = "") -> dict:
             "evidence": "Script produced no output",
         }
 
+    # ── 0. SOPLib FIRST, for scripts it has specific knowledge of ──────────
+    # Phase 4: generic patterns below are too broad for some of SOPLib's 8
+    # scripts — e.g. the generic NOT_VULN keyword "disabled" (meant for
+    # things like "WebDAV disabled" = safe) would otherwise misread
+    # smb-security-mode's "message_signing: disabled" (a BAD finding) as
+    # safe. For any script SOPLib explicitly knows the format of, let it
+    # decide first; only fall through to the generic heuristics below for
+    # scripts SOPLib has no entry for.
+    from app.scanner.soplib import soplib_check, SOPLIB
+    if script in SOPLIB:
+        sop_result = soplib_check(script, output)
+        if sop_result:
+            return {
+                "status":     sop_result["status"],
+                "confidence": 90 if sop_result["status"] == "CONFIRMED" else 0,
+                "evidence":   sop_result["evidence"],
+            }
+        # SOPLib knows the script but no pattern matched this output —
+        # still let the generic logic below have a try (e.g. an NSE error
+        # message), rather than jumping straight to UNCONFIRMED.
+
     # Extract only the script-output section (after nmap host header) to
     # avoid matching "vulnerable" that might appear in host names / banners.
     script_section = _extract_script_section(output)
@@ -573,7 +679,10 @@ def analyze_output(output: str, script: str = "", cve_id: str = "") -> dict:
         r"not\s+vulnerable",
         r"not\s+affected",
         r"patched",
-        r"disabled",                          # "WebDAV disabled", "SSL disabled"
+        # FIX DB-014: "disabled" was too broad — matched "message_signing: disabled"
+        # (a HIGH-severity SMB misconfiguration) and silently classified it as safe.
+        # Narrowed to only the contexts that genuinely indicate a feature is safely off.
+        r"\b(webdav|ssl|tls|compression)\s+disabled\b",
         r"not\s+exim",                        # smtp-vuln-cve2010-4344 on Postfix
         r"not\s+running\s+exim",
         r"version\s+is\s+not\s+affected",
@@ -581,12 +690,17 @@ def analyze_output(output: str, script: str = "", cve_id: str = "") -> dict:
         r"target\s+is\s+not\s+vulnerable",
         r"does\s+not\s+appear\s+to\s+be\s+vulnerable",
         r"host\s+is\s+not\s+vulnerable",
+        # Safe outcomes from scripts that ran but couldn't reach/authenticate
+        r"TIMEOUT",
+        r"receiveGreeting\(\):\s*failed",
+        r"NT_STATUS_OBJECT_NAME_NOT_FOUND",   # smb-vuln-cve-2017-7494 exploit path not found
+        r"NT_STATUS_LOGON_FAILURE",
     ]
     for pat in NOT_VULN_PATTERNS:
         if re.search(pat, script_section, re.IGNORECASE):
             evidence = _best_evidence_line(output, [
                 "not vulnerable", "not affected", "patched", "disabled",
-                "not exim", "state:"
+                "not exim", "state:", "timeout", "failed"
             ])
             return {
                 "status": "NOT_VULNERABLE",
@@ -603,6 +717,18 @@ def analyze_output(output: str, script: str = "", cve_id: str = "") -> dict:
         r"authentication\s+bypass",
         r"command\s+executed",
         r"shell\s+spawned",
+        r"looks\s+like\s+trojaned",        # irc-unrealircd-backdoor: "Looks like trojaned version"
+        r"trojaned\s+version",              # irc-unrealircd-backdoor variant
+        r"backdoor\s+found",               # generic backdoor confirmation
+        r"looks\s+like\s+the\s+trojanned", # irc-unrealircd-backdoor full phrase
+        # FIX DB-016: http-vuln-cve2012-1823 uses freeform output (not "State: VULNERABLE").
+        # It outputs "The website seems vulnerable to CVE-2012-1823" then returns command output.
+        # Without these patterns, confirmed PHP-CGI RCE was silently dropped.
+        r"seems\s+(to\s+be\s+)?vulnerable",               # http-vuln-cve2012-1823
+        r"Output\s+of\s+the\s+command",                   # PHP-CGI executed command output
+        # FIX DB-016: http-vuln-cve2014-3704 (Drupalgeddon) outputs this when it exploits.
+        r"adding\s+admin\s+user",                         # Drupalgeddon successful exploitation
+        r"uid=\d+\(\w+\)\s+gid=\d+",                     # Shell command returned uid= output
     ]
     for pat in CONFIRMED_PATTERNS:
         if re.search(pat, script_section, re.IGNORECASE | re.MULTILINE):
@@ -617,9 +743,12 @@ def analyze_output(output: str, script: str = "", cve_id: str = "") -> dict:
             }
 
     # ── 3. Weak positive indicators (lower confidence) ──────────────────────
+    # FIX DB-015: removed bare r"VULNERABLE" — too broad. Any script banner or
+    # advisory text mentioning the word could trigger a false CONFIRMED at 75%.
+    # All standard NSE output is already caught by CONFIRMED_PATTERNS above.
     WEAK_PATTERNS = [
-        r"VULNERABLE",              # bare keyword without "State:" context
-        r"exploitable",
+        r"exploitable",      # kept: more specific than bare "VULNERABLE"
+        r"LIKELY\s+VULNERABLE",   # http-slowloris-check: "State: LIKELY VULNERABLE"
     ]
     for pat in WEAK_PATTERNS:
         if re.search(pat, script_section, re.IGNORECASE):
@@ -631,6 +760,9 @@ def analyze_output(output: str, script: str = "", cve_id: str = "") -> dict:
             }
 
     # ── 4. Script ran cleanly but produced no evidence ──────────────────────
+    # (SOPLib already had first refusal at step 0, for any script it knows —
+    # reaching here means either an unknown script, or a SOPLib-known script
+    # whose output didn't match any of its patterns.)
     evidence = _best_evidence_line(output, ["state:", "version", "error"]) or ""
     if not evidence:
         # Truly empty meaningful output — probably "Starting Nmap..." only

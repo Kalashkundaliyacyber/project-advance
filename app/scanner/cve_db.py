@@ -105,11 +105,15 @@ def _create_schema(conn: sqlite3.Connection):
 
 def _upsert(conn: sqlite3.Connection, cve_id: str, script_name: Optional[str],
             products: str, confidence: int, source: str, verified: int = 0,
-            reasoning: str = ""):
+            reasoning: str = "", force: bool = False):
     """
     Insert a CVE→script mapping, updating confidence if the row exists
     and the new confidence is higher than the existing one.
-    Never downgrades manually-verified entries.
+
+    force=True (used by _seed_hardcoded for manual entries) always
+    overwrites existing rows regardless of confidence or verified flag.
+    This ensures hand-verified mappings can never be silently replaced by
+    wrong auto-seeded (nse_parse) or Gemini-suggested entries in the DB.
     """
     existing = conn.execute(
         "SELECT confidence, verified FROM cve_script_cache WHERE cve_id = ?",
@@ -117,15 +121,15 @@ def _upsert(conn: sqlite3.Connection, cve_id: str, script_name: Optional[str],
     ).fetchone()
 
     if existing:
-        # Don't overwrite a verified entry or one with higher confidence
-        if existing["verified"] or existing["confidence"] >= confidence:
+        # force=True: manual entries always win — overwrite wrong DB state
+        if not force and (existing["verified"] or existing["confidence"] >= confidence):
             return
         conn.execute("""
             UPDATE cve_script_cache
             SET script_name=?, product_keywords=?, confidence=?,
-                source=?, updated_at=datetime('now')
+                source=?, verified=?, updated_at=datetime('now')
             WHERE cve_id=?
-        """, (script_name, products, confidence, source, cve_id))
+        """, (script_name, products, confidence, source, verified, cve_id))
     else:
         conn.execute("""
             INSERT INTO cve_script_cache
@@ -158,6 +162,7 @@ def _seed_hardcoded(conn: sqlite3.Connection) -> int:
             source       = "manual",
             verified     = 1,
             reasoning    = entry.get("notes", ""),
+            force        = True,   # manual entries always override wrong DB state
         )
         count += 1
 
@@ -222,6 +227,39 @@ def _extract_cve_from_content(filepath: str) -> list[str]:
     return cves
 
 
+# Script-name prefix → product keywords.
+# Prevents auto-seeded nse_parse entries from running on the wrong service.
+_SCRIPT_PREFIX_PRODUCTS: dict[str, str] = {
+    "ftp-":         "ftp,vsftpd,proftpd,wu-ftpd",
+    "smtp-":        "smtp,exim,postfix,sendmail,mail",
+    "http-":        "http,apache,nginx,tomcat,iis,web",
+    "smb-":         "smb,samba,netbios,windows,microsoft,cifs",
+    "ssl-":         "ssl,tls,openssl,https",
+    "mysql-":       "mysql,mariadb",
+    "irc-":         "irc,unrealircd",
+    "rmi-":         "rmi,java-rmi,classpath,grmiregistry",
+    "rdp-":         "rdp,ms-wbt-server",
+    "snmp-":        "snmp",
+    "distcc-":      "distcc,distccd",
+    "vnc-":         "vnc,realvnc",
+    "realvnc-":     "vnc,realvnc",
+    "telnet-":      "telnet,telnetd",
+    "ssh-":         "ssh,openssh",
+}
+
+
+def _product_keywords_for_script(script_name: str) -> str:
+    """
+    Return a comma-separated product keyword list for an NSE script based on
+    its name prefix.  Used when seeding from NSE files so that auto-parsed
+    entries don't bypass the product guard in get_confirmation_plan().
+    """
+    for prefix, keywords in _SCRIPT_PREFIX_PRODUCTS.items():
+        if script_name.startswith(prefix):
+            return keywords
+    return ""
+
+
 def _seed_from_nse_files(conn: sqlite3.Connection) -> int:
     """
     Auto-scan all .nse files in /usr/share/nmap/scripts/ and extract
@@ -250,17 +288,22 @@ def _seed_from_nse_files(conn: sqlite3.Connection) -> int:
 
         filepath = os.path.join(NSE_DIR, filename)
 
+        # Derive product keywords from script-name prefix so the product
+        # guard in get_confirmation_plan() prevents cross-service misuse.
+        # e.g. smtp-vuln-cve2010-4344 must not run against rpcbind/http/postgres.
+        _prod_kw = _product_keywords_for_script(script_name)
+
         # Try filename first (most reliable)
         cve_id = _extract_cve_from_filename(filename)
         if cve_id:
-            _upsert(conn, cve_id, script_name, "", 80, "nse_parse")
+            _upsert(conn, cve_id, script_name, _prod_kw, 80, "nse_parse")
             count += 1
             continue
 
         # Fall back to reading script header
         cves_in_content = _extract_cve_from_content(filepath)
         for cve_id in cves_in_content:
-            _upsert(conn, cve_id, script_name, "", 78, "nse_parse")
+            _upsert(conn, cve_id, script_name, _prod_kw, 78, "nse_parse")
             count += 1
 
     conn.commit()

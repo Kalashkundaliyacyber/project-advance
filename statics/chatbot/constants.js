@@ -24,7 +24,7 @@
 
   // ── Slash commands ─────────────────────────────────────────
   const SLASH_CMDS = [
-    { cmd: '/graph',      hint: '/graph',                          desc: 'Open a graph in a new tab (OSINT Tree or Risk Dashboard)' },
+    { cmd: '/graph',      hint: '/graph',                          desc: 'Open a graph in a new tab (Infrastructure Intelligence Graph or Vulnerability Intelligence Dashboard)' },
     { cmd: '/scan',       hint: '/scan <ip>',                      desc: 'Scan a target (e.g. /scan 192.168.1.10)' },
     { cmd: '/patch',      hint: '/patch all',                      desc: '4-Layer patch resolution for all vulnerabilities' },
     { cmd: '/patch',      hint: '/patch <service> <port>',         desc: '4-Layer patch guide for a specific port' },

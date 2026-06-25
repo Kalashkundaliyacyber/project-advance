@@ -18,8 +18,8 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional
 
-from app.api.validators import validate_target, validate_scan_type
-from app.scanner.orchestrator import get_scan_command, SCAN_TEMPLATES
+from app.api.validators import validate_target, validate_scan_type, TARGET_PATTERN, _COMMA_FIX_PATTERN
+from app.scanner.scanner_core import run_full_scan, NMAP_SCRIPT_CATEGORIES, SCAN_KEY
 from app.scanner.executor import execute_scan
 from app.parser.nmap_parser import parse_nmap_output
 from app.analysis.version_engine import analyze_versions
@@ -77,9 +77,16 @@ def _is_scan_related(msg: str) -> bool:
 
 class ScanRequest(BaseModel):
     target: str
-    scan_type: str
+    scan_type: Optional[str] = "full_scan"   # Phase 0: vestigial, ignored — there's one scan
     message: Optional[str] = ""
     project_name: Optional[str] = ""
+    # Phase 7: optional authenticated scanning — startup config/flags, NOT a
+    # slash command. Absent => auth_scanner.run_auth_checks() does nothing.
+    ssh_username: Optional[str] = None
+    ssh_password: Optional[str] = None
+    ssh_key_path: Optional[str] = None
+    smb_username: Optional[str] = None
+    smb_password: Optional[str] = None
 
 class ConfirmPortRequest(BaseModel):
     """Single-port NSE confirmation request — called sequentially from the
@@ -108,24 +115,15 @@ class CompareRequest(BaseModel):
 # ── System prompt ──────────────────────────────────────────────────────────────
 
 def _build_system_prompt(scan_ctx: dict, inject_context: bool = True) -> str:
-    # Fix #14: enum_scripts excluded from AI prompt
-    scan_types_desc = "\n".join(
-        f"  - {k}: {v['description']}"
-        for k, v in SCAN_TEMPLATES.items()
-        if k not in ("enum_scripts",)
-    )
-
     base = f"""You are ThreatWeave AI, a defensive cybersecurity assistant for network scanning.
 
 CAPABILITIES:
 - Understand what the user wants in natural language
-- Recommend the best scan type for their goal
-- Trigger scans automatically when user provides a target and intent
+- Trigger the scan automatically when user provides a target — there is
+  exactly ONE scan ({NMAP_SCRIPT_CATEGORIES} script categories, all ports,
+  version detection); it always runs in full, nothing to choose
 - Explain scan results clearly and prioritise risks
 - Answer CVE, patching, and hardening questions
-
-AVAILABLE SCAN TYPES:
-{scan_types_desc}
 
 SAFETY RULES:
 - Never suggest exploits, attack payloads, or offensive techniques
@@ -133,17 +131,11 @@ SAFETY RULES:
 
 INTENT DETECTION - trigger auto-scan when user implies scanning:
   Examples: "check my server", "scan 192.168.1.1", "what is open on X", "audit X"
-  - Extract the target IP/hostname from the message
-  - Choose scan_type based on goal:
-    * open ports only -> tcp_basic
-    * what services running -> service_detect
-    * exact versions for CVE -> version_deep
-    * UDP services (DNS/SNMP) -> udp_scan
-    * OS fingerprint -> os_detect
-    * well-known ports -> port_range
+  - Extract the target IP/hostname from the message — that's all that's needed,
+    the scan itself is fixed and automatic
 
 WHEN TRIGGERING A SCAN - respond ONLY with this exact JSON, nothing else:
-{{"action": "auto_scan", "target": "<ip or hostname>", "scan_type": "<key>", "reason": "<one sentence why>"}}
+{{"action": "auto_scan", "target": "<ip or hostname>", "reason": "<one sentence why>"}}
 
 WHEN ANSWERING NORMALLY - respond in plain markdown. Never mix JSON with prose."""
 
@@ -206,24 +198,10 @@ def _handle_slash(cmd: str, args: str, sid: str):
     cmd = cmd.lower().strip()
     if cmd == "/help":
         return {"reply": "__HELP_CARD__", "action": "show_help"}
-    if cmd == "/scan":
-        parts = args.strip().split()
-        if parts:
-            return {"reply": f"Target set to **{parts[0]}**. Choose a scan type below.", "action": "show_scan_selector", "data": {"target": parts[0]}}
-        return {"reply": "Usage: `/scan <ip>` e.g. `/scan 192.168.1.10`", "action": "none"}
     if cmd == "/report":
         fmt = args.strip() or "html"
         if fmt not in ("pdf", "html"): fmt = "html"
         return {"reply": f"Opening report export for **{fmt.upper()}**.", "action": "open_report_modal", "data": {"format": fmt}}
-    if cmd == "/vuln":
-        # With no args: trigger client-side vuln dashboard (uses last scan data)
-        # With a service name: trigger targeted CVE lookup
-        svc = args.strip()
-        if svc:
-            return {"reply": f"Showing CVE intelligence for **{svc}**.", "action": "vuln_lookup", "data": {"service": svc}}
-        # No args → signal frontend to open the full vuln dashboard
-        return {"reply": "__VULN_DASHBOARD__", "action": "vuln_lookup", "data": {}}
-
     if cmd == "/patch":
         parts_args = args.strip().split()
         # /patch all → gather ALL port data from session and call Gemini for each
@@ -450,8 +428,6 @@ def _handle_slash(cmd: str, args: str, sid: str):
             ),
             "action": "none",
         }
-    if cmd == "/history":
-        return {"reply": "The `/history` command has been removed. Use the sidebar drawer (☰) to browse past scan sessions.", "action": "none"}
     if cmd == "/clear":
         # Fix #12: wipe AI history in DB AND session files + DB record
         errors = []
@@ -471,312 +447,8 @@ def _handle_slash(cmd: str, args: str, sid: str):
                 "action": "clear_chat",
             }
         return {"reply": "Chat, memory, and session data cleared.", "action": "clear_chat"}
-    if cmd == "/settings":
-        st        = ai_router.status()
-        qwen_tag  = f"✅ {st.get('qwen_model','qwen2.5:7b')}"      if st.get("qwen_available")     else "❌ offline — ollama pull qwen2.5:7b"
-        llama_tag = f"✅ {st.get('llama_chat_model','llama3.2:3b')}/{st.get('llama_gen_model','llama3.1:8b')}" if st.get("llama_available") else "❌ offline — ollama pull llama3.2:3b"
-        ds_tag    = f"✅ {st.get('deepseek_model','deepseek-r1:8b')}"  if st.get("deepseek_available")  else "❌ offline — ollama pull deepseek-r1:8b"
-        from app.ai.cache.ai_response_cache import ai_response_cache
-        cache_stats = ai_response_cache.stats()
-        try:
-            res_stats  = get_resolution_stats()
-            repo_total = (res_stats.get("layer1_repository") or {}).get("total", 0)
-            nvd_hr     = (res_stats.get("layer3_nvd") or {}).get("hit_rate", "—")
-            ai_hr      = (res_stats.get("layer4_ai") or {}).get("hit_rate", "—")
-            kb_total   = (res_stats.get("learning_kb") or {}).get("total", 0)
-            graph_n    = (res_stats.get("knowledge_graph") or {}).get("nodes", 0)
-        except Exception:
-            repo_total = nvd_hr = ai_hr = kb_total = graph_n = "—"
-        return {
-            "reply": (
-                "**⚙️ ThreatWeave AI Settings**\n\n"
-                "**🤖 Model Stack (4 Local Models)**\n"
-                f"  • Qwen 2.5 7B Instruct (Primary): {qwen_tag}\n"
-                f"  • Llama 3.2 3B / 3.1 8B (Fast/General): {llama_tag}\n"
-                f"  • DeepSeek R1 8B Distill (Security): {ds_tag}\n"
-                f"  • Rule Engine (Emergency): ✅ always available\n\n"
-                f"**Active:** `{st['display_name']}` · {st['display_provider']}\n\n"
-                "**🔧 4-Layer Patch Resolution**\n"
-                f"  • Layer 1 — Local Repository:  {repo_total} patches stored\n"
-                f"  • Layer 2 — Vendor Advisory:   Ubuntu USN / Red Hat / Known advisories\n"
-                f"  • Layer 3 — NVD Cache:         {nvd_hr} hit rate (7-day TTL)\n"
-                f"  • Layer 4 — AI Engine:         {ai_hr} cache hit rate\n"
-                f"  • Learning KB:                 {kb_total} approved patches\n"
-                f"  • Knowledge Graph:             {graph_n} nodes\n\n"
-                "**📦 Caching**\n"
-                f"  • AI Response Cache: {cache_stats['total_entries']} entries ({cache_stats['hit_rate']} hit rate)\n\n"
-                "**🖥️ Server**\n"
-                f"  • URL: `http://localhost:{os.environ.get('PORT', '3332')}`\n"
-                f"  • Token Auth: `{'enabled' if os.environ.get('API_TOKEN') else 'disabled'}`\n\n"
-                "**📋 Slash Commands:** `/help` for full list\n"
-                "**New:** `/patch CVE-XXXX` · `/fix <service>` · `/advisory CVE-XXXX` · `/remediate critical`"
-            ),
-            "action": "none"
-        }
     if cmd == "/stop":
         return {"reply": "Stopping scan...", "action": "stop_scan"}
-
-    # ── Phase 19: Extended slash command system ─────────────────────────────
-    if cmd == "/risk":
-        ctx = load_scan_context(sid) or {}
-        hosts = (ctx.get("risk") or {}).get("hosts", [])
-        if not hosts:
-            return {"reply": "⚠️ No scan data found. Run `/scan <ip>` first.", "action": "none"}
-        try:
-            from app.analysis.security_score import calculate_security_score
-            score_result = calculate_security_score(ctx, {})
-            grade   = score_result.get("grade", "?")
-            score   = score_result.get("score", 0)
-            label   = score_result.get("label", "")
-            dims    = score_result.get("dimensions", [])
-            recs    = score_result.get("recommendations", [])
-            reply   = f"**🔐 Security Score: {grade} ({score}/100) — {label}**\n\n"
-            reply  += "**Dimension Breakdown:**\n"
-            for d in dims:
-                bar = "█" * int(d["score"] / 10) + "░" * (10 - int(d["score"] / 10))
-                reply += f"  {d['name']:25s} [{bar}] {d['score']:5.1f}/100 ({d['weight']})\n"
-            if recs:
-                reply += "\n**Top Recommendations:**\n" + "\n".join(f"- {r}" for r in recs[:3])
-        except Exception as e:
-            reply = f"Risk summary unavailable: {e}"
-        return {"reply": reply, "action": "none"}
-
-    if cmd == "/projects":
-        try:
-            sessions = list_sessions()
-            if not sessions:
-                return {"reply": "No projects found. Start a scan to create one.", "action": "none"}
-            reply = f"**📁 Projects ({len(sessions)} sessions)**\n\n"
-            for s in sessions[:15]:
-                proj = s.get("project_name") or s.get("target", "?")
-                ts   = s.get("timestamp", "")[:10]
-                risk = s.get("overall_risk", "?").upper()
-                ports= s.get("open_ports", 0)
-                reply += f"- `{proj}` · {ts} · Risk: **{risk}** · {ports} ports\n"
-            if len(sessions) > 15:
-                reply += f"\n_...and {len(sessions)-15} more. Use the sidebar drawer to browse._"
-        except Exception as e:
-            reply = f"Could not load projects: {e}"
-        return {"reply": reply, "action": "none"}
-
-    if cmd == "/cve":
-        cve_id = args.strip().upper()
-        if not cve_id:
-            return {"reply": "Usage: `/cve CVE-2024-6387`", "action": "none"}
-        try:
-            from app.analysis.threat_intel import lookup_kev
-            # Use 4-layer resolver for CVE intelligence
-            entry = resolve_patch(cve_id=cve_id)
-            kev   = lookup_kev(cve_id)
-            reply = f"**🔍 CVE Intelligence: `{cve_id}`**\n\n"
-            if kev:
-                reply += "🚨 **IN CISA KEV CATALOG** — Actively Exploited\n"
-                reply += f"  Product: {kev['vendor']} {kev['product']}\n"
-                reply += f"  Added: {kev['date_added']}\n"
-                if kev.get("known_ransomware"):
-                    reply += "  ⚠️ Associated with ransomware campaigns\n"
-                reply += "\n"
-            if entry and entry.get("patch_found"):
-                conf_lbl = entry.get("confidence_label", entry.get("source", "?"))
-                reply += f"**Source:** {conf_lbl}  **Confidence:** {entry.get('confidence',0)}%\n"
-                reply += f"**Layer:** {entry.get('layer','?').replace('_',' ').title()}\n"
-                reply += f"**Fix Version:** `{entry.get('fix_version') or entry.get('fixed_version') or 'latest'}`\n"
-                cmds = entry.get("commands") or entry.get("patch_command") or {}
-                if cmds:
-                    reply += "\n**Patch Commands:**\n"
-                    for os_name, cmd_str in list(cmds.items())[:3]:
-                        reply += f"```bash\n# {os_name}\n{cmd_str}\n```\n"
-                url = entry.get("vendor_url") or entry.get("official_url", "")
-                if url:
-                    reply += f"\n[Vendor Advisory]({url})\n"
-                if entry.get("mitigation"):
-                    reply += f"\n**🛡️ Mitigation:** {entry['mitigation']}\n"
-            else:
-                reply += "_No patch data found. Try `/patch <service> <port>` for targeted guidance._"
-        except Exception as e:
-            reply = f"CVE lookup error: {e}"
-        return {"reply": reply, "action": "none"}
-
-    # ── New 4-Layer patch commands ─────────────────────────────────────────────
-
-    if cmd == "/advisory":
-        # /advisory CVE-2024-6387 — show full advisory with why/confidence/source
-        cve_id = args.strip().upper()
-        if not cve_id:
-            return {"reply": "Usage: `/advisory CVE-2024-6387`", "action": "none"}
-        try:
-            entry = resolve_patch(cve_id=cve_id)
-            if not entry or not entry.get("patch_found"):
-                return {"reply": f"No advisory data found for `{cve_id}`.", "action": "none"}
-            layer    = entry.get("layer", "unknown").replace("_", " ").title()
-            conf_lbl = entry.get("confidence_label", entry.get("source", "?"))
-            conf_val = entry.get("confidence", 0)
-            reply  = f"**📋 Security Advisory: `{cve_id}`**\n\n"
-            reply += f"**Why this patch was chosen:**\n"
-            reply += f"  • Source: **{conf_lbl}** via {layer}\n"
-            reply += f"  • Confidence: **{conf_val}%**\n"
-            reply += (
-                f"  • Resolution order: Local Repository → Vendor Advisory → "
-                f"NVD Cache → AI Engine\n"
-            )
-            reply += f"  • This result came from: **{layer}**\n\n"
-            if entry.get("title"):
-                reply += f"**Title:** {entry['title']}\n"
-            reply += f"**Severity:** {entry.get('severity','unknown').upper()}\n"
-            reply += f"**Fix Version:** `{entry.get('fix_version') or entry.get('fixed_version') or 'latest'}`\n"
-            cmds = entry.get("commands") or entry.get("patch_command") or {}
-            if cmds:
-                reply += "\n**Patch Commands:**\n"
-                for os_nm, cmd_str in list(cmds.items())[:4]:
-                    reply += f"```bash\n# {os_nm}\n{cmd_str}\n```\n"
-            url = entry.get("vendor_url") or entry.get("official_url", "")
-            if url:
-                reply += f"\n**Official Advisory:** {url}\n"
-            if entry.get("mitigation"):
-                reply += f"\n**🛡️ Mitigation:** {entry['mitigation']}\n"
-            if entry.get("verification"):
-                reply += f"\n**✅ Verification:** `{entry['verification']}`\n"
-        except Exception as e:
-            reply = f"Advisory lookup error: {e}"
-        return {"reply": reply, "action": "none"}
-
-    if cmd == "/fix":
-        # /fix openssh  — resolve by service name, no port needed
-        svc = args.strip()
-        if not svc:
-            return {"reply": "Usage: `/fix <service>` e.g. `/fix openssh`", "action": "none"}
-        try:
-            # Look up any CVE for this service in current scan context, then resolve
-            ctx    = load_scan_context(sid) or {}
-            cve_id = "unknown"
-            for h in (ctx.get("risk") or {}).get("hosts", []):
-                for p in h.get("ports", []):
-                    if svc.lower() in p.get("service", "").lower():
-                        cves = p.get("cves", [])
-                        if cves:
-                            cve_id = cves[0].get("cve_id", "unknown")
-                        break
-
-            entry  = resolve_patch(cve_id=cve_id, service=svc)
-            conf_lbl = entry.get("confidence_label", entry.get("source", "?"))
-            reply  = f"**🔧 Fix Guide — {svc}**\n\n"
-            reply += f"**Source:** {conf_lbl}  **Confidence:** {entry.get('confidence',0)}%\n"
-            reply += f"**Layer:** {entry.get('layer','?').replace('_',' ').title()}\n\n"
-            cmds = entry.get("commands") or entry.get("patch_command") or {}
-            if cmds:
-                for os_nm, cmd_str in list(cmds.items())[:3]:
-                    reply += f"```bash\n# {os_nm}\n{cmd_str}\n```\n"
-            else:
-                reply += f"```bash\napt-get update && apt-get upgrade -y {svc}\n```\n"
-            if entry.get("mitigation"):
-                reply += f"\n**🛡️ Mitigation:** {entry['mitigation']}\n"
-            url = entry.get("vendor_url") or entry.get("official_url", "")
-            if url:
-                reply += f"\n[Advisory]({url})\n"
-        except Exception as e:
-            reply = f"Fix lookup error: {e}"
-        return {"reply": reply, "action": "none"}
-
-    if cmd == "/export":
-        fmt = args.strip().lower() or "html"
-        if fmt not in ("pdf", "html", "json"):
-            fmt = "html"
-        return {"reply": f"Exporting report as **{fmt.upper()}**...", "action": "open_report_modal", "data": {"format": fmt}}
-
-    if cmd == "/remediate":
-        # /remediate [critical|high|all]
-        severity_filter = args.strip().lower() or "all"
-        if severity_filter not in ("critical", "high", "medium", "all"):
-            return {"reply": "__PATCH_ALL__", "action": "patch_all", "data": {}}
-
-        # If filtering by severity, load scan context and resolve only matching vulns
-        ctx   = load_scan_context(sid) or {}
-        hosts = (ctx.get("risk") or {}).get("hosts", [])
-        if not hosts:
-            return {"reply": "__PATCH_ALL__", "action": "patch_all", "data": {}}
-
-        all_ports = []
-        for _h in hosts:
-            for _p in _h.get("ports", []):
-                _cves    = _p.get("cves", [])
-                _top_cve = _cves[0] if _cves else {}
-                _sev     = (_top_cve.get("severity") or _p.get("risk", {}).get("level", "low")).lower()
-                if severity_filter != "all" and _sev != severity_filter:
-                    continue
-                all_ports.append({
-                    "ip":         _h.get("ip", ""),
-                    "port":       _p.get("port"),
-                    "service":    _p.get("service", ""),
-                    "version":    _p.get("version", "") or _p.get("product", ""),
-                    "risk_level": (_p.get("risk") or {}).get("level", "low"),
-                    "risk_score": (_p.get("risk") or {}).get("score", 0),
-                    "cve_id":     _top_cve.get("cve_id", "unknown"),
-                    "severity":   _sev,
-                    "cve_desc":   _top_cve.get("description", ""),
-                    "all_cves":   _cves,
-                })
-
-        if not all_ports:
-            return {
-                "reply": f"No **{severity_filter.upper()}** vulnerabilities found in current scan.",
-                "action": "none",
-            }
-
-        patch_results = []
-        for _entry in all_ports:
-            try:
-                _pd = resolve_patch(
-                    cve_id      = _entry["cve_id"],
-                    service     = _entry["service"],
-                    version     = _entry["version"] or "unknown",
-                    description = _entry.get("cve_desc", ""),
-                )
-                _cmds = _pd.get("commands") or _pd.get("patch_command") or {}
-                _upg  = next(iter(_cmds.values()), "") if isinstance(_cmds, dict) else ""
-                _pd.update({
-                    "ip":              _entry["ip"],
-                    "port":            _entry["port"],
-                    "service":         _entry["service"],
-                    "risk_level":      _entry["risk_level"],
-                    "risk_score":      _entry["risk_score"],
-                    "cve_id":          _entry["cve_id"],
-                    "cve_desc":        _entry["cve_desc"],
-                    "all_cves":        _entry["all_cves"],
-                    "upgrade_command": _upg,
-                    "engine": (
-                        f"{_pd.get('confidence_label', _pd.get('source','?'))} "
-                        f"[{_pd.get('confidence', 0)}%]"
-                    ),
-                })
-                patch_results.append(_pd)
-            except Exception:
-                patch_results.append({**_entry, "confidence": 30, "engine": "Rule Engine [30%]"})
-
-        _risk_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-        patch_results.sort(key=lambda x: _risk_order.get(x.get("risk_level", "low"), 3))
-
-        return {
-            "reply":          "__PATCH_ALL_DATA__",
-            "action":         "patch_all_data",
-            "patch_all_data": patch_results,
-        }
-
-    if cmd == "/model":
-        st = ai_router.status()
-        qwen_ok = st.get("qwen_available", False)
-        llama_ok = st.get("llama_available", False)
-        ds_ok   = st.get("deepseek_available", False)
-        reply   = "**🤖 AI Model Stack Status**\n\n"
-        reply  += f"  • Qwen 2.5 7B Instruct (Primary):   {'✅' if qwen_ok  else '❌'} `{st.get('qwen_model','qwen2.5:7b')}`\n"
-        reply  += f"  • Llama 3.2 3B (Fast Chat):          {'✅' if llama_ok else '❌'} `{st.get('llama_chat_model','llama3.2:3b')}`\n"
-        reply  += f"  • Llama 3.1 8B (General):            {'✅' if llama_ok else '❌'} `{st.get('llama_gen_model','llama3.1:8b')}`\n"
-        reply  += f"  • DeepSeek R1 8B Distill (Security): {'✅' if ds_ok   else '❌'} `{st.get('deepseek_model','deepseek-r1:8b')}`\n"
-        reply  += f"  • Rule Engine (Emergency):           ✅ always available\n\n"
-        reply  += f"**Active:** {st['display_name']} · {st['display_provider']}\n\n"
-        if not any([qwen_ok, llama_ok, ds_ok]):
-            reply += "⚠️ No models running! Start Ollama and pull models:\n"
-            reply += "```bash\nollama pull qwen2.5:7b\nollama pull llama3.2:3b\nollama pull llama3.1:8b\nollama pull deepseek-r1:8b\n```"
-        return {"reply": reply, "action": "none"}
 
     return None
 
@@ -824,37 +496,81 @@ async def _analyze_scan_capped(risk: dict, budget: float = 12.0) -> dict:
         return {"engine": "rule-based-fallback", "fallback_reason": str(e)}
 
 
-async def _run_scan_pipeline(target: str, scan_type: str, project_name: str = "", session_id: str = "") -> dict:
+async def _run_scan_pipeline(
+    target: str, project_name: str = "", session_id: str = "",
+    ssh_username: str = None, ssh_password: str = None, ssh_key_path: str = None,
+    smb_username: str = None, smb_password: str = None,
+) -> dict:
     target    = validate_target(target)
-    scan_type = validate_scan_type(scan_type)
-    sid       = create_session(target, scan_type, project_name=project_name)
-    cmd       = get_scan_command(scan_type, target)
+    sid       = create_session(target, SCAN_KEY, project_name=project_name)
 
     loop = asyncio.get_event_loop()
 
-    # CRITICAL: execute_scan MUST run in an executor — if called directly on the
-    # async event loop thread it blocks the loop, preventing call_soon_threadsafe
-    # SSE port_found events from being delivered until after the scan completes.
-    raw_output, xml_output, duration = await loop.run_in_executor(
-        None, execute_scan, cmd, target, scan_type
-    )
+    # CRITICAL: run_full_scan MUST run in an executor — if called directly on
+    # the async event loop thread it blocks the loop, preventing
+    # call_soon_threadsafe SSE port_found events from being delivered until
+    # after the scan completes.
+    scan_result = await loop.run_in_executor(None, run_full_scan, target)
+    raw_output  = scan_result["raw_output"]
+    xml_output  = scan_result["xml_output"]
+    duration    = scan_result["duration"]
+    parsed      = scan_result["parsed"]
     save_raw(sid, raw_output, xml_output)
 
-    parsed = parse_nmap_output(xml_output, raw_output)
+    # ── Phase 2: active service probing — automatic, right after the scan ──
+    # Independently re-verifies each open port (HTTP GET, SSH/FTP banner,
+    # SMB negotiation, raw socket). Additive only — never overwrites the
+    # nmap-reported service/version fields the CVE pipeline below keys off.
+    try:
+        from app.scanner.service_prober import probe_all_ports, merge_into_parsed
+        probed_services = await loop.run_in_executor(None, probe_all_ports, scan_result)
+        parsed = merge_into_parsed(parsed, probed_services)
+    except Exception as e:
+        logger.warning("Phase 2 service_prober failed (non-fatal): %s", e)
+        probed_services = {}
+
+    # ── Phase 4: SOPLib — automatic, right after the scan's output exists ──
+    # Reads scripts that already ran as part of the one scan (smb-security-
+    # mode, ssl-enum-ciphers, etc.) and understands their non-standard output
+    # formats, which the generic VULNERABLE-keyword check alone would miss.
+    try:
+        from app.scanner.soplib import scan_all_ports as soplib_scan_all
+        soplib_findings = await loop.run_in_executor(None, soplib_scan_all, parsed)
+    except Exception as e:
+        logger.warning("Phase 4 soplib failed (non-fatal): %s", e)
+        soplib_findings = []
+
     save_parsed(sid, parsed)
 
     versioned = await loop.run_in_executor(None, analyze_versions, parsed)
     cve_data  = await loop.run_in_executor(None, map_cves, versioned)
     # NVD enrichment: normalise local CVEs + augment with live NVD intelligence
     cve_data  = await loop.run_in_executor(None, enrich_with_nvd_sync, cve_data)
+
+    # ── Phase 3: tag each CVE with confidence "exact" (NVD CPE / NSE-confirmed)
+    # or "range" (local DB / NVD keyword) — the one piece neither existing
+    # CVE engine set before this phase.
+    try:
+        from app.scanner.cpe_cve_engine import tag_confidence_on_parsed
+        cve_data = await loop.run_in_executor(None, tag_confidence_on_parsed, cve_data)
+    except Exception as e:
+        logger.warning("Phase 3 cpe_cve_engine confidence tagging failed (non-fatal): %s", e)
+
     context   = await loop.run_in_executor(None, analyze_context, cve_data)
     risk      = await loop.run_in_executor(None, calculate_risk, context)
 
-    recommendation, explanation, ai_analysis, charts = await asyncio.gather(
-        loop.run_in_executor(None, get_recommendation, risk, scan_type),
+    def _run_misconfig():
+        from app.scanner.misconfig_checker import run_all as misconfig_run_all
+        return misconfig_run_all(cve_data, probed_services)
+
+    recommendation, explanation, ai_analysis, charts, misconfig_findings = await asyncio.gather(
+        loop.run_in_executor(None, get_recommendation, risk, SCAN_KEY),
         loop.run_in_executor(None, generate_explanation, risk, {}),
         _analyze_scan_capped(risk, budget=12.0),
         loop.run_in_executor(None, lambda: generate_chart_data({"risk": risk})),
+        # Phase 5: misconfig checking — runs IN PARALLEL with CVE/AI analysis
+        # above, not gated behind it; independent of any CVE.
+        loop.run_in_executor(None, _run_misconfig),
     )
 
     # FIX3: also run deterministic rule-based engine so compare module always has both outputs
@@ -876,8 +592,29 @@ async def _run_scan_pipeline(target: str, scan_type: str, project_name: str = ""
         logger.warning("Threat correlation failed: %s", tc_err)
         threat_correlation = {}
 
+    # ── Phase 7: optional authenticated scanning — runs AFTER everything ───
+    # above (confirmation router lives on the separate /scan/confirm-port
+    # path, driven per-port by the frontend's live table; this is the
+    # pipeline-level slot the phase spec asked for, "after Phase 6"). Does
+    # nothing and returns instantly if no credentials were provided —
+    # never blocks or slows the unauthenticated pipeline.
+    auth_findings = []
+    if ssh_username or smb_username:
+        try:
+            from app.scanner.auth_scanner import run_auth_checks
+            known_external_ports = {
+                p.get("port") for h in (cve_data.get("hosts") or [])
+                for p in (h.get("ports") or []) if p.get("port")
+            }
+            auth_findings = await loop.run_in_executor(
+                None, run_auth_checks, target, known_external_ports,
+                ssh_username, ssh_password, ssh_key_path, smb_username, smb_password,
+            )
+        except Exception as e:
+            logger.warning("Phase 7 auth_scanner failed (non-fatal, optional stage): %s", e)
+
     analysis = {
-        "session_id": sid, "target": target, "scan_type": scan_type,
+        "session_id": sid, "target": target, "scan_type": SCAN_KEY,
         "project_name": project_name, "duration": duration,
         "parsed": parsed, "versioned": versioned, "cve_data": cve_data,
         "context": context, "risk": risk, "recommendation": recommendation,
@@ -885,6 +622,11 @@ async def _run_scan_pipeline(target: str, scan_type: str, project_name: str = ""
         "rule_based_analysis": rule_based_analysis,   # FIX3: stored alongside AI output
         "threat_correlation":  threat_correlation,     # Feature 4: unified threat profiles
         "charts": charts,
+        # Phases 2/4/5/7 — report-ready data, all automatic, all optional-safe
+        "probed_services":     probed_services,
+        "soplib_findings":     soplib_findings,
+        "misconfig_findings":  misconfig_findings,
+        "auth_findings":       auth_findings,
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
     save_analysis(sid, analysis)
@@ -966,8 +708,11 @@ def _format_scan_reply(analysis: dict, reason: str) -> str:
         lines.append("")
 
     next_scan = ai.get("next_scan") or {}
-    if next_scan.get("type"):
-        lines.append(f"**Next Step:** Run `{next_scan['type']}` - {next_scan.get('reason','')}")
+    if next_scan.get("reason"):
+        # Phase 0: there's no other scan type to suggest running — the one
+        # scan already covered vuln/safe/auth/default scripts + all ports.
+        # Surface the underlying observation as a note, not a command.
+        lines.append(f"**Note:** {next_scan['reason']}")
         lines.append("")
 
     if sid:
@@ -991,17 +736,15 @@ def _try_parse_auto_scan(text: str) -> Optional[dict]:
 
 def _keyword_fallback(msg: str) -> str:
     ml = msg.lower()
-    keywords = {"tcp": "tcp_basic", "port": "tcp_basic", "udp": "udp_scan",
-                 "service": "service_detect", "version": "version_deep",
-                 "os": "os_detect", "syn": "tcp_syn", "range": "port_range"}
-    matched = next((t for kw, t in keywords.items() if kw in ml), None)
-    if matched:
-        info = SCAN_TEMPLATES[matched]
-        return f"I suggest a **{info['name']}** scan. {info['description']} Use `/scan <ip>` to begin."
+    scan_keywords = {"tcp", "port", "udp", "service", "version", "os", "syn",
+                      "range", "scan", "vuln", "check", "audit"}
+    if any(kw in ml for kw in scan_keywords):
+        return ("Just type the IP address or hostname you want scanned — "
+                "the scan starts automatically, no command needed.")
     if any(w in ml for w in ["hello", "hi", "hey"]):
         st = ai_router.status()
         return (f"**Hello!** I am ThreatWeave AI — powered by {st['display_name']}.\n\n"
-                "Type `/scan <ip>` to start scanning, or `/help` for all commands.")
+                "Type a target IP/hostname to scan it automatically, or `/help` for commands.")
     st = ai_router.status()
     if not st["qwen_available"] and not st["llama_available"] and not st.get("deepseek_available"):
         return (
@@ -1015,6 +758,47 @@ def _keyword_fallback(msg: str) -> str:
 
 
 # ── Chat route ─────────────────────────────────────────────────────────────────
+
+# BUG: unlike /api/scan (see _analyze_scan_capped above), this endpoint had no
+# time budget at all. ai_router.chat() tries multiple providers IN SEQUENCE,
+# each with its own ~20s HTTP timeout (qwen_provider.py / llama_provider.py /
+# deepseek_provider.py), and only falls back to _keyword_fallback() once every
+# provider in the stack has individually timed out:
+#   normal chat       -> llama, qwen            = up to  40s
+#   remediation/"how" -> qwen, llama             = up to  40s
+#   CVE/security chat -> qwen, deepseek, llama   = up to  60s
+# When local models are slow/unloaded (the same condition the scan path is
+# already protected against), a single chat message can hang the request for
+# up to a minute before the user sees anything.
+#
+# FIX: cap the executor call at CHAT_AI_BUDGET_SECS, same pattern as
+# _analyze_scan_capped. On timeout we fall back to _keyword_fallback()
+# immediately instead of waiting out every remaining provider in the stack;
+# the abandoned call keeps running in the background thread but no longer
+# blocks the response.
+CHAT_AI_BUDGET_SECS = 20.0
+
+
+def _extract_bare_target(msg: str) -> Optional[str]:
+    """
+    Phase 0: "no slash command needed — the scan runs automatically when an
+    IP is submitted." This is the deterministic fast path for that: if the
+    ENTIRE message is just a target (IP / hostname / CIDR, with the common
+    comma-for-dot typo auto-corrected), return the normalised target.
+    Anything else (a sentence, a question, multiple words) returns None and
+    falls through to the AI path below, which can still extract a target
+    out of natural language ("scan 192.168.1.5 for me").
+    """
+    candidate = msg.strip()
+    if not candidate or " " in candidate or "\n" in candidate:
+        return None
+    m = _COMMA_FIX_PATTERN.match(candidate)
+    if m:
+        candidate = ".".join(m.groups())
+    if TARGET_PATTERN.match(candidate):
+        return candidate
+    return None
+
 
 @router.post("/chat")
 async def chat(req: ChatRequest, request: Request):
@@ -1030,6 +814,36 @@ async def chat(req: ChatRequest, request: Request):
         result = _handle_slash(parts[0], parts[1] if len(parts) > 1 else "", sid)
         if result:
             return result
+
+    # ── Phase 0: automatic pipeline trigger, zero slash command needed ─────
+    # If the whole message IS a target, just scan it. No AI round-trip, no
+    # JSON-parsing dependency — this is the guaranteed path "type an IP and
+    # the full pipeline runs" relies on.
+    bare_target = _extract_bare_target(msg)
+    if bare_target:
+        try:
+            validate_target(bare_target)
+        except Exception as ve:
+            err = f"`{bare_target}` doesn't look like a valid IP, hostname, or CIDR: {ve}"
+            _push_history(sid, "user", msg)
+            _push_history(sid, "assistant", err)
+            return {"reply": err, "model": "validator"}
+        _push_history(sid, "user", msg)
+        try:
+            analysis    = await _run_scan_pipeline(bare_target, project_name=project_name, session_id=sid)
+            final_reply = _format_scan_reply(analysis, "Target submitted — running the full scan automatically.")
+            _push_history(sid, "assistant", final_reply)
+            return {
+                "reply":     final_reply,
+                "action":    "scan_complete",
+                "data":      {"session_id": analysis["session_id"], "target": bare_target},
+                "model":     "auto-trigger",
+                "auto_scan": True,
+            }
+        except Exception as e:
+            err = f"Scan of `{bare_target}` failed: `{e}`\n\nCheck: target reachable? nmap installed?"
+            _push_history(sid, "assistant", err)
+            return {"reply": err, "model": "auto-trigger", "error": str(e)}
 
     # Fix #2: load context for THIS session only
     scan_ctx = {}
@@ -1052,13 +866,26 @@ async def chat(req: ChatRequest, request: Request):
     provider_name = "unknown"
     fallback_note = ""
     try:
-        raw_reply, provider_name = await loop.run_in_executor(
-            None, ai_router.chat, messages, system, 1200
+        raw_reply, provider_name = await asyncio.wait_for(
+            loop.run_in_executor(None, ai_router.chat, messages, system, 1200),
+            timeout=CHAT_AI_BUDGET_SECS,
         )
         # Fix #6: surface fallback reason immediately when provider degraded
         st = ai_router.status()
         if st.get("fallback_reason") and provider_name not in ("rule-based",):
             fallback_note = f"\n\n> ⚠️ *Using {st['display_name']} — {st['fallback_reason']}*"
+    except asyncio.TimeoutError:
+        logger.warning(
+            "ai_router.chat exceeded %.0fs budget (providers slow/unloaded) — "
+            "falling back to keyword reply. (AI call continues in background "
+            "thread, result discarded.)",
+            CHAT_AI_BUDGET_SECS,
+        )
+        _push_history(sid, "user", msg)
+        return {
+            "reply": _keyword_fallback(msg), "suggestions": [], "model": "keyword-fallback",
+            "error": f"AI chat exceeded {CHAT_AI_BUDGET_SECS:.0f}s budget",
+        }
     except Exception as e:
         _push_history(sid, "user", msg)
         return {"reply": _keyword_fallback(msg), "suggestions": [], "model": "keyword-fallback", "error": str(e)}
@@ -1069,30 +896,28 @@ async def chat(req: ChatRequest, request: Request):
 
     if auto:
         target    = auto.get("target", "")
-        scan_type = auto.get("scan_type", "service_detect")
         reason    = auto.get("reason", "")
         try:
             validate_target(target)
-            validate_scan_type(scan_type)
         except Exception as ve:
             err = f"Identified intent to scan **{target}** but validation failed: {ve}\n\nProvide a valid IP or hostname."
             _push_history(sid, "assistant", err)
             return {"reply": err, "model": provider_name}
 
         try:
-            analysis    = await _run_scan_pipeline(target, scan_type, project_name=project_name, session_id=sid)
+            analysis    = await _run_scan_pipeline(target, project_name=project_name, session_id=sid)
             final_reply = _format_scan_reply(analysis, reason) + fallback_note
             _push_history(sid, "assistant", final_reply)
             return {
                 "reply":     final_reply,
                 "action":    "scan_complete",
-                "data":      {"session_id": analysis["session_id"], "target": target, "scan_type": scan_type},
+                "data":      {"session_id": analysis["session_id"], "target": target},
                 "model":     provider_name,
                 "auto_scan": True,
             }
         except Exception as e:
             err = (f"Scan of `{target}` failed: `{e}`\n\n"
-                   "Check: target reachable? nmap installed? try a different scan type.")
+                   "Check: target reachable? nmap installed?")
             _push_history(sid, "assistant", err)
             return {"reply": err, "model": provider_name, "error": str(e)}
 
@@ -1187,133 +1012,98 @@ async def confirm_single_port(req: ConfirmPortRequest):
     """
     POST /api/scan/confirm-port
 
-    CVE-first NSE confirmation for a single port.
-    Called sequentially by the chatbot (one port at a time, 400ms gaps).
+    Phase 6: delegates entirely to confirmation_router.route_confirmation().
+    The router itself decides whether/when Gemini gets called (only when a
+    CVE is present and no script has run yet) — this endpoint no longer
+    contains any confirmation decision logic of its own, and is the only
+    caller of the router in the live HTTP API surface.
 
-    Decision tree:
-      1. Normalise CVE list.
-      2. get_confirmation_plan() → find best CVE→NSE mapping on disk.
-      3. action == "NSE"     → run script → analyze_output() → verdict.
-      4. action == "VERSION" → version in known-vulnerable range → POTENTIALLY_VULNERABLE.
-      5. action == "NONE"    → no script, no version data → NOT_VALIDATABLE.
-
-    CONFIRMED requires actual "State: VULNERABLE" / "VULNERABLE:" in NSE output.
-    "Starting Nmap..." alone → UNCONFIRMED, never CONFIRMED.
-    "State: NOT VULNERABLE" / "not Exim" / "disabled" → NOT_VULNERABLE.
+    FIX (multi-CVE truncation bug): a single open port routinely matches
+    many CVEs (an old OpenSSH/Apache/BIND banner alone can pull a dozen).
+    This endpoint used to keep only cve_ids[0] and discard the rest before
+    ever calling the router, so any port whose first-listed CVE had no
+    mapped NSE script or version range came back UNCONFIRMED even when a
+    later CVE on that exact same port had a perfectly good match. The full
+    list is now passed through as "cves" so route_confirmation() — which
+    already loops over every CVE it's given — actually gets to do that.
+    "cve" is still set (to the first CVE) purely for any older caller that
+    reads that singular field; it is no longer what confirmation is based on.
     """
-    from app.scanner.script_selector import (
-        find_scripts_for_port_with_plan,
-        run_confirmation_scan,
-    )
-    from app.scanner.cve_script_mapper import analyze_output
+    from app.scanner.confirmation_router import route_confirmation
 
     loop = asyncio.get_event_loop()
-
-    # Normalise CVEs: frontend sends plain strings ["CVE-2011-2523", ...]
     cve_ids = [c.strip() for c in req.cves if c and c.strip()]
 
-    # ── Determine confirmation plan ─────────────────────────────────────────
-    plan = find_scripts_for_port_with_plan(
-        service=req.service,
-        product=req.product,
-        version=req.version,
-        cves=cve_ids,
-    )
+    finding = {
+        "target":      req.target,
+        "port":        req.port,
+        "protocol":    req.protocol,
+        "service":     req.service,
+        "product":     req.product,
+        "version":     req.version,
+        "cves":        cve_ids,                          # FIX: full list, not just [0]
+        "cve":         cve_ids[0] if cve_ids else "",     # kept for backward compat only
+        "script_name": "",
+        "raw_output":  "",
+    }
 
-    action = plan["action"]
+    result = await loop.run_in_executor(None, route_confirmation, finding)
 
-    # ── Case A: no NSE, version in vulnerable range ─────────────────────────
-    if action == "VERSION":
-        logger.info(
-            "confirm-port: %s:%d %s %s — POTENTIALLY_VULNERABLE via version range (CVE %s)",
-            req.target, req.port, req.service, req.version, plan["cve_id"]
-        )
-        return {
-            "vuln_status":    "POTENTIALLY_VULNERABLE",
-            "confidence":     plan["confidence_if_confirmed"],
-            "script_used":    None,
-            "scripts_tried":  [],
-            "cve_confirmed":  plan["cve_id"],
-            "evidence":       plan["reason"],
-        }
+    # The CVE actually used to reach this verdict — may be any entry in
+    # cve_ids, not necessarily the first one. Falls back to the legacy
+    # singular field if the router didn't report one (e.g. Step 5/6).
+    matched_cve = result.get("cve_id") or finding["cve"] or None
 
-    # ── Case B: nothing matches → NOT_VALIDATABLE ───────────────────────────
-    if action == "NONE" or not plan.get("script"):
-        logger.info(
-            "confirm-port: %s:%d %s — NOT_VALIDATABLE (CVEs: %s)",
-            req.target, req.port, req.service, cve_ids[:3]
-        )
-        return {
-            "vuln_status":    "NOT_VALIDATABLE",
-            "confidence":     0,
-            "script_used":    None,
-            "scripts_tried":  [],
-            "cve_confirmed":  None,
-            "evidence":       plan["reason"],
-        }
-
-    # ── Case C: run the NSE script ──────────────────────────────────────────
-    script = plan["script"]
-    logger.info(
-        "confirm-port: %s:%d — running %s (CVE %s)",
-        req.target, req.port, script, plan["cve_id"]
-    )
-
-    output = await loop.run_in_executor(
-        None,
-        run_confirmation_scan,
-        req.target, req.port, req.protocol, [script],
-    )
-
-    result = analyze_output(output or "", script, plan["cve_id"] or "")
-
-    # ── Self-learning: update confidence in DB based on real scan result ─────
-    # This is what makes the system intelligent over time — good mappings
-    # get reinforced, bad ones get flagged automatically.
+    # Self-learning feedback (unchanged) — reinforces good DB mappings,
+    # flags bad ones, exactly as before this phase. Now keyed on the CVE
+    # that was actually matched, not always the first one in the list.
     try:
         from app.scanner.cve_db import record_scan_result
-        if plan.get("cve_id"):
-            record_scan_result(plan["cve_id"], script, result["status"])
+        if matched_cve and result.get("script_used"):
+            record_scan_result(matched_cve, result["script_used"], result["vuln_status"])
     except Exception as _fb_err:
         logger.debug("Feedback update skipped: %s", _fb_err)
 
-    final_confidence = result["confidence"] if result["status"] == "CONFIRMED" else 0
-
     return {
-        "vuln_status":    result["status"],
-        "confidence":     final_confidence,
-        "script_used":    script,
-        "scripts_tried":  [script],
-        "cve_confirmed":  plan["cve_id"],
+        "vuln_status":    result["vuln_status"],
+        "confidence":     result["confidence"],
+        "script_used":    result.get("script_used"),
+        "scripts_tried":  [result["script_used"]] if result.get("script_used") else [],
+        "cve_confirmed":  matched_cve,
         "evidence":       result["evidence"],
-        "source":         plan.get("source", ""),
+        "source":         result.get("source", ""),
+        "trace":          result.get("trace", []),
     }
+
 
 
 @router.post("/scan/auto")
 async def auto_vuln_scan(req: ScanRequest, request: Request):
     """
-    POST /api/scan/auto — Auto-starts a vuln scan (nmap -sV --script vuln).
-    Called by the frontend when user submits an IP without choosing a scan type.
-    Delegates to _run_scan_pipeline with scan_type='vuln_scan'.
+    POST /api/scan/auto — kept as an alias of /api/scan for backward
+    compatibility with any client still calling this path. There's only one
+    scan (Phase 0) so this and /api/scan now do exactly the same thing.
     """
     from app.api.scan_control import scan_state as _global_ss
 
     target       = validate_target(req.target)
-    scan_type    = "vuln_scan"   # always vuln scan for auto mode
     project_name = (req.project_name or "").strip()
 
     if _global_ss.running:
         raise HTTPException(
             status_code=409,
             detail=(
-                f"A scan is already running against '{_global_ss.target}' "
-                f"({_global_ss.scan_type}). Stop it first or wait for it to finish."
+                f"A scan is already running against '{_global_ss.target}'. "
+                f"Stop it first or wait for it to finish."
             ),
         )
 
     try:
-        analysis = await _run_scan_pipeline(target, scan_type, project_name=project_name, session_id=req.message or "")
+        analysis = await _run_scan_pipeline(
+            target, project_name=project_name, session_id=req.message or "",
+            ssh_username=req.ssh_username, ssh_password=req.ssh_password, ssh_key_path=req.ssh_key_path,
+            smb_username=req.smb_username, smb_password=req.smb_password,
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Scan failed: {e}")
 
@@ -1321,22 +1111,18 @@ async def auto_vuln_scan(req: ScanRequest, request: Request):
 
 
 # ── Scan route ─────────────────────────────────────────────────────────────────
-
-@router.get("/templates")
-async def get_templates():
-    return {"templates": [k for k in SCAN_TEMPLATES if k != "enum_scripts"]}
-
+# Phase 0: /api/templates removed — there's nothing to list, there's one scan.
 
 @router.post("/scan")
 async def run_scan(req: ScanRequest, request: Request):
     """
     POST /api/scan — delegates entirely to _run_scan_pipeline().
-    Duplicate pipeline code removed: single source of truth for scan logic.
+    Phase 0: scan_type is no longer accepted/used — there is exactly one
+    scan (scanner_core.run_full_scan), and it always runs in full.
     """
     from app.api.scan_control import scan_state as _global_ss
 
     target       = validate_target(req.target)
-    scan_type    = validate_scan_type(req.scan_type)
     project_name = (req.project_name or "").strip()
 
     # ── Concurrent-scan guard ──────────────────────────────────────────────
@@ -1344,15 +1130,19 @@ async def run_scan(req: ScanRequest, request: Request):
         raise HTTPException(
             status_code=409,
             detail=(
-                f"A scan is already running against '{_global_ss.target}' "
-                f"({_global_ss.scan_type}). Stop it first or wait for it to finish."
+                f"A scan is already running against '{_global_ss.target}'. "
+                f"Stop it first or wait for it to finish."
             ),
         )
 
     try:
-        analysis = await _run_scan_pipeline(target, scan_type, project_name=project_name)
+        analysis = await _run_scan_pipeline(
+            target, project_name=project_name,
+            ssh_username=req.ssh_username, ssh_password=req.ssh_password, ssh_key_path=req.ssh_key_path,
+            smb_username=req.smb_username, smb_password=req.smb_password,
+        )
     except Exception as e:
-        logger.exception("Scan pipeline failed for target=%s scan_type=%s", target, scan_type)
+        logger.exception("Scan pipeline failed for target=%s", target)
         raise HTTPException(status_code=500, detail=f"Scan failed: {e}")
 
     return analysis
@@ -1451,98 +1241,6 @@ async def get_ai_status(request: Request):
 
 
 
-# ── FIX7: Multi-IP / CIDR Batch Scan ──────────────────────────────────────────
-
-import ipaddress as _ipaddress
-
-class BatchScanRequest(BaseModel):
-    targets: str          # comma-separated IPs or a single CIDR
-    scan_type: str
-    project_name: Optional[str] = ""
-
-def _expand_targets(raw: str) -> list:
-    """
-    FIX7: Parse comma-separated IPs or a CIDR block into a list of target strings.
-    CIDR /24 is capped at 255 hosts to prevent runaway scans.
-    """
-    raw = raw.strip()
-    results = []
-    # If it contains '/' treat it as CIDR
-    if '/' in raw and ',' not in raw:
-        try:
-            net = _ipaddress.ip_network(raw, strict=False)
-            hosts = list(net.hosts())
-            if len(hosts) > 255:
-                hosts = hosts[:255]  # safety cap
-            results = [str(h) for h in hosts]
-        except ValueError:
-            results = [raw]
-    else:
-        for part in raw.split(','):
-            t = part.strip()
-            if t:
-                results.append(t)
-    return results
-
-
-@router.post("/scan/batch")
-async def run_batch_scan(req: BatchScanRequest, request: Request):
-    """
-    FIX7: Scan multiple hosts (comma-separated or CIDR) in sequence.
-    Returns per-host results and aggregate risk/CVE summary.
-    """
-    targets = _expand_targets(req.targets)
-    if not targets:
-        raise HTTPException(status_code=400, detail="No valid targets provided")
-    if len(targets) > 50:
-        raise HTTPException(status_code=400, detail="Batch limited to 50 hosts. Use a narrower CIDR.")
-
-    scan_type    = validate_scan_type(req.scan_type)
-    project_name = (req.project_name or "").strip()
-
-    results      = []
-    all_cve_ids  = set()
-    risk_levels  = []
-
-    for target in targets:
-        try:
-            validate_target(target)
-        except Exception:
-            results.append({"target": target, "status": "skipped", "reason": "invalid target"})
-            continue
-        try:
-            analysis = await _run_scan_pipeline(target, scan_type, project_name=project_name)
-            cves = [
-                c.get("cve_id", "") for h in analysis.get("risk", {}).get("hosts", [])
-                for p in h.get("ports", []) for c in p.get("cves", [])
-            ]
-            all_cve_ids.update(c for c in cves if c.startswith("CVE"))
-            overall = analysis.get("risk", {}).get("hosts", [{}])[0].get(
-                "risk_summary", {}).get("overall", "low")
-            risk_levels.append(overall)
-            results.append({
-                "target":     target,
-                "status":     "ok",
-                "session_id": analysis["session_id"],
-                "overall_risk": overall,
-                "cve_count":  len(cves),
-            })
-        except Exception as e:
-            results.append({"target": target, "status": "error", "reason": str(e)})
-
-    # Aggregate risk: worst level wins
-    level_order = {"critical": 3, "high": 2, "medium": 1, "low": 0}
-    aggregate_risk = max(risk_levels, key=lambda l: level_order.get(l, 0)) if risk_levels else "unknown"
-
-    return {
-        "batch_targets": len(targets),
-        "completed":     sum(1 for r in results if r["status"] == "ok"),
-        "aggregate_risk": aggregate_risk,
-        "aggregate_cve_count": len(all_cve_ids),
-        "aggregate_cves": list(all_cve_ids),
-        "hosts": results,
-    }
-
 
 # ── FIX13: CVSS Vector Breakdown ──────────────────────────────────────────────
 
@@ -1603,87 +1301,6 @@ async def cvss_breakdown(req: CVSSVectorRequest):
         "order":     ["AV","AC","PR","UI","S","C","I","A"],
     }
 
-
-# ── Multi-IP Scan (new modular system) ────────────────────────────────────────
-
-import uuid as _uuid
-from app.multi_scan.parser import parse_targets_txt, MAX_TARGETS
-from app.multi_scan.orchestrator import (
-    create_job, get_job, run_multi_scan, aggregate_results,
-)
-
-class MultiScanStartRequest(BaseModel):
-    targets_txt: str          # raw content of uploaded .txt file
-    scan_type: str
-    project_name: Optional[str] = ""
-
-class MultiScanPollRequest(BaseModel):
-    job_id: str
-
-
-@router.post("/scan/multi/start")
-async def multi_scan_start(req: MultiScanStartRequest, request: Request):
-    """
-    Parse the targets TXT, validate, create a queue job, and start scanning
-    in the background.  Returns job_id immediately so the frontend can poll.
-    """
-    parsed = parse_targets_txt(req.targets_txt)
-    valid  = parsed["valid"]
-
-    if not valid:
-        return {
-            "ok": False,
-            "error": "No valid targets found in the uploaded file.",
-            "invalid": parsed["invalid"],
-        }
-
-    scan_type    = validate_scan_type(req.scan_type)
-    project_name = (req.project_name or "").strip()
-    job_id       = str(_uuid.uuid4())[:8]
-
-    queue = create_job(job_id, valid, scan_type, project_name)
-
-    async def _pipeline(target, st, pn):
-        return await _run_scan_pipeline(target, st, project_name=pn)
-
-    # Fire-and-forget — job runs in background, frontend polls
-    asyncio.create_task(run_multi_scan(queue, _pipeline))
-
-    return {
-        "ok":      True,
-        "job_id":  job_id,
-        "targets": valid,
-        "invalid": parsed["invalid"],
-        "total":   len(valid),
-    }
-
-
-@router.get("/scan/multi/status/{job_id}")
-async def multi_scan_status(job_id: str, request: Request):
-    """Poll the status of a running multi-scan job."""
-    queue = get_job(job_id)
-    if not queue:
-        raise HTTPException(status_code=404, detail="Job not found")
-    state = queue.to_dict()
-    if queue.done:
-        state["aggregate"] = aggregate_results(queue.results)
-    return state
-
-
-@router.post("/scan/multi/validate")
-async def multi_scan_validate(req: MultiScanStartRequest, request: Request):
-    """
-    Dry-run validation of a targets TXT without starting a scan.
-    Returns parsed valid/invalid lists for frontend preview.
-    """
-    parsed = parse_targets_txt(req.targets_txt)
-    return {
-        "valid":   parsed["valid"],
-        "invalid": parsed["invalid"],
-        "skipped": parsed["skipped"],
-        "total":   parsed["total"],
-        "max":     MAX_TARGETS,
-    }
 
 
 # ── AI Patch Guidance endpoint — used by /patch all dashboard ─────────────────

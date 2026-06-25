@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>ThreatWeave AI — Risk Dashboard</title>
+<title>ThreatWeave AI — Vulnerability Intelligence Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <style>
@@ -266,8 +266,8 @@ function drawGauge(svgEl, score, color){
    DASHBOARD
 ════════════════════════════════════════════ */
 function renderDashboard(){
-  nameEl.textContent = 'Risk Dashboard';
-  document.title = 'ThreatWeave AI — Risk Dashboard';
+  nameEl.textContent = 'Vulnerability Intelligence Dashboard';
+  document.title = 'ThreatWeave AI — Vulnerability Intelligence Dashboard';
 
   if(!scanData){ showEmpty(); return; }
 
@@ -544,8 +544,8 @@ function renderDashboard(){
    OSINT TREE (preserved as-is)
 ════════════════════════════════════════════ */
 function renderOsint(){
-  nameEl.textContent='OSINT Tree';
-  document.title='ThreatWeave AI — OSINT Tree';
+  nameEl.textContent='Infrastructure Intelligence Graph';
+  document.title='ThreatWeave AI — Infrastructure Intelligence Graph';
   if(!scanData){ showEmpty(); return; }
   const risk=scanData.risk||scanData||{};
   const hosts=risk.hosts||[];
@@ -568,7 +568,7 @@ function renderOsint(){
         <g id="osint-zoom-g"><g id="osint-links"></g><g id="osint-nodes"></g></g>
       </svg>
       <div id="osint-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:10px;color:#8b949e;font-size:13px;background:var(--bg)">
-        <div class="spinner"></div>Building OSINT tree…
+        <div class="spinner"></div>Building Infrastructure Intelligence Graph…
       </div>
       <div id="osint-empty" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:#8b949e;background:var(--bg)">
         <div style="font-size:32px">🕸</div><div>No data to render</div>
@@ -583,7 +583,7 @@ function renderOsint(){
     </div>`;
   requestAnimationFrame(()=>setTimeout(()=>{
     try{ Graphs.buildOsintTree(risk); }
-    catch(err){ console.error('OSINT build error:',err); showEmpty('Could not render OSINT tree: '+err.message); }
+    catch(err){ console.error('OSINT build error:',err); showEmpty('Could not render Infrastructure Intelligence Graph: '+err.message); }
   },80));
 }
 

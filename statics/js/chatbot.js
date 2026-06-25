@@ -22,7 +22,7 @@ const Chatbot = (() => {
 
   // ── Slash commands ─────────────────────────────────────────
   const SLASH_CMDS = [
-    { cmd: '/graph',    hint: '/graph',                  desc: 'Open OSINT tree or Risk Dashboard' },
+    { cmd: '/graph',    hint: '/graph',                  desc: 'Open Infrastructure Intelligence Graph or Vulnerability Intelligence Dashboard' },
     { cmd: '/patch',    hint: '/patch all',              desc: 'AI patch remediation dashboard for all vulnerabilities' },
     { cmd: '/patch',    hint: '/patch <service> <port>', desc: 'Patch guidance for a specific port' },
     { cmd: '/report',   hint: '/report [pdf|html]',      desc: 'Export scan report (PDF or HTML)' },
@@ -519,11 +519,11 @@ const Chatbot = (() => {
       menu.innerHTML = `
         <div class="post-ob-msg">Excellent. You can now:</div>
         <div class="post-ob-actions">
-          <button class="post-ob-btn" onclick="Chatbot._showScanModeSelector()">
+          <button class="post-ob-btn" onclick="Chatbot._promptScanIP()">
             <span class="pob-icon">🎯</span>
             <span class="pob-text"><strong>Start Scanning</strong><small>Single IP or Multiple IPs from file</small></span>
           </button>
-          <button class="post-ob-btn" onclick="Chatbot.quickChat('/vuln')">
+          <button class="post-ob-btn" onclick="Chatbot.openVulnDashboard()">
             <span class="pob-icon">🔎</span>
             <span class="pob-text"><strong>Vulnerability Intelligence</strong><small>All CVEs from last scan session</small></span>
           </button>
@@ -563,11 +563,11 @@ const Chatbot = (() => {
         &nbsp;— workspace active. What would you like to do?
       </div>
       <div class="post-ob-actions">
-        <button class="post-ob-btn" onclick="Chatbot._showScanModeSelector()">
+        <button class="post-ob-btn" onclick="Chatbot._promptScanIP()">
           <span class="pob-icon">🎯</span>
           <span class="pob-text"><strong>Start Scanning</strong><small>Single IP or Multiple IPs from file</small></span>
         </button>
-        <button class="post-ob-btn" onclick="Chatbot.quickChat('/vuln')">
+        <button class="post-ob-btn" onclick="Chatbot.openVulnDashboard()">
           <span class="pob-icon">🔎</span>
           <span class="pob-text"><strong>Vulnerability Intelligence</strong><small>CVEs from last scan</small></span>
         </button>
@@ -773,7 +773,7 @@ const Chatbot = (() => {
         <div class="gp-card" onclick="Chatbot._openGraph('osint')">
           <div class="gp-card-icon">🕸</div>
           <div class="gp-card-body">
-            <div class="gp-card-name">OSINT Tree</div>
+            <div class="gp-card-name">Infrastructure Intelligence Graph</div>
             <div class="gp-card-desc">Interactive click-to-expand intelligence tree. Reveals host → ports → services → CVEs progressively.</div>
             ${!hasScan ? '<div class="gp-card-warn">⚠ Run a scan first for live data</div>' : ''}
           </div>
@@ -782,7 +782,7 @@ const Chatbot = (() => {
         <div class="gp-card" onclick="Chatbot._openGraph('dashboard')">
           <div class="gp-card-icon">📊</div>
           <div class="gp-card-body">
-            <div class="gp-card-name">Risk Dashboard</div>
+            <div class="gp-card-name">Vulnerability Intelligence Dashboard</div>
             <div class="gp-card-desc">SOC-style view — severity donut, risk radar, CVE bar chart, service breakdown, and trend lines.</div>
             ${!hasScan ? '<div class="gp-card-warn">⚠ Run a scan first for live data</div>' : ''}
           </div>
@@ -1047,24 +1047,18 @@ const Chatbot = (() => {
   }
 
   // Command registry — single source of truth for all commands
+  // Phase 0 Part B: trimmed from 18 commands down to 6. Everything else
+  // (scanning, CVE matching, confirmation routing) now runs automatically —
+  // no slash command gates any core pipeline step. /scan's old job (set
+  // target + start the scan) moved to automatic bare-target detection in
+  // sendChat() below; it is no longer a typeable command.
   const CMD_REGISTRY = {
-
     '/report':   { fn: _cmdReport,   needsScan: true,  desc: 'Export report' },
     '/clear':    { fn: _cmdClear,    needsScan: false, desc: 'Clear chat' },
     '/stop':     { fn: _cmdStop,     needsScan: false, desc: 'Stop scan' },
     '/help':     { fn: _cmdHelp,     needsScan: false, desc: 'Show commands' },
     '/graph':    { fn: _cmdGraph,    needsScan: false, desc: 'Open a graph in a new tab' },
-    '/remediate':{ fn: _cmdRemediate,needsScan: true,  desc: 'Full remediation dashboard' },
-    '/export':   { fn: _cmdExport,   needsScan: true,  desc: 'Export report' },
-    '/projects': { fn: _cmdProjects, needsScan: false, desc: 'List projects' },
-    '/history':  { fn: _cmdHistory,  needsScan: false, desc: 'Scan history' },
-    // Internal-only — not in SLASH_CMDS autocomplete but still dispatched by buttons/quickChat
-    '/scan':     { fn: _cmdScan,     needsScan: false, desc: 'Scan a target' },
     '/patch':    { fn: _cmdPatch,    needsScan: false, desc: 'Patch guidance' },
-    '/vuln':     { fn: _cmdVuln,     needsScan: true,  desc: 'CVE dashboard' },
-    '/risk':     { fn: _cmdRisk,     needsScan: false, desc: 'Security score + risk breakdown' },
-    '/cve':      { fn: _cmdCveSearch,needsScan: false, desc: 'CVE intelligence lookup' },
-    '/model':    { fn: _cmdModel,    needsScan: false, desc: 'AI model status' },
   };
 
   async function _dispatchCommand(cmd, parts, msg) {
@@ -1165,6 +1159,19 @@ const Chatbot = (() => {
   async function _cmdStop()          { confirmStop(); }
   async function _cmdHelp()          { _showHelpCard(); }
 
+  // Phase 0: "type an IP, no slash command needed" — the deterministic
+  // client-side check, mirrors the same regex _submitScanIP already used to
+  // validate manually-entered targets. Returns the normalised target string,
+  // or null if `text` isn't (just) a target.
+  function _extractBareTarget(text) {
+    let candidate = text.trim();
+    if (!candidate || /\s/.test(candidate)) return null;
+    const commaFix = candidate.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3}),(\d{1,3})$/);
+    if (commaFix) candidate = `${commaFix[1]}.${commaFix[2]}.${commaFix[3]}.${commaFix[4]}`;
+    const validPattern = /^((\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?|localhost|([a-zA-Z0-9\-]+\.)+[a-zA-Z]{2,})$/;
+    return validPattern.test(candidate) ? candidate : null;
+  }
+
   async function sendChat() {
     const inp = document.getElementById('chat-inp');
     const msg = inp.value.trim();
@@ -1181,6 +1188,16 @@ const Chatbot = (() => {
 
     const ac = document.getElementById('chat-autocomplete');
     if (ac) ac.style.display = 'none';
+
+    // Phase 0: no slash command needed — if the whole message is a target,
+    // run the same automatic full scan _autoStartVulnScan() uses for the
+    // "Scan a Target" button (rich live table + charts + floating panel),
+    // instead of sending it to the AI chat endpoint at all.
+    const bareTarget = _extractBareTarget(msg);
+    if (bareTarget) {
+      await _autoStartVulnScan(bareTarget);
+      return;
+    }
 
     const parts = msg.split(/\s+/);
     const cmd   = parts[0].toLowerCase();
@@ -1305,11 +1322,11 @@ const Chatbot = (() => {
             &nbsp;— workspace active. You can now:
           </div>
           <div class="post-ob-actions">
-            <button class="post-ob-btn" onclick="Chatbot._showScanModeSelector()">
+            <button class="post-ob-btn" onclick="Chatbot._promptScanIP()">
               <span class="pob-icon">🎯</span>
               <span class="pob-text"><strong>Start Scanning</strong><small>Single IP or Multiple IPs from file</small></span>
             </button>
-            <button class="post-ob-btn" onclick="Chatbot.quickChat('/vuln')">
+            <button class="post-ob-btn" onclick="Chatbot.openVulnDashboard()">
               <span class="pob-icon">🔎</span>
               <span class="pob-text"><strong>Vulnerability Intelligence</strong><small>All CVEs from last scan session</small></span>
             </button>
@@ -1409,9 +1426,9 @@ const Chatbot = (() => {
 
   async function _autoStartVulnScan(ip) {
     _currentTarget = ip;
-    addMsg(`🎯 Target set: \`${ip}\` — starting **Vulnerability Scan** automatically…`, 'user');
+    addMsg(`🎯 Target set: \`${ip}\` — starting the full scan automatically…`, 'user');
     _renderLiveVulnTable(ip);
-    await runScan(ip, 'vuln_scan');
+    await runScan(ip, 'full_scan');
   }
 
   async function executeScan(ip, scanType) {
@@ -1515,6 +1532,15 @@ const Chatbot = (() => {
     if (status === 'NOT_VULNERABLE') return '<span class="lv-badge lv-not-vuln">🟢 NOT VULNERABLE</span>';
     if (status === 'WAITING')        return '<span class="lv-badge lv-loading">⏳ Waiting…</span>';
     if (status === 'SCANNING')       return '<span class="lv-badge lv-scanning"><span class="lv-spinner"></span> Confirming…</span>';
+    // FIX: these three statuses were falling through to the generic
+    // "⚠️ UNCONFIRMED" badge below even though the router had already
+    // determined something more specific — a version-range hit with no
+    // script proof, a heuristic misconfiguration flag, or "there was
+    // nothing at all to check" are not the same thing as "checked and
+    // inconclusive", and conflating them hid real findings in the table.
+    if (status === 'POTENTIALLY_VULNERABLE') return '<span class="lv-badge lv-potential">🟠 POTENTIALLY VULNERABLE</span>';
+    if (status === 'MISCONFIGURED')          return '<span class="lv-badge lv-misconfig">🟣 MISCONFIGURED</span>';
+    if (status === 'NOT_VALIDATABLE')        return '<span class="lv-badge lv-notvalidatable">❔ NOT VALIDATABLE</span>';
     return '<span class="lv-badge lv-unconfirmed">⚠️ UNCONFIRMED</span>';
   }
 
@@ -1557,13 +1583,87 @@ const Chatbot = (() => {
     return 'UNCONFIRMED';
   }
 
+  /** Returns every misconfig_findings entry for a given port number. Each
+   *  entry (from app/scanner/misconfig_checker.py) has at least: name,
+   *  description, severity, evidence, remediation, port. */
+  function _misconfigsForPort(misconfigFindings, port) {
+    if (!misconfigFindings || !misconfigFindings.length) return [];
+    return misconfigFindings.filter(m => m && m.port === port);
+  }
+
+  /**
+   * FIX (multi-vulnerability / misconfig visibility): a single port often
+   * carries SEVERAL distinct, independently-named findings — e.g. port 25's
+   * ssl-dh-params alone reports 3 separate named vulnerabilities (anonymous
+   * DH, Logjam, insufficient DH group strength) plus ssl-poodle reports a
+   * 4th, all on the same port. Misconfigurations (TRACE enabled, CSRF-able
+   * forms, exposed admin paths) are equally real findings with no CVE
+   * number. None of this reached the table before — only ONE summary
+   * verdict per port did. This combines both sources into one ordered list
+   * of {title, status, script, cve, evidence} objects, used to render one
+   * sub-row per item underneath each port's primary row.
+   */
+  function _additionalFindingsForPort(p, misconfigFindings) {
+    const out = [];
+    for (const m of _misconfigsForPort(misconfigFindings, p.port)) {
+      out.push({
+        title:    m.description || m.name || 'Misconfiguration',
+        status:   'MISCONFIGURED',
+        script:   m.name || null,
+        cve:      null,
+        evidence: m.evidence || m.description || '',
+      });
+    }
+    for (const f of (p.all_findings || [])) {
+      out.push({
+        title:    f.title || f.script,
+        status:   f.status || 'UNCONFIRMED',
+        script:   f.script || null,
+        cve:      f.cve || null,
+        evidence: f.evidence || '',
+      });
+    }
+    return out;
+  }
+
+  /** Same escaping as _esc(), plus quotes — needed when the value is going
+   *  inside an HTML attribute (e.g. title="..."), since raw NSE output can
+   *  contain quote characters that would otherwise break out of it. */
+  function _escAttr(s) {
+    return _esc(s).replace(/"/g, '&quot;');
+  }
+
+  /** Renders one indented sub-row for a single additional finding beneath
+   *  a port's primary row. Spans the Protocol+Service columns for the title
+   *  since there's no separate per-finding protocol/service to show. */
+  function _findingSubRowHtml(rowId, idx, finding) {
+    const status    = finding.status || 'UNCONFIRMED';
+    const badge     = _vulnStatusBadge(status);
+    const cveTag    = finding.cve ? `<span class="rb rb-high">${_esc(finding.cve)}</span>` : '—';
+    const scriptTag = finding.script ? `<code>${_esc(finding.script)}</code>` : '—';
+    const titleSafe = _esc(finding.title || finding.script || 'Finding');
+    const evidFull  = finding.evidence || '';
+    const evidShort = _esc(evidFull.slice(0, 100)) || '—';
+    return `
+      <tr class="lv-row lv-subrow lv-row-${status.toLowerCase().replace(/_/g, '-')}" id="${rowId}-f${idx}">
+        <td class="lv-mono lv-subindent">↳</td>
+        <td colspan="2" class="lv-subtitle" title="${titleSafe}">${titleSafe}</td>
+        <td class="lv-ver">—</td>
+        <td class="lv-cves">${cveTag}</td>
+        <td class="lv-status-cell">${badge}</td>
+        <td class="lv-script">${scriptTag}</td>
+        <td class="lv-evid" title="${_escAttr(evidFull)}">${evidShort}</td>
+      </tr>`;
+  }
+
   /**
    * Build the chatbot confirmation table for every open port found in this
    * scan. Returns { tableId, rows, toConfirmCount } for
    * _runSequentialConfirmation, or null if there are no open ports.
    */
-  function _renderPortConfirmTable(ip, ports) {
+  function _renderPortConfirmTable(ip, ports, misconfigFindings) {
     if (!ports || !ports.length) return null;
+    misconfigFindings = misconfigFindings || [];
 
     const chat    = document.getElementById('chat');
     const tableId = 'ct-' + Date.now();
@@ -1571,12 +1671,13 @@ const Chatbot = (() => {
     // Decide up front which ports need a live confirmation pass and which
     // can show their final badge immediately.
     const rows = ports.map(p => {
-      const status  = _normalizeVS(p.vuln_status);
-      const cves    = p.cves || [];
+      const status     = _normalizeVS(p.vuln_status);
+      const cves       = p.cves || [];
+      const extra      = _additionalFindingsForPort(p, misconfigFindings);
       // A port needs confirmation unless the initial `nmap --script vuln`
       // run already CONFIRMED it, or it's NOT_VULNERABLE with zero CVE matches.
       const needsConfirm = !(status === 'CONFIRMED' || (status === 'NOT_VULNERABLE' && cves.length === 0));
-      return { p, cves, needsConfirm, initialStatus: needsConfirm ? 'WAITING' : status };
+      return { p, cves, extra, needsConfirm, initialStatus: needsConfirm ? 'WAITING' : status };
     });
 
     const toConfirmCount = rows.filter(r => r.needsConfirm).length;
@@ -1585,11 +1686,10 @@ const Chatbot = (() => {
     wrap.className = 'msg msg-ai live-vuln-wrap';
     wrap.id = tableId;
 
-    const rowsHtml = rows.map(({ p, cves, initialStatus }) => {
+    const rowsHtml = rows.map(({ p, cves, extra, initialStatus }) => {
       const rowKey = p.port + '-' + (p.protocol || 'tcp');
       const rowId  = tableId + '-row-' + rowKey;
       const ver    = [p.product, p.version].filter(Boolean).join(' ') || '—';
-      const badge  = _vulnStatusBadge(initialStatus);
 
       // CVE column — strongest CVE first, "+N more" if there are others
       let cveCell = '—';
@@ -1598,14 +1698,24 @@ const Chatbot = (() => {
         cveCell = `<span class="rb rb-${top.severity || 'low'}">${top.cve_id || '?'}</span>`
           + (cves.length > 1 ? ` <span class="lv-scan-label">+${cves.length - 1} more</span>` : '');
       }
+      // FIX (multi-finding visibility): hint that more detail is sitting
+      // right below in the sub-rows, whether that's extra named
+      // vulnerabilities pulled out of one script's output or misconfigs —
+      // a port with ONLY a misconfig (no CVE match at all) used to show a
+      // blank "—" here with no hint anything was found at all.
+      if (extra.length) {
+        const eTag = `<span class="lv-scan-label">⚠ +${extra.length} finding${extra.length > 1 ? 's' : ''}</span>`;
+        cveCell = cveCell === '—' ? eTag : `${cveCell} ${eTag}`;
+      }
 
       // Ports already confirmed by the initial vuln scan carry their
       // script_used / evidence in the vuln_status dict — show them now.
-      const vsObj    = (p.vuln_status && typeof p.vuln_status === 'object') ? p.vuln_status : {};
-      const initScript = vsObj.script_used || '—';
-      const initEvid   = (vsObj.evidence || '').slice(0, 100) || '—';
+      const vsObj = (p.vuln_status && typeof p.vuln_status === 'object') ? p.vuln_status : {};
+      const scriptOut = vsObj.script_used || '—';
+      const evidOut   = (vsObj.evidence || '').slice(0, 100) || '—';
+      const badge     = _vulnStatusBadge(initialStatus);
 
-      return `
+      const primaryRow = `
       <tr class="lv-row lv-row-${initialStatus.toLowerCase().replace(/_/g, '-')}" id="${rowId}">
         <td class="lv-mono">${p.port}</td>
         <td>${p.protocol || 'tcp'}</td>
@@ -1613,9 +1723,17 @@ const Chatbot = (() => {
         <td class="lv-ver">${ver}</td>
         <td class="lv-cves">${cveCell}</td>
         <td class="lv-status-cell" id="${rowId}-status">${badge}</td>
-        <td class="lv-script" id="${rowId}-script">${initScript !== '—' ? `<code>${initScript}</code>` : '—'}</td>
-        <td class="lv-evid" id="${rowId}-evid" title="${vsObj.evidence || ''}">${initEvid}</td>
+        <td class="lv-script" id="${rowId}-script">${scriptOut !== '—' ? `<code>${scriptOut}</code>` : '—'}</td>
+        <td class="lv-evid" id="${rowId}-evid" title="${_escAttr(vsObj.evidence || '')}">${_esc(evidOut)}</td>
       </tr>`;
+
+      // FIX (multi-vulnerability / misconfig visibility): one sub-row per
+      // additional finding, rendered once here (these come from the
+      // original scan and don't change after live confirmation, unlike the
+      // primary row above).
+      const subRows = extra.map((f, idx) => _findingSubRowHtml(rowId, idx, f)).join('');
+
+      return primaryRow + subRows;
     }).join('');
 
     const badgeHtml = toConfirmCount
@@ -1719,6 +1837,8 @@ const Chatbot = (() => {
       if (myGen !== _confirmGeneration) return; // superseded mid-request
 
       const finalStatus = result.vuln_status || 'UNCONFIRMED';
+      const finalScript = result.script_used || '—';
+      const finalEvid   = (result.evidence || '—').slice(0, 100);
 
       if (statusCell) {
         statusCell.style.transition = 'opacity .2s';
@@ -1729,11 +1849,10 @@ const Chatbot = (() => {
         }, 150);
       }
       if (scriptCell) {
-        scriptCell.innerHTML = result.script_used ? `<code>${result.script_used}</code>` : '—';
+        scriptCell.innerHTML = (finalScript && finalScript !== '—') ? `<code>${finalScript}</code>` : '—';
       }
       if (evidCell) {
-        const evid = (result.evidence || '—').slice(0, 100);
-        evidCell.textContent = evid;       // textContent — raw NSE output may contain < > &
+        evidCell.textContent = finalEvid || '—';   // textContent — raw NSE output may contain < > &
         evidCell.title       = result.evidence || '';
       }
       if (tr) {
@@ -2030,7 +2149,12 @@ const Chatbot = (() => {
           }
 
           if (allOpenPorts.length > 0) {
-            const ctInfo = _renderPortConfirmTable(target, allOpenPorts);
+            // FIX (misconfig visibility): misconfig_findings is already
+            // computed by app/scanner/misconfig_checker.py during the main
+            // scan (d.misconfig_findings) but was never passed into this
+            // table before, so real misconfigurations (anon FTP, TRACE
+            // enabled, SMB signing off, etc.) were invisible here.
+            const ctInfo = _renderPortConfirmTable(target, allOpenPorts, d.misconfig_findings || []);
             if (ctInfo) _runSequentialConfirmation(target, ctInfo);
           } else {
             console.log('[ThreatWeave] confirm-table: skipped — no open ports in d.risk.hosts or dMerged.risk.hosts');
@@ -2507,7 +2631,7 @@ const Chatbot = (() => {
         </table>
       </div>` : ''}
       <div class="src-actions">
-        <button class="post-ob-btn" style="font-size:12px;padding:6px 12px" onclick="Chatbot.quickChat('/vuln')">🔎 Full CVE Dashboard</button>
+        <button class="post-ob-btn" style="font-size:12px;padding:6px 12px" onclick="Chatbot.openVulnDashboard()">🔎 Full CVE Dashboard</button>
         <button class="post-ob-btn" style="font-size:12px;padding:6px 12px" onclick="Chatbot.quickChat('/patch all')">🔧 Patch Dashboard</button>
         <button class="post-ob-btn" style="font-size:12px;padding:6px 12px" onclick="Chatbot.quickChat('/report html')">📄 Generate Report</button>
       </div>`;
@@ -2541,7 +2665,7 @@ const Chatbot = (() => {
       <div class="vt-header">
         <span class="vt-title">🔍 Vulnerability Intelligence</span>
         <span class="vt-count">${allCves.length} CVE${allCves.length !== 1 ? 's' : ''} detected</span>
-        <button class="vd-export-btn" style="margin-left:auto" onclick="Chatbot.quickChat('/vuln')">Open Full Dashboard →</button>
+        <button class="vd-export-btn" style="margin-left:auto" onclick="Chatbot.openVulnDashboard()">Open Full Dashboard →</button>
       </div>
       <div class="vt-scroll">
         <table class="vt-table" id="${tableId}">
@@ -3660,7 +3784,9 @@ const Chatbot = (() => {
     const d    = document.createElement('div');
     d.className = 'msg msg-ai help-card';
     const cmds = [
-      { icon:'📊', cmd:'/graph',              label:'/graph',                        desc:'Open OSINT tree or Risk Dashboard in new tab' },
+      { icon:'❓', cmd:'/help',               label:'/help',                         desc:'Show this command list' },
+      { icon:'🔧', cmd:'/patch all',          label:'/patch [all|<svc> <port>]',     desc:'AI-assisted remediation guidance for findings' },
+      { icon:'📊', cmd:'/graph',              label:'/graph',                        desc:'Open Infrastructure Intelligence Graph or Vulnerability Intelligence Dashboard in new tab' },
       { icon:'📄', cmd:'/report pdf',         label:'/report [pdf|html]',            desc:'Export the last scan report as PDF or HTML' },
       { icon:'🗑️', cmd:'/clear',              label:'/clear',                        desc:'Clear this chat window' },
       { icon:'⏹️', cmd:'/stop',               label:'/stop',                         desc:'Abort the running scan' },
@@ -3672,7 +3798,7 @@ const Chatbot = (() => {
           <span class="hc-badge">${c.icon}</span>
           <div class="hc-info"><span class="hc-name">${c.label}</span><span class="hc-desc">${c.desc}</span></div>
         </div>`).join('')}</div>
-      <div class="help-tip">✨ Click any card to run the command instantly</div>`;
+      <div class="help-tip">✨ Just type an IP address or hostname to scan it automatically — no command needed. Click any card above to run a command instantly.</div>`;
     chat.appendChild(d);
     chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
   }
@@ -3771,7 +3897,7 @@ const Chatbot = (() => {
         </table>
       </div>` : ''}
       <div class="src-actions">
-        <button class="post-ob-btn" style="font-size:12px;padding:6px 12px" onclick="Chatbot.quickChat('/vuln')">🔎 Full CVE Dashboard</button>
+        <button class="post-ob-btn" style="font-size:12px;padding:6px 12px" onclick="Chatbot.openVulnDashboard()">🔎 Full CVE Dashboard</button>
         <button class="post-ob-btn" style="font-size:12px;padding:6px 12px" onclick="Chatbot.quickChat('/patch all')">🔧 Patch Dashboard</button>
         <button class="post-ob-btn" style="font-size:12px;padding:6px 12px" onclick="Chatbot.quickChat('/report html')">📄 Generate Report</button>
       </div>`;
@@ -3790,7 +3916,7 @@ const Chatbot = (() => {
       <div class="vt-header">
         <span class="vt-title">🔍 Vulnerability Intelligence</span>
         <span class="vt-count">${allCves.length} CVE${allCves.length !== 1 ? 's' : ''} detected</span>
-        <button class="vd-export-btn" style="margin-left:auto" onclick="Chatbot.quickChat('/vuln')">Open Full Dashboard →</button>
+        <button class="vd-export-btn" style="margin-left:auto" onclick="Chatbot.openVulnDashboard()">Open Full Dashboard →</button>
       </div>
       <div class="vt-scroll">
         <table class="vt-table" id="${tableId}">
@@ -4075,7 +4201,7 @@ const Chatbot = (() => {
         <div class="srw-bar-track"><div class="srw-bar-fill srw-bar-done"></div></div>
         <span class="srw-bar-label" style="color:var(--text3);font-size:11px">
           ${data.started_at ? 'Started ' + new Date(data.started_at).toLocaleTimeString() : 'Session record'}
-          — <button class="srw-rescan-btn" onclick="Chatbot.quickChat('/scan ${data.ip || ''}')">↻ Re-scan</button>
+          — <button class="srw-rescan-btn" onclick="Chatbot.rescan('${data.ip || ""}')">↻ Re-scan</button>
         </span>
       </div>`;
     container.appendChild(d);
@@ -4811,7 +4937,7 @@ const Chatbot = (() => {
         <button class="miu-btn-start" onclick="Chatbot._startMultiScan('${uid}')">
           ▶ Start Batch Scan
         </button>
-        <button class="miu-btn-back" onclick="Chatbot._showScanModeSelector()">
+        <button class="miu-btn-back" onclick="Chatbot._promptScanIP()">
           ← Change Mode
         </button>
       </div>`;
@@ -5328,10 +5454,6 @@ const Chatbot = (() => {
     _togglePatchExpand, _togglePncCard, _filterPatchDash, _searchPatchDash,
     _promptScanIP, _submitScanIP,
     _showProjectOnboarding, _submitProjectName, _setProjectQuick,
-    // Scan mode selector + multi-scan
-    _showScanModeSelector, _onScanModeSelect,
-    _showMultiIPUpload, _onMultiFileDrop, _onMultiFileSelect,
-    _startMultiScan, _filterMultiCards, _loadMultiIPDetail,
     // Drawer 3-dot menu
     _toggleDrawerMenu, _renameDrawerSession, _submitDrawerRename,
     _cancelDrawerRename, _deleteDrawerSession, _confirmDrawerDelete,
@@ -5345,5 +5467,10 @@ const Chatbot = (() => {
     _switchPatchTab,
     // Graph picker
     _openGraph,
+    // Phase 0 Part B: /vuln and /scan are gone as slash commands, but the
+    // dashboards/buttons that used to fire them as quickChat('/vuln') /
+    // quickChat('/scan <ip>') call these directly now instead.
+    openVulnDashboard: _handleVulnCommand,
+    rescan: _autoStartVulnScan,
   };
 })();

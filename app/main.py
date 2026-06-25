@@ -24,14 +24,12 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import uvicorn
 
-from app.api.routes import router, _run_scan_pipeline
+from app.api.routes import router
 from app.api.analysis_routes import analysis_router
 from app.api.patch_api import router as patch_router
 from app.api.scan_control import ctrl_router
-from app.api.scheduled_scans import router as sched_router, run_due_schedules
 from app.api.presets import router as presets_router
 from app.api.findings import router as findings_router
-from app.api.discovery import router as discovery_router
 from app.report.multi_format import report_router
 from app.vuln.routes import nvd_router
 from app.files.chat_manager import save_chat, list_chats
@@ -132,11 +130,9 @@ app.include_router(patch_router,  prefix="/api/patch")  # v2: dedicated patch AP
 app.include_router(ctrl_router,   prefix="/api")
 app.include_router(report_router, prefix="/api")
 app.include_router(nvd_router)                    # prefix is /api/nvd (set in router)
-app.include_router(sched_router, prefix="/api")   # FIX8: scheduled scans
 app.include_router(presets_router, prefix="/api") # FIX10: scan presets
 app.include_router(findings_router, prefix="/api")# FIX12: false positive tracking
 app.include_router(analysis_router, prefix="/api") # Phase 8: analysis & intelligence routes
-app.include_router(discovery_router, prefix="/api")  # FIX9: network discovery
 
 
 # ── Fix #5: Rate-limit /api/scan (20/minute per IP) ──────────────────────────
@@ -247,12 +243,6 @@ async def startup_event():
     else:
         print(f"  Token  →  Not set (open access on LAN)")
     print("━" * 54 + "\n")
-
-    # FIX8: fire any overdue scheduled scans on server startup
-    try:
-        asyncio.create_task(run_due_schedules(_run_scan_pipeline))
-    except Exception as e:
-        logger.warning("startup: failed to schedule due scans: %s", e)
 
     # CVE intelligence database — initialize in background so it doesn't
     # block the server from accepting requests. Seeds from:

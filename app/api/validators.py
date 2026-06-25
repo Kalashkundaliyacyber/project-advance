@@ -1,25 +1,16 @@
 """
-Input validation — target and scan type sanitization.
+Input validation — target sanitization (+ legacy scan-type shim).
 Includes SSRF / private-range abuse protection.
 """
 import re
 import ipaddress
 
-# All scan types available to users. Must stay in sync with orchestrator.SCAN_TEMPLATES.
-ALLOWED_SCAN_TYPES = [
-    # Discovery
-    "ping_sweep", "host_discovery", "arp_discovery",
-    # Port scanning
-    "tcp_basic", "tcp_syn", "full_tcp", "udp_scan", "stealth_syn",
-    # Enumeration
-    "service_detect", "full_service_enum", "os_detect",
-    "banner_grab", "version_deep", "port_range", "db_discovery",
-    # Vulnerability assessment
-    "vuln_scan", "smb_audit", "ftp_audit", "ssh_audit", "web_pentest",
-    # Advanced pentesting
-    "aggressive_pentest", "firewall_evasion", "frag_scan",
-    "decoy_scan", "timing_manipulation", "ultimate_recon",
-]
+# Phase 0: there is exactly one scan now (app/scanner/scanner_core.py).
+# This used to be a 25-entry allowlist kept in sync with
+# orchestrator.SCAN_TEMPLATES. validate_scan_type() is kept only so any
+# leftover caller (or an old cached frontend bundle) doesn't 500 — it no
+# longer affects what actually runs.
+LEGACY_SCAN_TYPE = "full_scan"
 
 TARGET_PATTERN = re.compile(
     r'^((\d{1,3}\.){3}\d{1,3}'              # plain IPv4
@@ -107,18 +98,10 @@ def validate_target(target: str) -> str:
 
 
 def validate_scan_type(scan_type: str) -> str:
-    try:
-        from fastapi import HTTPException
-        Exc = HTTPException
-    except ImportError:
-        class Exc(Exception):
-            def __init__(self, status_code=400, detail=""):
-                super().__init__(detail)
-
-    # Allow enum_scripts internally but not via public API
-    all_types = ALLOWED_SCAN_TYPES + ["enum_scripts"]
-    scan_type = scan_type.strip().lower()
-    if scan_type not in all_types:
-        raise Exc(status_code=400,
-                  detail=f"Unknown scan type. Allowed: {', '.join(ALLOWED_SCAN_TYPES)}")
-    return scan_type
+    """
+    Phase 0: scan_type is vestigial. There's exactly one scan
+    (scanner_core.run_full_scan) and it always runs — this function exists
+    only so any old caller passing a scan_type string doesn't error.
+    Whatever is passed in is ignored downstream.
+    """
+    return LEGACY_SCAN_TYPE

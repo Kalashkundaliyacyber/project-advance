@@ -141,7 +141,7 @@
         <div class="gp-card" onclick="Chatbot._openGraph('osint')">
           <div class="gp-card-icon">🕸</div>
           <div class="gp-card-body">
-            <div class="gp-card-name">OSINT Tree</div>
+            <div class="gp-card-name">Infrastructure Intelligence Graph</div>
             <div class="gp-card-desc">Interactive click-to-expand intelligence tree. Reveals host → ports → services → CVEs progressively.</div>
             ${!hasScan ? '<div class="gp-card-warn">⚠ Run a scan first for live data</div>' : ''}
           </div>
@@ -150,7 +150,7 @@
         <div class="gp-card" onclick="Chatbot._openGraph('dashboard')">
           <div class="gp-card-icon">📊</div>
           <div class="gp-card-body">
-            <div class="gp-card-name">Risk Dashboard</div>
+            <div class="gp-card-name">Vulnerability Intelligence Dashboard</div>
             <div class="gp-card-desc">SOC-style view — severity donut, risk radar, CVE bar chart, service breakdown, and trend lines.</div>
             ${!hasScan ? '<div class="gp-card-warn">⚠ Run a scan first for live data</div>' : ''}
           </div>

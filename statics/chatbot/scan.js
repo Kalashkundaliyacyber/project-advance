@@ -10,7 +10,12 @@
   async function _autoStartVulnScan(ip) {
     _currentTarget = ip;
     addMsg(`🎯 Target set: \`${ip}\` — starting **Vulnerability Scan** automatically…`, 'user');
-    _renderLiveVulnTable(ip);
+    // FIX DUPLICATE TABLE: removed _renderLiveVulnTable(ip) — it created an
+    // SSE-driven live table that appeared alongside the post-scan confirmation
+    // table, resulting in two separate tables in the chat.  We now show a
+    // slim "Loading table…" placeholder that fades out the moment the
+    // confirmation table replaces it.
+    _showScanLoadingPlaceholder(ip);
     await runScan(ip, 'vuln_scan');
   }
 
@@ -18,7 +23,8 @@
   async function executeScan(ip, scanType, cardEl) {
     _currentTarget = ip;
     addMsg(`Running **${scanType}** on \`${ip}\`…`, 'user');
-    _renderLiveVulnTable(ip);
+    // FIX DUPLICATE TABLE: replaced _renderLiveVulnTable with loading placeholder
+    _showScanLoadingPlaceholder(ip);
     await runScan(ip, scanType);
   }
 
@@ -33,6 +39,9 @@
   // FIX BUG 2: tracks category per port-key so port_update from NSE confirmation
   // recategorises (moves between buckets) rather than double-incrementing the total.
   let _rowCategories    = new Map(); // key: "port-protocol" → "CONFIRMED"|"NOT_VULNERABLE"|"UNCONFIRMED"
+  // FIX DUPLICATE TABLE: tracks the loading placeholder id shown before the
+  // confirmation table appears; null when not showing a placeholder.
+  let _liveLoadingId    = null;
 
   // ── Sequential port-by-port NSE confirmation table state ──────────────────
   // Incremented every time _runSequentialConfirmation starts. A running loop
@@ -40,6 +49,61 @@
   // newer scan has started, the old loop bails out instead of fighting over
   // the same DOM rows / making redundant network calls.
   let _confirmGeneration = 0;
+
+  /* ═══════════════════════════════════════════════════════
+     SCAN LOADING PLACEHOLDER
+     Shown immediately when a scan starts — replaces the old SSE live
+     table (_renderLiveVulnTable).  Fades out the moment the
+     confirmation table (_renderPortConfirmTable) takes its place.
+     This eliminates the "two tables" UX issue where the SSE table and
+     the confirmation table both appeared in the chat simultaneously.
+  ═══════════════════════════════════════════════════════ */
+
+  function _showScanLoadingPlaceholder(ip) {
+    // Remove any lingering placeholder from a previous scan
+    _removeScanLoadingPlaceholder();
+
+    const chat = document.getElementById('chat');
+    const wrap = document.createElement('div');
+    _liveLoadingId = 'scan-loading-' + Date.now();
+    wrap.id        = _liveLoadingId;
+    wrap.className = 'msg msg-ai live-vuln-wrap';
+
+    wrap.innerHTML = `
+      <div class="lv-header">
+        <div class="lv-title-row">
+          <span class="lv-scan-badge scanning" id="${_liveLoadingId}-badge">
+            <span class="lv-badge-dot"></span>⚡ SCANNING
+          </span>
+          <span class="lv-target"><code>${ip}</code></span>
+          <span class="lv-scan-label">nmap -sV --script vuln</span>
+        </div>
+      </div>
+      <div class="lv-table-wrap" style="padding:1.6rem 2rem;text-align:center;color:var(--text3);font-style:italic;font-size:.85rem;">
+        <span class="lv-pulse" style="margin-right:.5rem;"></span>Loading table…
+      </div>`;
+
+    wrap.style.opacity   = '0';
+    wrap.style.transform = 'translateY(8px)';
+    chat.appendChild(wrap);
+    requestAnimationFrame(() => {
+      wrap.style.transition = 'opacity .3s ease, transform .3s ease';
+      wrap.style.opacity    = '1';
+      wrap.style.transform  = 'translateY(0)';
+    });
+    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
+  }
+
+  function _removeScanLoadingPlaceholder() {
+    if (!_liveLoadingId) return;
+    const el = document.getElementById(_liveLoadingId);
+    if (el) {
+      el.style.transition = 'opacity .2s ease';
+      el.style.opacity    = '0';
+      setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 220);
+    }
+    _liveLoadingId = null;
+  }
 
   function _renderLiveVulnTable(ip) {
     const chat = document.getElementById('chat');
@@ -855,9 +919,13 @@
         }
 
         if (allOpenPorts.length > 0) {
+          // FIX DUPLICATE TABLE: remove the loading placeholder now that
+          // the real confirmation table is about to render in its place.
+          _removeScanLoadingPlaceholder();
           const ctInfo = _renderPortConfirmTable(target, allOpenPorts);
           if (ctInfo) _runSequentialConfirmation(target, ctInfo);
         } else {
+          _removeScanLoadingPlaceholder();   // clean up placeholder even with no ports
           console.log('[ThreatWeave] confirm-table: skipped — no open ports in d.risk.hosts or dMerged.risk.hosts');
         }
       } catch (ctErr) {
@@ -926,9 +994,10 @@
     SessionManager.create();
     App.setLastData(null);
     App.setCurrentSession(null);
-    _currentTarget = '';
-    _liveTableId   = null;
-    _liveTableEl   = null;
+    _currentTarget  = '';
+    _liveTableId    = null;
+    _liveTableEl    = null;
+    _liveLoadingId  = null;
     Dashboard.resetOsint();
     ['rc-risk','rc-cve','rc-find','rc-ai'].forEach(id => {
       const el = document.getElementById(id);

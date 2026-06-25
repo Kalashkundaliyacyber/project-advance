@@ -90,6 +90,11 @@ SCAN_TIMEOUTS = {
     "timing_manipulation":1800,
     "ultimate_recon":    7200,   # 120 min
     "enum_scripts":      1800,
+    # Phase 0/1: the one and only scan (scanner_core.py) — full port range
+    # PLUS four NSE script categories (vuln,safe,auth,default) is one of the
+    # slowest possible profiles. Give it the same generous ceiling as
+    # ultimate_recon rather than falling through to the 30-min default.
+    "full_scan":         7200,   # 120 min
 }
 DEFAULT_SCAN_TIMEOUT = 1800   # 30-min fallback for unknown types
 
@@ -281,6 +286,8 @@ def _simulated_scan(target: str, scan_type: str):
         "decoy_scan":         _sim_tcp(target),
         "timing_manipulation":_sim_tcp(target),
         "ultimate_recon":     _sim_service(target),
+        # Phase 0/1: the one and only scan — full vuln-style simulated output.
+        "full_scan":          _sim_vuln(target),
     }
     xml = sims.get(scan_type, _sim_vuln(target))
     raw = f"[SIMULATED - nmap not installed]\nTarget: {target}\nType: {scan_type}\n\n{xml}"
@@ -386,6 +393,58 @@ def _sim_vuln(target):
 </host>
 <runstats>
   <finished elapsed="120.00" exit="success" summary="1 IP address scanned"/>
+  <hosts up="1" down="0" total="1"/>
+</runstats>
+</nmaprun>"""
+
+
+def _sim_service(target):
+    """
+    Simulated service/version-detection output (no NSE vuln scripts) —
+    open ports + product/version banners only.
+
+    Pre-existing bug fix: this function was referenced 8 times in
+    _simulated_scan()'s `sims` dict (service_detect, version_deep,
+    full_service_enum, banner_grab, db_discovery, smb_audit, ftp_audit,
+    ssh_audit, web_pentest, aggressive_pentest, ultimate_recon) but was
+    never defined anywhere in this file. Because Python dict literals
+    evaluate every value eagerly, ANY simulated scan — regardless of which
+    key was actually requested — crashed with NameError the moment nmap
+    wasn't installed. Found while verifying the Phase 0 pipeline end-to-end
+    in an environment without nmap; fixed here since it blocks that
+    verification (and blocks anyone else running this app without nmap).
+    """
+    return f"""<?xml version="1.0"?>
+<nmaprun scanner="nmap" args="nmap -sV {target}" version="7.95" xmloutputversion="1.05">
+<host starttime="1720000000" endtime="1720000030">
+<status state="up" reason="echo-reply"/>
+<address addr="{target}" addrtype="ipv4"/>
+<ports>
+  <port protocol="tcp" portid="21">
+    <state state="open" reason="syn-ack"/>
+    <service name="ftp" product="vsftpd" version="3.0.3" conf="10" method="probed"/>
+  </port>
+  <port protocol="tcp" portid="22">
+    <state state="open" reason="syn-ack"/>
+    <service name="ssh" product="OpenSSH" version="8.9p1" extrainfo="Ubuntu Linux; protocol 2.0" conf="10" method="probed"/>
+  </port>
+  <port protocol="tcp" portid="80">
+    <state state="open" reason="syn-ack"/>
+    <service name="http" product="Apache httpd" version="2.4.52" extrainfo="(Ubuntu)" conf="10" method="probed"/>
+  </port>
+  <port protocol="tcp" portid="443">
+    <state state="open" reason="syn-ack"/>
+    <service name="https" product="Apache httpd" version="2.4.52" conf="10" method="probed"/>
+  </port>
+  <port protocol="tcp" portid="3306">
+    <state state="open" reason="syn-ack"/>
+    <service name="mysql" product="MySQL" version="8.0.35" conf="10" method="probed"/>
+  </port>
+</ports>
+<times srtt="500" rttvar="250" to="100000"/>
+</host>
+<runstats>
+  <finished elapsed="30.00" exit="success" summary="1 IP address scanned"/>
   <hosts up="1" down="0" total="1"/>
 </runstats>
 </nmaprun>"""

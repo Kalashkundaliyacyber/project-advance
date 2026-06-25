@@ -106,13 +106,11 @@ def get_recommendation(risk_data: dict, current_scan_type: str) -> dict:
 
 
 def _fmt(rec: dict) -> dict:
-    from app.scanner.orchestrator import SCAN_TEMPLATES
-    out = {
+    # Phase 0: orchestrator.SCAN_TEMPLATES is gone — there's only one scan
+    # now, so there's no per-type "command_description" to look up anymore.
+    return {
         "title":    rec["title"],
         "reason":   rec["reason"],
         "scan_type": rec["scan_type"],
         "priority": rec["priority"],
     }
-    if rec["scan_type"] and rec["scan_type"] in SCAN_TEMPLATES:
-        out["command_description"] = SCAN_TEMPLATES[rec["scan_type"]]["description"]
-    return out

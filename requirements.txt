@@ -46,3 +46,11 @@ python-docx==1.1.2
 # With a key: 50 req/30s (10× throughput, recommended for full_tcp/ultimate_recon)
 
 PyYAML>=6.0
+
+# Phase 7 — optional authenticated scanning (SSH checks). Only used if SSH
+# credentials are explicitly provided at scan time; auth_scanner.py degrades
+# gracefully (logs a warning, returns no SSH findings) if this isn't
+# installed. SMB checks similarly need `pysmb` or `impacket` — not pinned
+# here since they're heavier and genuinely optional; install either one
+# manually if you want SMB authenticated checks.
+paramiko>=3.4

@@ -177,6 +177,7 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
         muted_clr = colors.HexColor("#4a627a")
         body      = ParagraphStyle("Body", parent=styles["Normal"], fontSize=9.5, leading=13)
         body_sm   = ParagraphStyle("BodySm", parent=styles["Normal"], fontSize=8.5, leading=11.5)
+        body_sm_c = ParagraphStyle("BodySmCenter", parent=body_sm, alignment=TA_CENTER)
         muted     = ParagraphStyle("Muted", parent=body, fontSize=8.5, textColor=muted_clr)
         center    = ParagraphStyle("Center", parent=body, alignment=TA_CENTER)
         muted_c   = ParagraphStyle("MutedCenter", parent=muted, alignment=TA_CENTER)
@@ -357,9 +358,8 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
         story.append(Paragraph("8.3 Security Weaknesses", h3))
         for b in _build_weaknesses(ctx["all_findings"], ctx["all_cves"]):
             story.append(Paragraph(f"&bull; {b}", body))
-        story.append(PageBreak())
 
-        # ── PAGE 5 — Vulnerabilities by Impact ─────────────────────────────
+        # ── Vulnerabilities by Impact ────────────────────────────────────
         story.append(Paragraph("9. Vulnerabilities by Impact", h2))
         story.append(Paragraph(
             f"Figure 1 illustrates the open services found by impact, based on {COMPANY_NAME}'s composite risk "
@@ -399,7 +399,6 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
                     "No open services with an assigned risk level were found during this assessment.")
         story.append(Spacer(1, 3 * mm))
         story.append(Paragraph(dom_text, body))
-        story.append(PageBreak())
 
         # ── PAGE 6+ — Detailed Findings (vuln cards) ───────────────────────
         MAX_CARDS = 25
@@ -448,16 +447,17 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
         inv_rows = [["Host", "Port", "Service", "Version", "Status", "Risk", "Score", "CVEs"]]
         for f in ctx["all_findings"]:
             inv_rows.append([
-                f["host"], f"{f['port']}/{f['proto']}", f["service"],
-                Paragraph(f["version_str"] or "—", body_sm), f["v_status"],
+                Paragraph(f["host"], body_sm), Paragraph(f"{f['port']}/{f['proto']}", body_sm),
+                Paragraph(f["service"], body_sm), Paragraph(f["version_str"] or "—", body_sm),
+                Paragraph(f["v_status"], body_sm),
                 _badge_para(f["risk"]), str(f["score"]), str(f["cve_count"]),
             ])
         if len(inv_rows) == 1:
             inv_rows.append(["—", "—", "No open ports were found.", "", "", "", "", ""])
-        t = _tbl(inv_rows, colWidths=[22 * mm, 16 * mm, 20 * mm, 38 * mm, 18 * mm, 22 * mm, 14 * mm, 14 * mm], repeatRows=1)
+        t = _tbl(inv_rows, colWidths=[27 * mm, 18 * mm, 20 * mm, 34 * mm, 21 * mm, 22 * mm, 14 * mm, 14 * mm], repeatRows=1)
         t.setStyle(TableStyle(TABLE_BASE + [("ALIGN", (5, 1), (5, -1), "CENTER")]))
         story.append(t)
-        story.append(PageBreak())
+        story.append(Spacer(1, 6 * mm))
 
         # ── Appendix B — Full CVE table (capped for a sane page count; the
         # complete list always remains in the session's analysis.json) ──────
@@ -473,23 +473,27 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
         cve_rows = [["CVE ID", "Host:Port", "Service", "CVSS", "Severity", "Description"]]
         for c in shown_cve_rows:
             cve_rows.append([
-                c["cve_id"], Paragraph(f"{c['host']}:{c['port']}", body_sm), c["service"], f"{c['cvss']:.1f}",
+                Paragraph(c["cve_id"], body_sm), Paragraph(f"{c['host']}:{c['port']}", body_sm),
+                Paragraph(c["service"], body_sm), Paragraph(f"{c['cvss']:.1f}", body_sm_c),
                 _badge_para(c["severity"]), Paragraph((c["desc"] or "")[:160], body_sm),
             ])
         if len(cve_rows) == 1:
             cve_rows.append(["—", "—", "No CVEs were matched during this assessment.", "", "", ""])
-        t = _tbl(cve_rows, colWidths=[26 * mm, 32 * mm, 16 * mm, 12 * mm, 22 * mm, 62 * mm], repeatRows=1)
+        t = _tbl(cve_rows, colWidths=[27 * mm, 34 * mm, 19 * mm, 11 * mm, 23 * mm, 56 * mm], repeatRows=1)
         t.setStyle(TableStyle(TABLE_BASE + [("ALIGN", (3, 1), (3, -1), "CENTER")]))
         story.append(t)
-        story.append(PageBreak())
+        story.append(Spacer(1, 6 * mm))
 
         # ── Sign-off page ─────────────────────────────────────────────────
-        story.append(Paragraph("11. Client Acknowledgment &amp; Sign-off", h2))
-        story.append(Paragraph(
+        sign_off = []
+        sign_off.append(Paragraph("11. Client Acknowledgment &amp; Sign-off", h2))
+        sign_off.append(HRFlowable(width="100%", thickness=1.2, color=colors.HexColor("#ccd7e4"),
+                                     spaceBefore=0, spaceAfter=10))
+        sign_off.append(Paragraph(
             "By signing below, the client acknowledges receipt of this Security Assessment Finding Report and "
             "agrees to review the findings, assess associated risks, and implement remediation actions as "
             "appropriate.", body))
-        story.append(Spacer(1, 10 * mm))
+        sign_off.append(Spacer(1, 10 * mm))
 
         def _sig_cell(label):
             return [Paragraph(f"<b>{label}</b>", body_sm), Spacer(1, 9 * mm)]
@@ -507,21 +511,25 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
             ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
             ("TOPPADDING", (0, 0), (-1, -1), 6),
         ]))
-        story.append(t)
-        story.append(Spacer(1, 4 * mm))
-        story.append(Paragraph("<b>Comments / Observations:</b>", body_sm))
-        box = _tbl([[""]], colWidths=[170 * mm], rowHeights=[20 * mm])
-        box.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 0.7, colors.black)]))
-        story.append(box)
+        sign_off.append(t)
+        sign_off.append(Spacer(1, 4 * mm))
+        sign_off.append(Paragraph("<b>Comments / Observations:</b>", body_sm))
+        sign_off.append(Spacer(1, 16 * mm))
+        sign_off.append(HRFlowable(width="100%", thickness=0.7, color=colors.black, spaceAfter=0))
 
-        story.append(Spacer(1, 10 * mm))
-        story.append(Paragraph(f"<b>For {COMPANY_NAME}:</b>", body_sm))
-        story.append(Spacer(1, 8 * mm))
+        sign_off.append(Spacer(1, 10 * mm))
+        sign_off.append(Paragraph(f"<b>For {COMPANY_NAME}:</b>", body_sm))
+        sign_off.append(Spacer(1, 8 * mm))
         line = _tbl([[""]], colWidths=[60 * mm])
         line.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.7, colors.black)]))
-        story.append(line)
-        story.append(Paragraph("Lead Security Analyst", body_sm))
-        story.append(Paragraph(ctx["date_long"], body_sm))
+        sign_off.append(line)
+        sign_off.append(Paragraph("Lead Security Analyst", body_sm))
+        sign_off.append(Paragraph(ctx["date_long"], body_sm))
+        sign_off.append(Spacer(1, 8 * mm))
+        sign_off.append(HRFlowable(width="100%", thickness=0.6, color=colors.HexColor("#dddddd"), spaceAfter=6))
+        sign_off.append(Paragraph(
+            "This sign-off confirms that the report has been delivered and accepted for review.", muted_c))
+        story.append(KeepTogether(sign_off))
         story.append(PageBreak())
 
         # ── Closing page ──────────────────────────────────────────────────

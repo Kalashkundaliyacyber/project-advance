@@ -72,11 +72,49 @@ echo -e "${GREEN}  ✓ Environment OK${NC}"
 echo -e "${YELLOW}[2/3] Checking nmap...${NC}"
 if command -v nmap &>/dev/null; then
     echo -e "${GREEN}  ✓ $(nmap --version | head -1)${NC}"
+    NSE_COUNT=$(ls /usr/share/nmap/scripts/*.nse 2>/dev/null | wc -l)
+    echo -e "${GREEN}  ✓ NSE scripts available: ${NSE_COUNT}${NC}"
 else
     echo -e "${YELLOW}  ⚠  nmap not found — simulation mode active${NC}"
 fi
 
-mkdir -p data/sessions data/cve_db data/logs reports exports
+mkdir -p data/sessions data/cve_db data/logs reports exports data
+
+# ── CVE Intelligence Database status ───────────────────────────────────────
+CVE_DB="data/cve_scripts.db"
+if [ -f "$CVE_DB" ]; then
+    CVE_TOTAL=$("$PY" -c "
+import sqlite3
+try:
+    c = sqlite3.connect('$CVE_DB')
+    total   = c.execute('SELECT COUNT(*) FROM cve_script_cache').fetchone()[0]
+    gemini  = c.execute(\"SELECT COUNT(*) FROM cve_script_cache WHERE source='gemini'\").fetchone()[0]
+    confirm = c.execute('SELECT COUNT(*) FROM cve_script_cache WHERE confirmed_count > 0').fetchone()[0]
+    print(f'{total} entries ({gemini} Gemini-cached, {confirm} scan-confirmed)')
+except Exception as e:
+    print(f'error: {e}')
+" 2>/dev/null || echo "unreadable")
+    echo -e "${GREEN}  ✓ CVE database: ${CVE_TOTAL}${NC}"
+else
+    echo -e "${YELLOW}  ⚠  CVE database not found — will initialize on first scan${NC}"
+    echo -e "${YELLOW}     Run: bash setup_env.sh  to pre-initialize${NC}"
+fi
+
+# ── Gemini API key status ───────────────────────────────────────────────────
+GEMINI_KEY="${GEMINI_API_KEY:-}"
+if [ -n "$GEMINI_KEY" ] && [ "$GEMINI_KEY" != "your_gemini_api_key_here" ]; then
+    GEMINI_SDK=$("$PY" -c "import google.generativeai; print('ok')" 2>/dev/null || echo "missing")
+    if [ "$GEMINI_SDK" = "ok" ]; then
+        echo -e "${GREEN}  ✓ Gemini CVE selector: ENABLED (${GEMINI_MODEL:-gemini-2.0-flash})${NC}"
+        echo -e "${CYAN}    New CVEs → Gemini → saved to local DB → never re-asked${NC}"
+    else
+        echo -e "${YELLOW}  ⚠  GEMINI_API_KEY set but SDK missing — run: bash setup_env.sh${NC}"
+    fi
+else
+    echo -e "${YELLOW}  ⚠  Gemini CVE selector: DISABLED${NC}"
+    echo -e "${YELLOW}     Get a free key: https://aistudio.google.com/apikey${NC}"
+    echo -e "${YELLOW}     Then add to .env: GEMINI_API_KEY=your_key_here${NC}"
+fi
 
 # ── Optional modes ─────────────────────────────────────────────────
 case "${1:-}" in

@@ -4,9 +4,13 @@
 #  Run ONCE before first launch, or after a clean reinstall.
 #
 #  Usage:
-#    bash setup_env.sh               # standard setup
-#    PULL_LLAMA3B=true bash setup_env.sh   # also pull Llama 3.2 3B
-#    PULL_GEMMA2=true  bash setup_env.sh   # also pull Gemma 2:2b
+#    bash setup_env.sh                          # pulls all 4 models the
+#                                                # AI router actually uses
+#    QWEN_MODEL=qwen2.5:14b bash setup_env.sh   # override any model —
+#                                                # see QWEN_MODEL / LLAMA_CHAT_MODEL /
+#                                                # LLAMA_GEN_MODEL / DEEPSEEK_MODEL
+#    PULL_GEMMA2=true bash setup_env.sh         # also pull Gemma 2:2b
+#                                                # (extra — not used by the router)
 #
 #  All pip packages and system dependencies are managed here.
 #  To add a new package, add it to the "Install all packages" block.
@@ -53,6 +57,17 @@ else
         || echo -e "${RED}  ✗ nmap install failed — run: sudo apt-get install -y nmap${NC}"
 fi
 
+# Update NSE script database — ensures all installed scripts are indexed
+# and Gemini can confirm scripts exist by name on this machine.
+if command -v nmap &>/dev/null; then
+    echo -e "${YELLOW}  → Updating NSE script database (nmap --script-updatedb)...${NC}"
+    nmap --script-updatedb 2>/dev/null \
+        && echo -e "${GREEN}  ✓ NSE script database updated${NC}" \
+        || echo -e "${YELLOW}  ⚠  NSE update failed — scripts may still work (non-fatal)${NC}"
+    NSE_COUNT=$(ls /usr/share/nmap/scripts/*.nse 2>/dev/null | wc -l)
+    echo -e "${GREEN}  ✓ NSE scripts on disk: ${NSE_COUNT}${NC}"
+fi
+
 # libxrender1 (required by reportlab for PDF font rendering)
 if dpkg -l libxrender1 &>/dev/null 2>&1; then
     echo -e "${GREEN}  ✓ libxrender1 already installed${NC}"
@@ -78,15 +93,21 @@ echo -e "${GREEN}  ✓ $(python3 --version)${NC}"
 # ══════════════════════════════════════════════════════════════════
 echo ""
 echo -e "${CYAN}[2/6] Ollama & local AI models${NC}"
-echo -e "${CYAN}  Architecture:${NC}"
-echo -e "${CYAN}    PRIMARY    →  Qwen2.5-Coder 3B  (security analysis, remediation, JSON)${NC}"
-echo -e "${CYAN}    CHATBOT    →  Llama 3.2 1B      (conversations, summaries)${NC}"
-echo -e "${CYAN}    FALLBACK   →  Llama 3.2 3B      (optional — set PULL_LLAMA3B=true)${NC}"
-echo -e "${CYAN}    CLOUD      →  Gemini            (emergency fallback — set GEMINI_API_KEY)${NC}"
-echo -e "${CYAN}    OFFLINE    →  Rule engine       (always available, no model required)${NC}"
+echo -e "${CYAN}  Architecture (matches app/ai/routing/ai_router.py):${NC}"
+echo -e "${CYAN}    PRIMARY    →  Qwen 2.5 7B Instruct    (chatbot + reasoning)${NC}"
+echo -e "${CYAN}    FAST       →  Llama 3.2 3B            (fast local chatbot)${NC}"
+echo -e "${CYAN}    GENERAL    →  Llama 3.1 8B            (general purpose analysis)${NC}"
+echo -e "${CYAN}    SECURITY   →  DeepSeek R1 8B Distill  (deep CVE / security analysis)${NC}"
+echo -e "${CYAN}    CLOUD      →  Gemini                  (emergency fallback — set GEMINI_API_KEY)${NC}"
+echo -e "${CYAN}    OFFLINE    →  Rule engine              (always available, no model required)${NC}"
 
-OLLAMA_MODEL_NAME="${OLLAMA_MODEL:-llama3.2:1b}"
-QWEN_MODEL_NAME="${QWEN_MODEL:-qwen2.5-coder:3b}"
+# These four env vars match the ones app/ai/providers/*.py read at runtime —
+# same names, same defaults — so "already pulled by setup" always means
+# "the model the app will actually try to call".
+QWEN_MODEL_NAME="${QWEN_MODEL:-qwen2.5:7b}"
+LLAMA_CHAT_MODEL_NAME="${LLAMA_CHAT_MODEL:-llama3.2:3b}"
+LLAMA_GEN_MODEL_NAME="${LLAMA_GEN_MODEL:-llama3.1:8b}"
+DEEPSEEK_MODEL_NAME="${DEEPSEEK_MODEL:-deepseek-r1:8b}"
 
 # Install Ollama if missing
 if command -v ollama &>/dev/null; then
@@ -108,38 +129,33 @@ if ! curl -s http://localhost:11434/api/tags &>/dev/null; then
     sleep 3
 fi
 
-# Pull Llama 3.2 1B (chatbot)
-if ollama list 2>/dev/null | grep -q "$OLLAMA_MODEL_NAME"; then
-    echo -e "${GREEN}  ✓ $OLLAMA_MODEL_NAME already available${NC}"
-else
-    echo -e "${YELLOW}  → Pulling $OLLAMA_MODEL_NAME (~700MB, one-time)...${NC}"
-    ollama pull "$OLLAMA_MODEL_NAME" \
-        && echo -e "${GREEN}  ✓ $OLLAMA_MODEL_NAME ready${NC}" \
-        || echo -e "${RED}  ✗ Pull failed — run manually: ollama pull $OLLAMA_MODEL_NAME${NC}"
-fi
-
-# Pull Qwen2.5-Coder 3B (primary AI engine)
-if ollama list 2>/dev/null | grep -q "qwen2.5-coder"; then
-    echo -e "${GREEN}  ✓ $QWEN_MODEL_NAME already available${NC}"
-else
-    echo -e "${YELLOW}  → Pulling $QWEN_MODEL_NAME (~1.9GB, one-time)...${NC}"
-    ollama pull "$QWEN_MODEL_NAME" \
-        && echo -e "${GREEN}  ✓ $QWEN_MODEL_NAME ready${NC}" \
-        || echo -e "${RED}  ✗ Qwen pull failed — run manually: ollama pull $QWEN_MODEL_NAME${NC}"
-fi
-
-# Optional: Llama 3.2 3B
-if [ "${PULL_LLAMA3B:-false}" = "true" ]; then
-    if ollama list 2>/dev/null | grep -q "llama3.2:3b"; then
-        echo -e "${GREEN}  ✓ llama3.2:3b already available${NC}"
+# BUG FIX: this used to pull only "llama3.2:1b" (read by nothing — no
+# provider checks OLLAMA_MODEL) and "qwen2.5-coder:3b" (qwen_provider.py
+# actually defaults QWEN_MODEL to "qwen2.5:7b", a different model). DeepSeek
+# and Llama 3.1 8B — both used by ai_router.py's "security"/"general"
+# routing stacks — were never pulled at all, so a fresh install could never
+# succeed locally on those task types no matter how long you waited.
+# FIX: pull exactly the 4 models the providers default to, via the same
+# env var names, so "setup says ready" always matches what the app calls.
+_pull_model() {
+    local name="$1" size="$2" role="$3"
+    if ollama list 2>/dev/null | grep -q "$name"; then
+        echo -e "${GREEN}  ✓ $name already available ($role)${NC}"
     else
-        echo -e "${YELLOW}  → Pulling llama3.2:3b (~2GB, optional)...${NC}"
-        ollama pull llama3.2:3b \
-            || echo -e "${YELLOW}  ⚠  llama3.2:3b pull failed — continuing without it${NC}"
+        echo -e "${YELLOW}  → Pulling $name (~$size, one-time, $role)...${NC}"
+        ollama pull "$name" \
+            && echo -e "${GREEN}  ✓ $name ready${NC}" \
+            || echo -e "${RED}  ✗ Pull failed — run manually: ollama pull $name${NC}"
     fi
-fi
+}
 
-# Optional: Gemma 2:2b
+_pull_model "$QWEN_MODEL_NAME"       "4.7GB" "PRIMARY/QWEN_MODEL"
+_pull_model "$LLAMA_CHAT_MODEL_NAME" "2GB"   "FAST/LLAMA_CHAT_MODEL"
+_pull_model "$LLAMA_GEN_MODEL_NAME"  "4.7GB" "GENERAL/LLAMA_GEN_MODEL"
+_pull_model "$DEEPSEEK_MODEL_NAME"   "4.9GB" "SECURITY/DEEPSEEK_MODEL"
+
+# Optional extra: Gemma 2:2b — not read by any provider's default, purely
+# an experimentation option, so it stays opt-in.
 if [ "${PULL_GEMMA2:-false}" = "true" ]; then
     echo -e "${CYAN}  → Pulling gemma2:2b (optional)...${NC}"
     ollama pull gemma2:2b \
@@ -331,6 +347,7 @@ try:
 except Exception as e:
     print(f"  ⚠  CVE database init skipped: {e} (will initialize on first scan)")
 PYDB
+mkdir -p \
     "$PROJECT_DIR/data/logs" \
     "$PROJECT_DIR/reports" \
     "$PROJECT_DIR/exports"
@@ -344,16 +361,16 @@ echo -e "${GREEN}  ━━━━━━━━━━━━━━━━━━━━�
 echo -e "${GREEN}${BOLD}  ✓ THREATWEAVE setup complete!${NC}"
 GEMINI_KEY="${GEMINI_API_KEY:-}"
 if [ -n "$GEMINI_KEY" ] && [ "$GEMINI_KEY" != "your_gemini_api_key_here" ]; then
-    echo -e "${GREEN}  AI Primary  →  Qwen2.5-Coder 3B + Llama 3.2 1B${NC}"
+    echo -e "${GREEN}  AI Primary  →  Qwen 7B + Llama 3B/8B + DeepSeek R1 8B${NC}"
     echo -e "${GREEN}  AI Backup   →  Gemini (emergency cloud fallback)${NC}"
 else
-    echo -e "${YELLOW}  AI Models   →  Qwen2.5-Coder 3B + Llama 3.2 1B (local only)${NC}"
+    echo -e "${YELLOW}  AI Models   →  Qwen 7B + Llama 3B/8B + DeepSeek R1 8B (local only)${NC}"
     echo -e "${YELLOW}  Tip: Add GEMINI_API_KEY to .env for cloud fallback${NC}"
 fi
 echo ""
 echo -e "${GREEN}  Start server  →  bash run.sh${NC}"
 echo -e "${GREEN}  Run tests     →  bash run.sh --test${NC}"
 echo -e "${GREEN}  Benchmark     →  bash run.sh --benchmark${NC}"
-echo -e "${CYAN}  Custom model  →  OLLAMA_MODEL=mistral bash setup_env.sh${NC}"
+echo -e "${CYAN}  Custom model  →  QWEN_MODEL=qwen2.5:14b bash setup_env.sh${NC}"
 echo -e "${GREEN}  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
