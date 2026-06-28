@@ -144,6 +144,100 @@ async def download_report_file(session_id: str, fmt: str):
 # text are pulled from the shared `_build_context()` helper so the PDF and
 # HTML exports can never drift apart.
 
+def _parse_start_end_times(analysis: dict):
+    """Extract scan start time and compute end time from timestamp + duration."""
+    import datetime as _dt
+    timestamp = analysis.get("timestamp", "")
+    duration  = analysis.get("duration") or 0
+    try:
+        dur_secs = float(duration)
+    except (TypeError, ValueError):
+        dur_secs = 0.0
+
+    start_dt = None
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"):
+        try:
+            start_dt = _dt.datetime.strptime(timestamp[:19], fmt)
+            break
+        except Exception:
+            pass
+
+    if start_dt is None:
+        # Try parsing from session_id format: 20260619_174421_...
+        try:
+            sid_prefix = str(analysis.get("session_id", ""))[:15]  # "20260619_174421"
+            start_dt = _dt.datetime.strptime(sid_prefix, "%Y%m%d_%H%M%S")
+        except Exception:
+            start_dt = _dt.datetime.now()
+
+    end_dt = start_dt + _dt.timedelta(seconds=dur_secs)
+    return (
+        start_dt.strftime("%Y-%m-%d %H:%M:%S"),
+        end_dt.strftime("%Y-%m-%d %H:%M:%S"),
+        int(dur_secs),
+    )
+
+
+def _risk_factor_analysis(cvss: float, severity: str, service: str) -> dict:
+    """
+    Derive Likelihood and Impact scores from CVSS score + severity.
+    Returns sub-scores used in the Risk Factor breakdown table.
+    """
+    sev = (severity or "unknown").lower()
+
+    # Likelihood = how likely exploitation is (access vector, exploitability)
+    if cvss >= 9.5:
+        likelihood_score = 5; likelihood_label = "Very High"
+    elif cvss >= 8.5:
+        likelihood_score = 4; likelihood_label = "High"
+    elif cvss >= 7.0:
+        likelihood_score = 3; likelihood_label = "Medium"
+    elif cvss >= 4.0:
+        likelihood_score = 2; likelihood_label = "Low"
+    else:
+        likelihood_score = 1; likelihood_label = "Very Low"
+
+    # Threat factors: known exploits for these common services
+    high_risk_svcs = {"smb", "rdp", "ssh", "ftp", "telnet", "rpcbind", "samba", "nfs"}
+    svc_lower = (service or "").lower()
+    if any(h in svc_lower for h in high_risk_svcs):
+        likelihood_label += " (widely exploited service)"
+
+    # Impact = business and technical impact of successful exploitation
+    if sev == "critical":
+        impact_score = 5; impact_label = "Complete system compromise (RCE / full takeover)"
+    elif sev == "high":
+        impact_score = 4; impact_label = "Significant privilege escalation or data breach"
+    elif sev == "medium":
+        impact_score = 3; impact_label = "Partial access or service disruption"
+    elif sev == "low":
+        impact_score = 2; impact_label = "Limited local impact"
+    else:
+        impact_score = 1; impact_label = "Negligible direct impact"
+
+    # Overall composite risk rating
+    composite = (likelihood_score * 0.5) + (impact_score * 0.5)
+    if composite >= 4.5:
+        overall_rf = "Critical"
+    elif composite >= 3.5:
+        overall_rf = "High"
+    elif composite >= 2.5:
+        overall_rf = "Medium"
+    elif composite >= 1.5:
+        overall_rf = "Low"
+    else:
+        overall_rf = "Informational"
+
+    return {
+        "likelihood_score": likelihood_score,
+        "likelihood_label": likelihood_label,
+        "impact_score":     impact_score,
+        "impact_label":     impact_label,
+        "overall_rf":       overall_rf,
+        "composite":        round(composite, 1),
+    }
+
+
 def _build_pdf(session_id: str, analysis: dict) -> str:
     out_path = os.path.join(REPORTS_DIR, f"report_{session_id}.pdf")
     os.makedirs(REPORTS_DIR, exist_ok=True)
@@ -151,18 +245,27 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
     try:
         from reportlab.lib.pagesizes import A4
         from reportlab.lib import colors
-        from reportlab.lib.enums import TA_CENTER
-        from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table,
-                                         TableStyle, HRFlowable, PageBreak, KeepTogether)
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT
+        from reportlab.platypus import (Paragraph, Spacer, Table,
+                                         TableStyle, HRFlowable, PageBreak, KeepTogether,
+                                         BaseDocTemplate, Frame, PageTemplate)
+        from reportlab.platypus.tableofcontents import TableOfContents
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib.units import mm
+        import re as _re
 
         from app.report.html_report import (
             _build_context, _build_attack_summary, _build_strengths, _build_weaknesses,
             _ver_str, SEVERITY_COLORS, SEVERITY_ORDER, COMPANY_NAME, COMPANY_INIT, COMPANY_EMAIL,
         )
 
+        start_time_str, end_time_str, dur_secs = _parse_start_end_times(analysis)
+
         ctx = _build_context(session_id, analysis)
+
+        # Inject timing data into context
+        ctx["start_time"] = start_time_str
+        ctx["end_time"]   = end_time_str
 
         PAGE_W, _ = A4
         CONTENT_W = PAGE_W - 40 * mm  # 20mm margins each side -> 170mm usable
@@ -192,6 +295,32 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
             tb = Table(data, **kw)
             tb.hAlign = "LEFT"
             return tb
+
+        # ── Two-pass doc template with footer + live TOC support ────────────
+        class _TWDocTemplate(BaseDocTemplate):
+            """BaseDocTemplate subclass: draws footer on every page and
+            notifies the TableOfContents element of each heading's page."""
+            def __init__(self, filename, footer_fn, **kw):
+                BaseDocTemplate.__init__(self, filename, **kw)
+                self._footer_fn = footer_fn
+                frame = Frame(self.leftMargin, self.bottomMargin,
+                              self.width, self.height, id='normal')
+                self.addPageTemplates([
+                    PageTemplate(id='Page', frames=frame, onPage=footer_fn)
+                ])
+
+            def afterFlowable(self, flowable):
+                """Called after every flowable is placed — used to collect TOC entries."""
+                if hasattr(flowable, '_toc_entry'):
+                    level, text = flowable._toc_entry
+                    self.notify('TOCEntry', (level, text, self.page))
+
+        class _TocHeading(Paragraph):
+            """Paragraph that registers itself with the TOC when rendered."""
+            def __init__(self, text, style, toc_level=0, toc_text=None):
+                clean = toc_text or _re.sub(r'<[^>]+>', '', text)
+                super().__init__(text, style)
+                self._toc_entry = (toc_level, clean)
 
         TABLE_HDR = ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f0f4f8"))
         TABLE_GRID = ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#bdc4cf"))
@@ -233,14 +362,38 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
         story.append(Spacer(1, 16 * mm))
         story.append(Paragraph(ctx["date_long"], center))
         story.append(Paragraph(f"Target Scope: {ctx['target']} &nbsp;|&nbsp; Assessment Type: {ctx['scan_label']}", muted_c))
-        story.append(Spacer(1, 34 * mm))
+        story.append(Spacer(1, 4 * mm))
+        story.append(Paragraph(f"Scan Start: {ctx['start_time']} &nbsp;|&nbsp; Scan End: {ctx['end_time']}", muted_c))
+        story.append(Spacer(1, 28 * mm))
         story.append(Paragraph("Confidential – Proprietary Information", muted_c))
         story.append(Paragraph(f"Prepared by {COMPANY_NAME}", muted_c))
         story.append(PageBreak())
 
+        # ── TABLE OF CONTENTS ─────────────────────────────────────────────────
+        story.append(_TocHeading("Table of Contents", h1, toc_level=0, toc_text="Table of Contents"))
+        story.append(Spacer(1, 3 * mm))
+
+        # Live TOC — page numbers filled automatically on second build pass
+        toc = TableOfContents()
+        toc.dotsMinLevel = 0
+        toc_main = ParagraphStyle(
+            "TocMain", parent=body,
+            fontSize=10, leading=15,
+            textColor=colors.HexColor("#1c4e6e"),
+        )
+        toc_sub = ParagraphStyle(
+            "TocSub", parent=body_sm,
+            fontSize=9, leading=13,
+            leftIndent=12 * mm,
+            textColor=colors.HexColor("#4a627a"),
+        )
+        toc.levelStyles = [toc_main, toc_sub]
+        story.append(toc)
+        story.append(PageBreak())
+
         # ── PAGE 2 — Confidentiality + Disclaimer + Contact ────────────────
         client = ctx["client_label"]
-        story.append(Paragraph("1. Confidentiality Statement", h2))
+        story.append(_TocHeading("1. Confidentiality Statement", h2, toc_level=0))
         story.append(Paragraph(
             f"This document is the exclusive property of {client} and {COMPANY_NAME} ({COMPANY_INIT}). "
             f"This document contains proprietary and confidential information. Duplication, redistribution, "
@@ -248,7 +401,7 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
             f"{COMPANY_INIT} may share this document with auditors under non-disclosure agreements to "
             f"demonstrate security assessment compliance.", body))
 
-        story.append(Paragraph("2. Disclaimer", h2))
+        story.append(_TocHeading("2. Disclaimer", h2, toc_level=0))
         story.append(Paragraph(
             f"A security assessment is considered a snapshot in time. The findings and recommendations in "
             f"this report reflect the information gathered during the assessment window ({ctx['date_long']}) "
@@ -258,7 +411,7 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
             f"recommends conducting similar assessments on a recurring basis using internal or third-party "
             f"assessors.", body))
 
-        story.append(Paragraph("3. Contact Information", h2))
+        story.append(_TocHeading("3. Contact Information", h2, toc_level=0))
         contact_rows = [
             ["Name", "Title", "Contact Information"],
             [Paragraph("<i>[Client Contact Name]</i>", body_sm), Paragraph("<i>[Title]</i>", body_sm),
@@ -269,10 +422,12 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
         t.setStyle(TableStyle(TABLE_BASE))
         story.append(t)
         story.append(Paragraph("The client contact row above is intentionally left blank for the engagement owner to complete.", muted))
-        story.append(PageBreak())
+        story.append(Spacer(1, 5 * mm))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#d0d8e4")))
+        story.append(Spacer(1, 5 * mm))
 
-        # ── PAGE 3 — Overview + Components + Severity classification ──────
-        story.append(Paragraph("4. Assessment Overview", h2))
+        # ── Assessment Overview + Components + Severity classification ────
+        story.append(_TocHeading("4. Assessment Overview", h2, toc_level=0))
         story.append(Paragraph(
             f"On {ctx['date_long']}, {COMPANY_INIT} used the {COMPANY_NAME} platform to evaluate the security "
             f"posture of {client}'s infrastructure against current industry best practices, including a "
@@ -287,12 +442,20 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
         ]:
             story.append(Paragraph(f"&bull; <b>{label}</b> – {desc}", body))
 
-        story.append(Paragraph("5. Assessment Components", h2))
+        story.append(_TocHeading("5. Assessment Components", h2, toc_level=0))
         story.append(Paragraph(
             f"<b>{ctx['scan_label']}</b> – this assessment used {ctx['scan_desc']}. The assessment lasted "
             f"approximately {ctx['duration_str']} and covered {ctx['total_hosts']} live host(s).", body))
+        story.append(Spacer(1, 2 * mm))
+        timing_data = [
+            ["Start Time", "End Time", "Duration", "Hosts Scanned"],
+            [ctx["start_time"], ctx["end_time"], ctx["duration_str"], str(ctx["total_hosts"])],
+        ]
+        t_timing = _tbl(timing_data, colWidths=[42 * mm, 42 * mm, 42 * mm, 44 * mm])
+        t_timing.setStyle(TableStyle(TABLE_BASE))
+        story.append(t_timing)
 
-        story.append(Paragraph("6. Findings Severity Classification", h2))
+        story.append(_TocHeading("6. Findings Severity Classification", h2, toc_level=0))
         sev_rows = [["Severity", "CVSS v3 Score Range", "Definition"]]
         sev_defs = [
             ("critical", "9.0 – 10.0", "Exploitation is straightforward and usually results in system-level compromise. Immediate action required."),
@@ -310,22 +473,24 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
             f"Note: the per-finding risk level shown in Sections 9–10 is {COMPANY_NAME}'s composite risk score "
             f"(CVSS 40%, service criticality 25%, version currency 20%, exposure 15%) rather than raw CVSS "
             f"alone, and may differ slightly from each CVE's own CVSS-based severity.", muted))
-        story.append(PageBreak())
+        story.append(Spacer(1, 5 * mm))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#d0d8e4")))
+        story.append(Spacer(1, 5 * mm))
 
-        # ── PAGE 4 — Scope + Executive Summary + Attack Summary + S/W ──────
-        story.append(Paragraph("7. Scope", h2))
+        # ── Scope + Executive Summary ─────────────────────────────────────
+        story.append(_TocHeading("7. Scope", h2, toc_level=0))
         t = _tbl([["Assessment", "Scope Details"], [ctx["scan_label"], ctx["target"]]], colWidths=[60 * mm, 110 * mm])
         t.setStyle(TableStyle(TABLE_BASE))
         story.append(t)
-        story.append(Paragraph("7.1 Scope Exclusion", h3))
+        story.append(_TocHeading("7.1 Scope Exclusion", h3, toc_level=1))
         story.append(Paragraph(
             f"Per {COMPANY_NAME}'s standard safety policy, denial-of-service style attacks and live exploitation "
             f"were not performed; this assessment is limited to non-intrusive discovery, version detection, and "
             f"vulnerability correlation.", body))
-        story.append(Paragraph("7.2 Client Allowances", h3))
+        story.append(_TocHeading("7.2 Client Allowances", h3, toc_level=1))
         story.append(Paragraph("No special allowances (e.g. credentials, IP whitelisting) were provided for this assessment.", body))
 
-        story.append(Paragraph("8. Executive Summary", h2))
+        story.append(_TocHeading("8. Executive Summary", h2, toc_level=0))
         story.append(Paragraph(ctx["summary_text"], body))
         story.append(Paragraph(
             f"Overall risk for this assessment is rated <b>{ctx['overall'].upper()}</b>, based on "
@@ -336,7 +501,7 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
             label = "Claude AI" if engine == "claude-ai" else engine.replace("-", " ").title()
             story.append(Paragraph(f"Narrative summary generated using {label} analysis.", muted))
 
-        story.append(Paragraph("8.1 Attack Summary", h3))
+        story.append(_TocHeading("8.1 Attack Summary", h3, toc_level=1))
         story.append(Paragraph(
             "The following table illustrates how the highest-severity findings could be chained together by an "
             "attacker, step by step, based on the discovered weaknesses.", body))
@@ -351,16 +516,16 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
         t.setStyle(TableStyle(TABLE_BASE))
         story.append(t)
 
-        story.append(Paragraph("8.2 Security Strengths", h3))
+        story.append(_TocHeading("8.2 Security Strengths", h3, toc_level=1))
         for b in _build_strengths(ctx["all_findings"], ctx["severity_counts"]):
             story.append(Paragraph(f"&bull; {b}", body))
 
-        story.append(Paragraph("8.3 Security Weaknesses", h3))
+        story.append(_TocHeading("8.3 Security Weaknesses", h3, toc_level=1))
         for b in _build_weaknesses(ctx["all_findings"], ctx["all_cves"]):
             story.append(Paragraph(f"&bull; {b}", body))
 
         # ── Vulnerabilities by Impact ────────────────────────────────────
-        story.append(Paragraph("9. Vulnerabilities by Impact", h2))
+        story.append(_TocHeading("9. Vulnerabilities by Impact", h2, toc_level=0))
         story.append(Paragraph(
             f"Figure 1 illustrates the open services found by impact, based on {COMPANY_NAME}'s composite risk "
             f"score (CVSS, service criticality, version currency, and exposure).", body))
@@ -403,7 +568,8 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
         # ── PAGE 6+ — Detailed Findings (vuln cards) ───────────────────────
         MAX_CARDS = 25
         shown_cves = ctx["all_cves"][:MAX_CARDS]
-        story.append(Paragraph(f"10. {ctx['scan_label']} Findings", h2))
+        story.append(PageBreak())
+        story.append(_TocHeading(f"10. {ctx['scan_label']} Findings", h2, toc_level=0, toc_text=f"10. {ctx['scan_label']} Findings"))
         if not shown_cves:
             story.append(Paragraph(
                 "No CVE-backed findings were identified for the in-scope target(s). See Appendix A for the "
@@ -418,12 +584,46 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
                 ver_str = _ver_str(c["product"], c["version"])
                 title = f"10.{idx} {c['cve_id']} — {c['service']}" + (f" ({ver_str})" if ver_str else "")
                 remediation = c["patch"] or "Apply the latest vendor patch for this service and re-scan to confirm remediation."
+
+                # ── Risk Factor Analysis ────────────────────────────────────
+                rf = _risk_factor_analysis(c["cvss"], sev, c["service"])
+                rf_score_str = f"{rf['composite']}/5.0"
+                rf_rows = [
+                    ["Risk Dimension", "Score", "Assessment"],
+                    ["Likelihood",
+                     f"{rf['likelihood_score']}/5",
+                     Paragraph(rf["likelihood_label"], body_sm)],
+                    ["Impact",
+                     f"{rf['impact_score']}/5",
+                     Paragraph(rf["impact_label"], body_sm)],
+                    [Paragraph("<b>Overall Risk Factor</b>", body_sm),
+                     Paragraph(f"<b>{rf_score_str}</b>", body_sm),
+                     _badge_para(rf["overall_rf"].lower())],
+                ]
+                rf_table = _tbl(rf_rows, colWidths=[30 * mm, 18 * mm, 105 * mm])
+                rf_table.setStyle(TableStyle([
+                    ("BACKGROUND",    (0, 0), (-1, 0), colors.HexColor("#f0f4f8")),
+                    ("GRID",          (0, 0), (-1, -1), 0.4, colors.HexColor("#cdd5e0")),
+                    ("FONTSIZE",      (0, 0), (-1, -1), 8.0),
+                    ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+                    ("TOPPADDING",    (0, 0), (-1, -1), 3),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                    ("LEFTPADDING",   (0, 0), (-1, -1), 5),
+                    ("RIGHTPADDING",  (0, 0), (-1, -1), 5),
+                    ("BACKGROUND",    (0, 3), (-1, 3), colors.HexColor("#eef2f7")),
+                    ("ALIGN",         (2, 3), (2, 3), "CENTER"),
+                ]))
+
                 cell = [
                     Paragraph(title, h4),
                     Paragraph(f"{('Informational' if sev=='informational' else sev.title())} &nbsp; "
                               f"<font color='#4a627a'>CVSS {c['cvss']:.1f}/10</font>", body_sm),
                     Paragraph(f"<b>Description:</b> {c['desc'] or 'No description available.'}", body_sm),
                     Paragraph(f"<b>Affected System:</b> {c['host']}:{c['port']}/{c['proto']}", body_sm),
+                    Spacer(1, 2 * mm),
+                    Paragraph("<b>Risk Factor Analysis:</b>", body_sm),
+                    rf_table,
+                    Spacer(1, 2 * mm),
                     Paragraph(f"<b>References:</b> {c['cve_id']} — "
                               f"<link href='{c['nvd_url']}' color='blue'>{c['nvd_url']}</link>", body_sm),
                     Paragraph(f"<b>Remediation:</b> {remediation}", body_sm),
@@ -436,11 +636,17 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
                     ("TOPPADDING", (0, 0), (-1, 0), 6),
                     ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
                 ]))
-                story.append(KeepTogether([card, Spacer(1, 3 * mm)]))
+                # Critical and High findings each get their own page for emphasis
+                if sev in ("critical", "high"):
+                    story.append(KeepTogether([card, Spacer(1, 3 * mm)]))
+                    story.append(PageBreak())
+                else:
+                    story.append(KeepTogether([card, Spacer(1, 4 * mm)]))
+
         story.append(PageBreak())
 
         # ── Appendix A — Full port/service inventory ───────────────────────
-        story.append(Paragraph("Appendix A — Full Port &amp; Service Inventory", h2))
+        story.append(_TocHeading("Appendix A — Full Port &amp; Service Inventory", h2, toc_level=0, toc_text="Appendix A — Full Port & Service Inventory"))
         story.append(Paragraph(
             "The following table lists every open service observed during this assessment, including those "
             "without a matched CVE, for completeness.", body))
@@ -459,12 +665,13 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
         story.append(t)
         story.append(Spacer(1, 6 * mm))
 
-        # ── Appendix B — Full CVE table (capped for a sane page count; the
-        # complete list always remains in the session's analysis.json) ──────
+        # ── Appendix B — Full CVE table ───────────────────────────────────
         MAX_CVE_ROWS = 60
         cve_list = ctx["all_cves"]
         shown_cve_rows = cve_list[:MAX_CVE_ROWS]
-        story.append(Paragraph(f"Appendix B — CVE Listing ({len(cve_list)} total matched)", h2))
+        story.append(PageBreak())
+        story.append(_TocHeading(f"Appendix B — CVE Listing ({len(cve_list)} total matched)", h2,
+                                  toc_level=0, toc_text=f"Appendix B — CVE Listing ({len(cve_list)} total)"))
         if len(cve_list) > MAX_CVE_ROWS:
             story.append(Paragraph(
                 f"Showing the top {MAX_CVE_ROWS} of {len(cve_list)} matched CVEs, ordered by CVSS score, to keep "
@@ -485,52 +692,97 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
         story.append(Spacer(1, 6 * mm))
 
         # ── Sign-off page ─────────────────────────────────────────────────
-        sign_off = []
-        sign_off.append(Paragraph("11. Client Acknowledgment &amp; Sign-off", h2))
-        sign_off.append(HRFlowable(width="100%", thickness=1.2, color=colors.HexColor("#ccd7e4"),
-                                     spaceBefore=0, spaceAfter=10))
-        sign_off.append(Paragraph(
-            "By signing below, the client acknowledges receipt of this Security Assessment Finding Report and "
-            "agrees to review the findings, assess associated risks, and implement remediation actions as "
-            "appropriate.", body))
-        sign_off.append(Spacer(1, 10 * mm))
-
-        def _sig_cell(label):
-            return [Paragraph(f"<b>{label}</b>", body_sm), Spacer(1, 9 * mm)]
-
-        sig_rows = [
-            [_sig_cell("Client Representative Name:"), _sig_cell("Title:")],
-            [_sig_cell("Signature:"), _sig_cell("Date:")],
-        ]
-        t = _tbl(sig_rows, colWidths=[85 * mm, 85 * mm])
-        t.setStyle(TableStyle([
-            ("LINEBELOW", (0, 0), (0, 0), 0.7, colors.black),
-            ("LINEBELOW", (1, 0), (1, 0), 0.7, colors.black),
-            ("LINEBELOW", (0, 1), (0, 1), 0.7, colors.black),
-            ("LINEBELOW", (1, 1), (1, 1), 0.7, colors.black),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
-            ("TOPPADDING", (0, 0), (-1, -1), 6),
-        ]))
-        sign_off.append(t)
-        sign_off.append(Spacer(1, 4 * mm))
-        sign_off.append(Paragraph("<b>Comments / Observations:</b>", body_sm))
-        sign_off.append(Spacer(1, 16 * mm))
-        sign_off.append(HRFlowable(width="100%", thickness=0.7, color=colors.black, spaceAfter=0))
-
-        sign_off.append(Spacer(1, 10 * mm))
-        sign_off.append(Paragraph(f"<b>For {COMPANY_NAME}:</b>", body_sm))
-        sign_off.append(Spacer(1, 8 * mm))
-        line = _tbl([[""]], colWidths=[60 * mm])
-        line.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.7, colors.black)]))
-        sign_off.append(line)
-        sign_off.append(Paragraph("Lead Security Analyst", body_sm))
-        sign_off.append(Paragraph(ctx["date_long"], body_sm))
-        sign_off.append(Spacer(1, 8 * mm))
-        sign_off.append(HRFlowable(width="100%", thickness=0.6, color=colors.HexColor("#dddddd"), spaceAfter=6))
-        sign_off.append(Paragraph(
-            "This sign-off confirms that the report has been delivered and accepted for review.", muted_c))
-        story.append(KeepTogether(sign_off))
         story.append(PageBreak())
+        story.append(_TocHeading("11. Client Acknowledgment &amp; Sign-off", h2,
+                                  toc_level=0, toc_text="11. Client Acknowledgment & Sign-off"))
+        story.append(HRFlowable(width="100%", thickness=1.2,
+                                color=colors.HexColor("#ccd7e4"), spaceBefore=0, spaceAfter=8))
+        story.append(Paragraph(
+            "By signing below, the client acknowledges receipt of this Security Assessment "
+            "Finding Report and agrees to review the findings, assess associated risks, and "
+            "implement remediation actions as appropriate.", body))
+        story.append(Spacer(1, 5 * mm))
+
+        _SO_LINE = colors.HexColor("#333333")
+        _SO_W    = 170 * mm   # full usable content width
+
+        def _so_field(label, write_mm=13, hint=None):
+            """Single stacked field: bold label (row 0) + writing space with
+            LINEBELOW (row 1). rowHeights are hard constraints — never compressed."""
+            t = _tbl(
+                [[Paragraph(f"<b>{label}</b>", body_sm)], [""]],
+                colWidths=[_SO_W],
+                rowHeights=[6 * mm, write_mm * mm],
+            )
+            t.setStyle(TableStyle([
+                ("VALIGN",       (0, 0), (-1, -1), "BOTTOM"),
+                ("LINEBELOW",    (0, 1), (0, 1), 0.7, _SO_LINE),
+                ("TOPPADDING",   (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING",(0, 0), (-1, -1), 0),
+                ("LEFTPADDING",  (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ]))
+            els = [t]
+            if hint:
+                hint_st = ParagraphStyle("SOHint", parent=body_sm,
+                                         fontSize=8, textColor=colors.HexColor("#888888"),
+                                         spaceBefore=1, spaceAfter=0)
+                els.append(Paragraph(hint, hint_st))
+            els.append(Spacer(1, 6 * mm))
+            return els
+
+        def _so_comments(label, lines=4, line_h_mm=9):
+            """Comments block: label row then N ruled lines."""
+            rows    = [[Paragraph(f"<b>{label}</b>", body_sm)]] + [[""] for _ in range(lines)]
+            heights = [6 * mm] + [line_h_mm * mm] * lines
+            t = _tbl(rows, colWidths=[_SO_W], rowHeights=heights)
+            cmds = [
+                ("VALIGN",       (0, 0), (-1, -1), "BOTTOM"),
+                ("TOPPADDING",   (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING",(0, 0), (-1, -1), 0),
+                ("LEFTPADDING",  (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ]
+            for r in range(1, lines + 1):
+                cmds.append(("LINEBELOW", (0, r), (0, r), 0.7, _SO_LINE))
+            t.setStyle(TableStyle(cmds))
+            return [t, Spacer(1, 6 * mm)]
+
+        # ── Fields (all stacked vertically) ──────────────────────────────
+        for el in _so_field("Client Representative Name:"):
+            story.append(el)
+
+        for el in _so_field("Title:"):
+            story.append(el)
+
+        for el in _so_field("Signature:"):
+            story.append(el)
+
+        for el in _so_field("Date:", hint="(MM/DD/YYYY)"):
+            story.append(el)
+
+        for el in _so_comments("Comments / Observations:", lines=4, line_h_mm=9):
+            story.append(el)
+
+        # ── ThreatWeave analyst block ──────────────────────────────────
+        story.append(Paragraph(f"<b>For {COMPANY_NAME}:</b>", body_sm))
+        story.append(Spacer(1, 1 * mm))
+        tw_t = _tbl([[""], [""]], colWidths=[65 * mm], rowHeights=[14 * mm, 1])
+        tw_t.setStyle(TableStyle([
+            ("LINEBELOW",    (0, 1), (0, 1), 0.7, _SO_LINE),
+            ("TOPPADDING",   (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING",(0, 0), (-1, -1), 0),
+            ("LEFTPADDING",  (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ]))
+        story.append(tw_t)
+        story.append(Spacer(1, 3 * mm))
+        story.append(Paragraph("Lead Security Analyst", body_sm))
+        story.append(Paragraph(ctx["date_long"], body_sm))
+        story.append(Spacer(1, 6 * mm))
+        story.append(Paragraph(
+            "This sign-off confirms that the report has been delivered and "
+            "accepted for review.", body_sm))
 
         # ── Closing page ──────────────────────────────────────────────────
         story.append(Spacer(1, 60 * mm))
@@ -543,11 +795,11 @@ def _build_pdf(session_id: str, analysis: dict) -> str:
         story.append(Spacer(1, 20 * mm))
         story.append(Paragraph("— This report concludes the Security Assessment Finding Report —", muted_c))
 
-        doc = SimpleDocTemplate(out_path, pagesize=A4,
-                                 leftMargin=20 * mm, rightMargin=20 * mm,
-                                 topMargin=20 * mm, bottomMargin=20 * mm,
-                                 title=f"{COMPANY_NAME} Security Assessment Finding Report")
-        doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
+        doc = _TWDocTemplate(out_path, footer_fn=_footer, pagesize=A4,
+                              leftMargin=20 * mm, rightMargin=20 * mm,
+                              topMargin=20 * mm, bottomMargin=20 * mm,
+                              title=f"{COMPANY_NAME} Security Assessment Finding Report")
+        doc.multiBuild(story)
         logger.info(f"[Report] PDF generated: {out_path}")
 
     except ImportError as e:

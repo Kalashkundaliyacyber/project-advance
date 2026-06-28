@@ -148,33 +148,51 @@ SOPLIB: dict[str, dict] = {
         "severity": "HIGH",
     },
 
-    # FIX FIX-S1: smb-vuln-cve-2017-7494 (SambaCry) ran on Samba but got
-    # NT_STATUS_OBJECT_NAME_NOT_FOUND — the exploit path did not exist, so
-    # the vulnerability was NOT confirmed.  Without safe_patterns here, the
-    # verbose SMB debug output (containing words like "IPC$", "PIPE", "WARNING")
-    # triggered Qwen's YES heuristic, producing a MISCONFIGURED false positive
-    # on ports 139 and 445.  These safe patterns short-circuit Qwen by returning
-    # NOT_VULNERABLE from soplib_check() before Qwen is ever called.
+    # FIX FIX-S1 (corrected): smb-vuln-cve-2017-7494 (SambaCry).
+    #
+    # WHAT WENT WRONG WITH THE PREVIOUS FIX:
+    # The first attempt added NT_STATUS_OBJECT_NAME_NOT_FOUND to safe_patterns.
+    # That string only appears in the NSE *debug log* (the -d output), NOT in
+    # the nmap XML <script output=""> field. So safe_patterns never fired and
+    # the output still fell through to Qwen, which saw "Writable share" text
+    # and returned "issue" → MISCONFIGURED false positive.
+    #
+    # ACTUAL XML SCRIPT OUTPUT for smb-vuln-cve-2017-7494 on a non-vulnerable
+    # Unix Samba server looks like one of:
+    #   (a) Empty string  — script exited without printing anything.
+    #   (b) A writable-share note + no State: block.
+    #
+    # CORRECT FIX: mark anything WITHOUT an explicit "State: VULNERABLE" as
+    # NOT_VULNERABLE via the safe_patterns fallback. The confirmed_patterns
+    # already require "State: VULNERABLE" — if that doesn't appear, and the
+    # script ran at all (any output), treat it as not confirmed.
+    # The `catch_all_non_empty` key below tells soplib_check() to return
+    # NOT_VULNERABLE whenever output is non-empty and confirmed_patterns don't
+    # match, preventing the fall-through to Qwen for this script.
     "smb-vuln-cve-2017-7494": {
         "confirmed_patterns": [
             r"State:\s*VULNERABLE",
             r"VULNERABLE\s*\(Exploitable\)",
         ],
         "safe_patterns": [
-            r"NT_STATUS_OBJECT_NAME_NOT_FOUND",   # exploit .so path not found
-            r"NT_STATUS_LOGON_FAILURE",            # auth failed
-            r"server\s+appears\s+to\s+be\s+Unix", # Unix-specific warning
+            # These match what is actually in the XML script output:
+            r"server\s+appears\s+to\s+be\s+Unix",   # Unix warning = exploit N/A
+            r"Writable\s+share",                      # found share but never loaded .so
+            r"trying\s+path",                         # attempted but didn't succeed
+            r"STATUS_OBJECT_NAME",                    # partial path-error string
         ],
-        "finding_description": "SambaCry (CVE-2017-7494) — writable share + .so load path exploitation.",
+        # If the script ran and produced ANY output but none of the
+        # confirmed_patterns matched, downgrade to NOT_VALIDATABLE instead of
+        # letting the output fall through to Qwen.
+        "strict_confirmed_only": True,
+        "finding_description": "SambaCry (CVE-2017-7494) — writable share + shared-library load path exploitation.",
         "category": "VULNERABILITY",
         "severity": "CRITICAL",
     },
 
-    # FIX FIX-S2: mysql-vuln-cve2012-2122 timed out on MySQL 5.0.51a
-    # (receiveGreeting(): failed. Reason: TIMEOUT). The script never established
-    # a connection — nothing was confirmed.  Without safe_patterns here, the
-    # partially logged output was passed to Qwen which returned YES, producing
-    # a MISCONFIGURED false positive on port 3306.
+    # FIX FIX-S2 (corrected): mysql-vuln-cve2012-2122.
+    # The script timed out — receiveGreeting(): failed. Reason: TIMEOUT.
+    # The timeout message appears in the XML output. safe_patterns now match it.
     "mysql-vuln-cve2012-2122": {
         "confirmed_patterns": [
             r"State:\s*VULNERABLE",
@@ -186,6 +204,7 @@ SOPLIB: dict[str, dict] = {
             r"connection\s+refused",
             r"failed\s+to\s+connect",
         ],
+        "strict_confirmed_only": True,
         "finding_description": "MySQL authentication bypass via timing attack (CVE-2012-2122).",
         "category": "VULNERABILITY",
         "severity": "HIGH",
@@ -232,6 +251,23 @@ def soplib_check(script_name: str, raw_output: str) -> dict | None:
                 "severity": entry["severity"],
                 "category": entry["category"],
             }
+
+    # FIX: strict_confirmed_only mode — used for scripts whose output can look
+    # positive to Qwen even when no vulnerability was confirmed (e.g.
+    # smb-vuln-cve-2017-7494 shows "Writable share found: tmp" which Qwen
+    # reads as a security issue, even though the exploit .so was never loaded).
+    # When strict_confirmed_only=True, if we reach here it means:
+    #   - no safe_pattern matched (output isn't explicitly negative)
+    #   - no confirmed_pattern matched (output isn't explicitly positive)
+    # In that ambiguous case, return NOT_VULNERABLE instead of None so the
+    # caller does NOT fall through to Qwen and produce a false positive.
+    if entry.get("strict_confirmed_only"):
+        return {
+            "status": "NOT_VULNERABLE",
+            "evidence": _trim(raw_output[:120]) or "Script ran but produced no confirmed evidence",
+            "description": entry["finding_description"],
+            "severity": entry["severity"],
+        }
 
     return None
 

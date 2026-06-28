@@ -11,10 +11,24 @@ This module is the single source of truth for CVE→script mappings:
   Layer 3 — Gemini AI suggestions (saved here after first ask, never re-asked)
   Layer 4 — Version-range fallback (POTENTIALLY_VULNERABLE, no script)
 
-Self-learning:
-  After every confirmation scan, record_scan_result() updates confidence.
-  CONFIRMED results boost confidence. Repeated failures flag for review.
-  Over time, the database becomes accurate without any manual maintenance.
+What IS stored:
+  • cve_id  → script_name  (which NSE script to run for this CVE)
+  • product_keywords        (which services this CVE applies to)
+  • source                  (manual | nse_parse | gemini)
+  • confidence              (reliability of the CVE→script mapping itself)
+  • used_count              (how many times this mapping was selected)
+
+What is NEVER stored:
+  • Whether any specific target was vulnerable  ← host-specific, ephemeral
+  • Whether a script returned CONFIRMED/NOT_VULNERABLE for any host
+  • Failure counters or review flags based on scan outcomes
+
+Rationale:  A scan result (CONFIRMED / NOT_VULNERABLE) belongs to a specific
+target at a specific point in time.  Storing it globally would cause results
+from machine A to silently influence the confidence used when scanning machine B
+— a fundamentally different system with different patch levels and services.
+The script selection (which NSE to use for CVE-XXXX) is universal and correct
+to cache.  The vulnerability outcome is not.
 
 Privacy:
   The database stores only CVE IDs and script names — never IP addresses,
@@ -65,20 +79,26 @@ def _connect() -> sqlite3.Connection:
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS cve_script_cache (
     cve_id               TEXT PRIMARY KEY,
-    script_name          TEXT,          -- NULL = confirmed no script exists
+    script_name          TEXT,          -- NULL = confirmed no script exists for this CVE
     product_keywords     TEXT,          -- comma-sep, e.g. "vsftpd,ftp"
     confidence           INTEGER DEFAULT 75,
     source               TEXT DEFAULT 'unknown',
                                         -- manual | nse_parse | gemini | nvd
-    verified             INTEGER DEFAULT 0,  -- 1 = human confirmed
+    verified             INTEGER DEFAULT 0,   -- 1 = human-confirmed mapping
     gemini_reasoning     TEXT,
-    used_count           INTEGER DEFAULT 0,
-    confirmed_count      INTEGER DEFAULT 0,  -- produced CONFIRMED result
-    consecutive_failures INTEGER DEFAULT 0,
-    needs_review         INTEGER DEFAULT 0,
+    used_count           INTEGER DEFAULT 0,   -- how many times this mapping was selected
     created_at           TEXT DEFAULT (datetime('now')),
     updated_at           TEXT DEFAULT (datetime('now'))
 );
+
+-- REMOVED columns (were storing target-specific scan outcomes — wrong):
+--   confirmed_count      INTEGER  -- how many targets were CONFIRMED vulnerable
+--   consecutive_failures INTEGER  -- how many scans returned UNCONFIRMED
+--   needs_review         INTEGER  -- flag set after repeated scan failures
+--
+-- These columns caused scan results from machine A to corrupt confidence
+-- scores used when scanning machine B.  Scan outcomes belong in per-scan
+-- reports, never in the shared script-selection cache.
 
 CREATE TABLE IF NOT EXISTS version_ranges (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -97,6 +117,62 @@ CREATE INDEX IF NOT EXISTS idx_vr_cve     ON version_ranges(cve_id);
 def _create_schema(conn: sqlite3.Connection):
     conn.executescript(_SCHEMA)
     conn.commit()
+    _migrate_schema(conn)
+
+
+def _migrate_schema(conn: sqlite3.Connection):
+    """
+    Handle existing databases that still have the removed target-specific
+    columns (confirmed_count, consecutive_failures, needs_review).
+
+    SQLite does not support DROP COLUMN on older versions, so we use the
+    standard rename-create-copy-drop migration pattern.  This runs once on
+    startup; if the old columns don't exist the migration is skipped.
+    """
+    cols = [row[1] for row in conn.execute("PRAGMA table_info(cve_script_cache)")]
+    stale_cols = {"confirmed_count", "consecutive_failures", "needs_review"}
+    if not stale_cols.intersection(cols):
+        return   # already clean — nothing to do
+
+    logger.info(
+        "cve_db: migrating schema — removing stale target-specific columns: %s",
+        stale_cols.intersection(cols),
+    )
+    conn.executescript("""
+        -- Step 1: copy into a clean table with only the valid columns
+        CREATE TABLE IF NOT EXISTS cve_script_cache_v2 (
+            cve_id               TEXT PRIMARY KEY,
+            script_name          TEXT,
+            product_keywords     TEXT,
+            confidence           INTEGER DEFAULT 75,
+            source               TEXT DEFAULT 'unknown',
+            verified             INTEGER DEFAULT 0,
+            gemini_reasoning     TEXT,
+            used_count           INTEGER DEFAULT 0,
+            created_at           TEXT DEFAULT (datetime('now')),
+            updated_at           TEXT DEFAULT (datetime('now'))
+        );
+
+        INSERT OR IGNORE INTO cve_script_cache_v2
+            (cve_id, script_name, product_keywords, confidence,
+             source, verified, gemini_reasoning, used_count,
+             created_at, updated_at)
+        SELECT
+             cve_id, script_name, product_keywords, confidence,
+             source, verified, gemini_reasoning, used_count,
+             created_at, updated_at
+        FROM cve_script_cache;
+
+        -- Step 2: swap
+        DROP TABLE cve_script_cache;
+        ALTER TABLE cve_script_cache_v2 RENAME TO cve_script_cache;
+
+        -- Step 3: recreate indexes
+        CREATE INDEX IF NOT EXISTS idx_cve_script ON cve_script_cache(cve_id);
+        CREATE INDEX IF NOT EXISTS idx_source     ON cve_script_cache(source);
+    """)
+    conn.commit()
+    logger.info("cve_db: schema migration complete — stale columns removed")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -426,9 +502,16 @@ def save_ai_result(
     source: str = "gemini",
 ) -> bool:
     """
-    Save an AI-suggested CVE→script mapping to the database.
-    Confidence starts at 72 (below manual=90 and nse_parse=80).
-    Will be boosted automatically when real scans confirm it.
+    Save a Gemini-suggested CVE→script mapping to the database.
+
+    This stores ONLY the script selection (which NSE script to run for this
+    CVE) — never whether any target was actually vulnerable.  Confidence
+    starts at 72 (below manual=90 and nse_parse=80) because Gemini's answer
+    has not yet been human-verified.
+
+    The confidence value here reflects how reliable the CVE→script MAPPING
+    is, not whether any specific machine was found vulnerable.  Scan outcomes
+    (CONFIRMED / NOT_VULNERABLE / UNCONFIRMED) are never written to this DB.
     """
     init_db()
     conn = _connect()
@@ -442,6 +525,8 @@ def save_ai_result(
             reasoning  = reasoning,
         )
         conn.commit()
+        logger.debug("save_ai_result: saved script mapping %s → %s (source=%s)",
+                     cve_id, script_name, source)
         return True
     except Exception as e:
         logger.warning("save_ai_result failed for %s: %s", cve_id, e)
@@ -450,68 +535,67 @@ def save_ai_result(
         conn.close()
 
 
-def record_scan_result(cve_id: str, script_name: Optional[str], result_status: str) -> bool:
+def record_script_selection(cve_id: str) -> bool:
     """
-    Self-learning feedback loop — called after every confirmation scan.
+    Increment the used_count for a CVE→script mapping.
 
-    CONFIRMED      → confidence += 5 (max 95), reset consecutive_failures
-    NOT_VULNERABLE → mild confidence += 2 (script ran, just not vuln here)
-    UNCONFIRMED    → consecutive_failures += 1, confidence -= 3 if >3 failures
+    This is the ONLY feedback the DB accepts from live scans — a pure usage
+    counter that records how many times a mapping was selected.  It carries
+    no information about whether the target was vulnerable.
+
+    What is deliberately NOT recorded here:
+      - Whether the scan returned CONFIRMED, NOT_VULNERABLE, or UNCONFIRMED
+      - Any confidence adjustment based on scan outcome
+      - Failure counters or review flags based on target-specific results
+
+    Scan outcomes (CONFIRMED / NOT_VULNERABLE) belong in the per-scan report
+    only.  Recording them globally would corrupt confidence scores across
+    different targets and scan sessions.
     """
     if not cve_id:
         return False
     init_db()
     conn = _connect()
     try:
-        row = conn.execute(
-            "SELECT * FROM cve_script_cache WHERE cve_id = ?", (cve_id,)
-        ).fetchone()
-
-        if not row:
-            return False
-
-        cur_conf    = row["confidence"]
-        cur_fails   = row["consecutive_failures"]
-        cur_confirm = row["confirmed_count"]
-        cur_used    = row["used_count"]
-
-        if result_status == "CONFIRMED":
-            new_conf    = min(cur_conf + 5, 95)
-            new_fails   = 0
-            new_confirm = cur_confirm + 1
-            needs_review = 0
-        elif result_status == "NOT_VULNERABLE":
-            new_conf     = min(cur_conf + 2, 90)
-            new_fails    = 0
-            new_confirm  = cur_confirm
-            needs_review = 0
-        else:  # UNCONFIRMED / POTENTIALLY_VULNERABLE / NOT_VALIDATABLE
-            new_fails    = cur_fails + 1
-            new_conf     = max(cur_conf - 3, 20) if new_fails > 3 else cur_conf
-            new_confirm  = cur_confirm
-            needs_review = 1 if new_fails > 5 else int(row["needs_review"])
-
         conn.execute("""
             UPDATE cve_script_cache
-            SET used_count           = ?,
-                confirmed_count      = ?,
-                confidence           = ?,
-                consecutive_failures = ?,
-                needs_review         = ?,
-                updated_at           = datetime('now')
+            SET used_count = used_count + 1,
+                updated_at = datetime('now')
             WHERE cve_id = ?
-        """, (cur_used + 1, new_confirm, new_conf, new_fails, needs_review, cve_id))
+        """, (cve_id,))
         conn.commit()
         return True
     except Exception as e:
-        logger.warning("record_scan_result failed for %s: %s", cve_id, e)
+        logger.warning("record_script_selection failed for %s: %s", cve_id, e)
         return False
     finally:
         conn.close()
 
 
+# ---------------------------------------------------------------------------
+# record_scan_result() has been REMOVED.
+#
+# It previously adjusted global confidence and consecutive_failures columns
+# based on whether a specific host was vulnerable — mixing script-selection
+# quality (universal) with vulnerability outcomes (target-specific).
+#
+# Example of the bug it caused:
+#   1. Scan Samba host A (not vulnerable)  → NOT_VULNERABLE
+#      → record_scan_result sets confidence += 2, failures = 0
+#   2. Scan Samba host B (IS vulnerable)   → UNCONFIRMED (e.g. timeout)
+#      → record_scan_result sets consecutive_failures += 1, confidence -= 3
+#   3. Scan Samba host C (IS vulnerable)   → confidence now too low, script
+#      may be skipped or flagged needs_review=1 → missed vulnerability
+#
+# The fix: confidence in this DB represents only how reliable the
+# CVE→script MAPPING is (does running smb-vuln-cve-2017-7494 test for
+# CVE-2017-7494?  Yes — always).  It must not be influenced by which
+# targets happened to be running vulnerable versions.
+# ---------------------------------------------------------------------------
+
+
 def get_db_stats() -> dict:
-    """Return database statistics for admin/debug."""
+    """Return database statistics for admin/debug.  No target-specific data."""
     try:
         conn = _connect()
         try:
@@ -519,12 +603,20 @@ def get_db_stats() -> dict:
             manual    = conn.execute("SELECT COUNT(*) FROM cve_script_cache WHERE source='manual'").fetchone()[0]
             nse_parse = conn.execute("SELECT COUNT(*) FROM cve_script_cache WHERE source='nse_parse'").fetchone()[0]
             gemini    = conn.execute("SELECT COUNT(*) FROM cve_script_cache WHERE source='gemini'").fetchone()[0]
-            confirmed = conn.execute("SELECT COUNT(*) FROM cve_script_cache WHERE confirmed_count > 0").fetchone()[0]
-            flagged   = conn.execute("SELECT COUNT(*) FROM cve_script_cache WHERE needs_review=1").fetchone()[0]
+            verified  = conn.execute("SELECT COUNT(*) FROM cve_script_cache WHERE verified=1").fetchone()[0]
+            no_script = conn.execute("SELECT COUNT(*) FROM cve_script_cache WHERE script_name IS NULL").fetchone()[0]
+            vr_count  = conn.execute("SELECT COUNT(DISTINCT cve_id) FROM version_ranges").fetchone()[0]
+            # NOTE: confirmed_count, needs_review, consecutive_failures columns
+            # have been removed — they stored target-specific scan outcomes which
+            # must never be persisted in the shared script-selection cache.
             return {
-                "total": total, "manual": manual,
-                "nse_parsed": nse_parse, "gemini": gemini,
-                "ever_confirmed": confirmed, "needs_review": flagged,
+                "total"           : total,
+                "manual"          : manual,
+                "nse_parsed"      : nse_parse,
+                "gemini"          : gemini,
+                "human_verified"  : verified,
+                "no_script_mapped": no_script,
+                "version_ranges"  : vr_count,
             }
         finally:
             conn.close()

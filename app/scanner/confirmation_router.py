@@ -68,10 +68,22 @@ def _ask_qwen(raw_output: str, service: str, product: str, version: str) -> str:
 def _finalize(status: str, confidence: int, evidence: str, source: str,
               trace: list[str], finding: dict, script_used: str | None = None,
               cve_id: str | None = None) -> dict:
+    _cve = cve_id or finding.get("cve") or None
+    # Record ONLY that this CVE→script mapping was selected (increments used_count).
+    # The verdict (status) is intentionally NOT persisted to the DB — scan outcomes
+    # are target-specific and must never affect confidence for future scans of
+    # different machines.  Only script_selection events (which NSE to run) are cached.
+    if _cve:
+        try:
+            from app.scanner.cve_db import record_script_selection
+            record_script_selection(_cve)
+        except Exception:
+            pass   # never let DB logging break the scan pipeline
+
     logger.info(
         "confirmation_router: %s:%s/%s -> %s (source=%s, cve=%s) | trace: %s",
         finding.get("target", "?"), finding.get("port", "?"),
-        finding.get("service", "?"), status, source, cve_id or "?", " | ".join(trace),
+        finding.get("service", "?"), status, source, _cve or "?", " | ".join(trace),
     )
     return {
         "vuln_status":   status,
@@ -79,10 +91,7 @@ def _finalize(status: str, confidence: int, evidence: str, source: str,
         "evidence":      evidence,
         "source":        source,
         "script_used":   script_used or finding.get("script_name") or None,
-        # FIX (multi-CVE): the CVE actually matched/used to reach this verdict —
-        # not necessarily the first CVE the caller passed in. See the
-        # multi-CVE fix below for why this matters.
-        "cve_id":        cve_id or finding.get("cve") or None,
+        "cve_id":        _cve,
         "trace":         trace,
     }
 

@@ -281,18 +281,12 @@ const App = (() => {
     if (startupState === 'fresh') {
       // run.sh was re-executed — check for interrupted scan on old data BEFORE clearing.
       const interrupted = SessionManager.getInterruptedScan();
-      // CORE FIX: Wipe ALL sessions from localStorage on every fresh server start.
-      // purgeBlankSessions() only removed empty sessions — named sessions with messages
-      // survived and kept appearing in the sidebar on every browser (Chrome, Firefox, etc).
-      // clearAllSessions() removes everything so every browser gets a clean slate.
       SessionManager.clearAllSessions();
-      // FIX 3: Do NOT auto-create a session here. The user must provide a project name.
-      // showGreeting() will display the project onboarding card.
       Chatbot.loadDrawer();
       _setupPersistenceListeners();
       Utils.setStatus('idle');
       _checkHealth();
-      Chatbot.showGreeting();  // shows onboarding card — no session created yet
+      Chatbot.showGreeting();
       if (interrupted) {
         setTimeout(() => {
           Chatbot.addMsg(
@@ -304,11 +298,31 @@ const App = (() => {
       return;
     }
 
-    // STEP 3: Browser refresh — restore the existing session, never create a new one.
+    // STEP 3: Check if URL contains a session id (?s=<scan_session_id>)
+    // This enables direct linking to a session via URL, e.g.:
+    //   http://localhost:3332/?s=20260625_100122_5d77ef22_10-103-181-160_full_scan
+    const urlSessionId = _getUrlSessionId();
+    if (urlSessionId) {
+      Chatbot.loadDrawer();
+      _setupPersistenceListeners();
+      Utils.setStatus('idle');
+      _checkHealth();
+      // Delay slightly so Chatbot fully initialises before switching
+      setTimeout(async () => {
+        try {
+          await Chatbot.viewSession(urlSessionId);
+        } catch (e) {
+          console.warn('[App] URL session load failed:', e);
+          const restored = _restoreFromStorage();
+          if (!restored) Chatbot.showGreeting();
+        }
+      }, 200);
+      return;
+    }
+
+    // STEP 4: Browser refresh — restore the existing session, never create a new one.
     const restored = _restoreFromStorage();
     if (!restored) {
-      // FIX 3: Truly nothing in storage — first ever visit or storage was cleared.
-      // Do NOT auto-create a session. Show onboarding card.
       Chatbot.showGreeting();
     }
 
@@ -334,9 +348,42 @@ const App = (() => {
     }
   }
 
+  /**
+   * URL SESSION ROUTING
+   * ─────────────────────────────────────────────────────────────────────────
+   * Reads the '?s=' query parameter from the current URL.
+   * Format: http://localhost:3332/?s=20260625_100122_5d77ef22_10-103-181-160_full_scan
+   */
+  function _getUrlSessionId() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('s') || null;
+    } catch (_) { return null; }
+  }
+
+  /**
+   * Update the browser URL to include the current scan session id.
+   * Called by viewSession() so every session switch is URL-bookmarkable.
+   * Uses history.replaceState so Back/Forward work naturally.
+   *
+   * @param {string|null} scanSessionId — the scan_session id (disk format), or null to clear
+   */
+  function setUrlSessionId(scanSessionId) {
+    try {
+      const url = new URL(window.location.href);
+      if (scanSessionId) {
+        url.searchParams.set('s', scanSessionId);
+      } else {
+        url.searchParams.delete('s');
+      }
+      window.history.replaceState({ sessionId: scanSessionId }, '', url.toString());
+    } catch (_) {}
+  }
+
   // Triggered by bootstrap() in index.html after ALL components are in the DOM
   document.addEventListener('app:ready', () => { _init(); });
 
-  return { getCurrentSession, setCurrentSession, getLastData, setLastData };
-})();
+  return { getCurrentSession, setCurrentSession, getLastData, setLastData, setUrlSessionId };
 
+
+})();

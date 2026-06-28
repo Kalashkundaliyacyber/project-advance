@@ -4483,7 +4483,8 @@ const Chatbot = (() => {
               ✏️ Rename
             </div>
             ${hasScan ? `<div class="sb-menu-item"
-                 onclick="Chatbot.('${sid}')">
+                 onclick="Chatbot._copySessionLink('${sid}')">
+              🔗 Copy Link
             </div>` : ''}
             <div class="sb-menu-item sb-menu-delete"
                  onclick="Chatbot._deleteDrawerSession('${sid}')">
@@ -4492,6 +4493,33 @@ const Chatbot = (() => {
           </div>
         </div>
       </div>`;
+  }
+
+  /**
+   * Copy a shareable session URL to the clipboard.
+   * Format: http://host:port/?s=<scan_session_id>
+   * The session id is the scan_session stored in SessionManager (disk format).
+   */
+  function _copySessionLink(sid) {
+    // Resolve the scan_session id — prefer the disk-format id over the frontend id
+    const mem = SessionManager.list().find(s => s.session_id === sid);
+    const scanId = (mem && mem.scan_session) ? mem.scan_session : sid;
+    const url = new URL(window.location.href);
+    url.searchParams.set('s', scanId);
+    url.hash = '';
+    const link = url.toString();
+    try {
+      navigator.clipboard.writeText(link).then(() => {
+        Utils.showToast && Utils.showToast('link-copied-toast');
+      }).catch(() => {
+        prompt('Copy this session link:', link);
+      });
+    } catch (_) {
+      prompt('Copy this session link:', link);
+    }
+    // Close the 3-dot menu
+    const menu = document.getElementById('dmenu-' + sid);
+    if (menu) menu.style.display = 'none';
   }
 
 
@@ -4630,7 +4658,10 @@ const Chatbot = (() => {
 
     if (mem?.scan_results) {
       App.setLastData(mem.scan_results);
-      App.setCurrentSession(mem.scan_session || id);
+      const scanSessId = mem.scan_session || id;
+      App.setCurrentSession(scanSessId);
+      // URL SESSION ROUTING: reflect this session in the browser URL
+      if (typeof App.setUrlSessionId === 'function') App.setUrlSessionId(scanSessId);
       _currentTarget = mem.scan_results?.target || '';
       Dashboard.flagOsintStale();
       renderAll(mem.scan_results);
@@ -4660,6 +4691,8 @@ const Chatbot = (() => {
     if (mem) {
       App.setCurrentSession(null);
       App.setLastData(null);
+      // Clear URL session param when viewing a non-scan session
+      if (typeof App.setUrlSessionId === 'function') App.setUrlSessionId(null);
       _currentTarget = '';
       const chat = document.getElementById('chat');
       chat.innerHTML = '';
@@ -4688,6 +4721,7 @@ const Chatbot = (() => {
     }
 
     // Not in memory at all — try to load from backend (backend session ids)
+    // This is the primary path for URL-based session loading (?s=<scan_session_id>)
     try {
       const d = await ApiService.getScanResults(id);
       if (d.risk) {
@@ -4697,6 +4731,8 @@ const Chatbot = (() => {
         SessionManager.saveScan(d);
         App.setLastData(d);
         App.setCurrentSession(id);
+        // URL SESSION ROUTING: set URL to reflect this session
+        if (typeof App.setUrlSessionId === 'function') App.setUrlSessionId(id);
         _currentTarget = d.target || '';
         Dashboard.flagOsintStale();
         renderAll(d);
@@ -5456,7 +5492,7 @@ const Chatbot = (() => {
     _showProjectOnboarding, _submitProjectName, _setProjectQuick,
     // Drawer 3-dot menu
     _toggleDrawerMenu, _renameDrawerSession, _submitDrawerRename,
-    _cancelDrawerRename, _deleteDrawerSession, _confirmDrawerDelete,
+    _cancelDrawerRename, _deleteDrawerSession, _confirmDrawerDelete, _copySessionLink,
     // Fix 8 — scroll-to-bottom
     scrollToBottom, _onChatScroll,
     // AI patch guidance

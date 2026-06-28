@@ -32,7 +32,10 @@ _VULN_NEGATIVE_RE = _re.compile(
     r'|server\s+is\s+not\s+exim'
     r'|not\s+affected'
     r'|patched'
-    r'|disabled'            # "WebDAV disabled", "SSL disabled"
+    # FIX: bare r'disabled' was too broad — it matched "message_signing: disabled"
+    # (a HIGH-severity Samba misconfiguration) and silently killed that finding.
+    # Narrowed to only contexts where "disabled" genuinely means "feature is off/safe".
+    r'|\b(webdav|ssl|tls|compression)\s+disabled\b'
     r'|target\s+is\s+not\s+vulnerable'
     r'|server\s+is\s+not\s+vulnerable'
     r'|host\s+is\s+not\s+vulnerable'
@@ -55,7 +58,19 @@ _VULN_POSITIVE_RE = _re.compile(
     r'|shell\s+spawned'
     r'|looks\s+like\s+trojaned'         # irc-unrealircd-backdoor output
     r'|trojaned\s+version'              # irc-unrealircd-backdoor variant
-    r'|backdoor\s+found',               # generic backdoor confirmation
+    r'|looks\s+like\s+the\s+trojanned'  # irc-unrealircd-backdoor full phrase
+    r'|backdoor\s+found'                # generic backdoor confirmation
+    # FIX: http-vuln-cve2012-1823 (PHP-CGI) does NOT use vulns.lua "State:" format.
+    # It outputs freeform text: "The website seems vulnerable to CVE-2012-1823"
+    # followed by the result of the executed command (e.g. uname -a output).
+    # Without these patterns this script's confirmed RCE was silently discarded.
+    r'|seems\s+(to\s+be\s+)?vulnerable'             # http-vuln-cve2012-1823
+    r'|Output\s+of\s+the\s+command'                 # PHP-CGI executed uname -a
+    # FIX: http-vuln-cve2014-3704 (Drupalgeddon) outputs this line on successful
+    # exploitation.  Without this pattern the created admin user was never surfaced.
+    r'|adding\s+admin\s+user'                        # Drupalgeddon confirmed
+    # FIX: uid= return from a shell command proves code execution.
+    r'|uid=\d+\(\w+\)\s+gid=\d+',
     _re.IGNORECASE | _re.MULTILINE,
 )
 
