@@ -4,7 +4,7 @@ Scan Control Module v2.0
 - /scan/progress — polling fallback (kept for backward compat)
 - /scan/stream  — NEW: Server-Sent Events endpoint (replaces polling)
 """
-import os, signal, time, threading, asyncio, json, logging
+import os, signal, time, threading, json, logging
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 

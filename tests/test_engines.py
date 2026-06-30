@@ -103,11 +103,11 @@ class TestAnalyzeVersionsIntegration:
 class TestScoreToLevel:
     def test_critical(self):
         assert _score_to_level(9.5) == "critical"
-        assert _score_to_level(8.5) == "critical"
+        assert _score_to_level(9.0) == "critical"
 
     def test_high(self):
+        assert _score_to_level(8.5) == "high"
         assert _score_to_level(7.0) == "high"
-        assert _score_to_level(6.5) == "high"
 
     def test_medium(self):
         assert _score_to_level(5.0) == "medium"

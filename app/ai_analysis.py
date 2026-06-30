@@ -231,8 +231,8 @@ def _rule_based_analyze(data: dict) -> dict:
             cve_insight.append({"service": name, "cve_id": "CVE-2011-2523", "severity": "critical",
                                  "cvss_score": 10.0, "description": "vsftpd 2.3.4 backdoor — remove immediately", "confidence": "high"})
         elif "2.2" in version and name in ("http", "https"):
-            cve_insight.append({"service": name, "cve_id": "CVE-2017-7679", "severity": "critical",
-                                 "cvss_score": 9.8, "description": "Apache 2.2 EOL with critical vulnerabilities", "confidence": "high"})
+            cve_insight.append({"service": name, "cve_id": "CVE-2017-7679", "severity": "medium",
+                                 "cvss_score": 5.3, "description": "Apache 2.2 EOL; mod_mime out-of-bounds read can leak memory or crash a worker", "confidence": "high"})
         else:
             cve_insight.append({"service": name, "cve_id": "unknown", "severity": "unknown",
                                  "cvss_score": 0.0, "description": "Run version_deep scan for CVE matching", "confidence": "low"})
@@ -241,7 +241,7 @@ def _rule_based_analyze(data: dict) -> dict:
         score = {"critical": 9.0, "high": 7.0, "medium": 5.0, "low": 2.0}.get(risk_level, 2.0)
         if v_status == "unsupported": score = min(score + 1.5, 10.0)
         if v_status == "outdated":    score = min(score + 0.8, 10.0)
-        actual = "critical" if score >= 8.5 else "high" if score >= 6.5 else "medium" if score >= 4.0 else "low"
+        actual = "critical" if score >= 9.0 else "high" if score >= 7.0 else "medium" if score >= 4.0 else "low"
 
         risk_analysis.append({"service": name, "port": port, "risk_level": actual, "score": round(score, 1), "reason": reason})
         overall_scores.append(score)

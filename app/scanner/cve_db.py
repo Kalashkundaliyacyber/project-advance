@@ -203,9 +203,9 @@ def _upsert(conn: sqlite3.Connection, cve_id: str, script_name: Optional[str],
         conn.execute("""
             UPDATE cve_script_cache
             SET script_name=?, product_keywords=?, confidence=?,
-                source=?, verified=?, updated_at=datetime('now')
+                source=?, verified=?, gemini_reasoning=?, updated_at=datetime('now')
             WHERE cve_id=?
-        """, (script_name, products, confidence, source, verified, cve_id))
+        """, (script_name, products, confidence, source, verified, reasoning, cve_id))
     else:
         conn.execute("""
             INSERT INTO cve_script_cache
@@ -474,6 +474,7 @@ def get_script_for_cve(
             "source"             : row["source"],
             "has_version_range"  : has_vr,
             "product_keywords"   : row["product_keywords"] or "",
+            "gemini_reasoning"   : row["gemini_reasoning"] or "",
         }
     finally:
         conn.close()

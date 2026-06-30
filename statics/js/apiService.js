@@ -72,7 +72,7 @@ const ApiService = (() => {
    *   forms are normalised to plain CVE-ID strings before sending.
    * @returns {Promise<{vuln_status, script_used, scripts_tried, evidence}>}
    */
-  async function confirmPort(target, portData = {}) {
+  async function confirmPort(target, portData = {}, sessionId = '') {
     const cves = (portData.cves || [])
       .map(c => (typeof c === 'string' ? c : (c.cve_id || c.id || '')))
       .filter(Boolean);
@@ -87,6 +87,7 @@ const ApiService = (() => {
         product:  portData.product  || '',
         version:  portData.version  || '',
         cves,
+        session_id: sessionId || '',
       }),
     });
   }

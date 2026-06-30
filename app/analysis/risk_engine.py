@@ -126,14 +126,26 @@ def _calculate_port_risk(port: dict, host_exposure: str) -> dict:
            + ver_score  * w["version"]     * 10
            + exp_score  * w["exposure"]    * 10) / 10
 
-    # CVSS floor rules — high CVSS must never map to medium/low regardless of weights
-    # This ensures real-world severity standards are upheld even with custom weight configs
-    if max_cvss >= 10.0:
-        raw = max(raw, 8.5)    # CVSS 10.0 → always critical
-    elif max_cvss >= 9.0:
-        raw = max(raw, 6.5)    # CVSS 9.x  → always at least high
+    # CVSS floor rules — high CVSS must never map to medium/low regardless of weights.
+    # This ensures real-world severity standards are upheld even with custom weight configs.
+    #
+    # FIX (severity-understatement bug): the previous floors were flat, disconnected
+    # numbers (8.5 / 6.5 / 4.0) that sat at or barely above the NEXT LOWER bucket's
+    # threshold, rather than tracking the CVE's own real severity. A CVSS 10.0
+    # finding (e.g. the vsftpd 2.3.4 backdoor, CVE-2011-2523) floored at exactly 8.5
+    # — displayed as barely-critical instead of near-maximum. A CVSS 9.3 finding
+    # (e.g. the distcc RCE, CVE-2004-2687) floored at exactly 6.5 — displayed as
+    # MEDIUM. This was a systematic, one-directional bias toward understating risk,
+    # worst on exactly the unauthenticated-RCE findings where it matters most. The
+    # floor now tracks within a small margin of the real max_cvss, and a medium-tier
+    # floor was added since CVSS 4.0–6.9 findings previously had no floor at all and
+    # could be diluted all the way down to "low" by the weighted blend.
+    if max_cvss >= 9.0:
+        raw = max(raw, max_cvss - 0.3, 9.0)   # Critical → close to real CVSS, never below the critical floor
     elif max_cvss >= 7.0:
-        raw = max(raw, 4.0)    # CVSS 7–9  → always at least medium
+        raw = max(raw, max_cvss - 0.3, 7.0)   # High → close to real CVSS, never below the high floor
+    elif max_cvss >= 4.0:
+        raw = max(raw, 4.0)                   # Medium → never diluted below the medium floor
 
     score = round(min(raw, 10.0), 1)
     level = _score_to_level(score)
@@ -150,8 +162,8 @@ def _calculate_port_risk(port: dict, host_exposure: str) -> dict:
 
 
 def _score_to_level(score: float) -> str:
-    if score >= 8.5: return "critical"
-    if score >= 6.5: return "high"
+    if score >= 9.0: return "critical"
+    if score >= 7.0: return "high"
     if score >= 4.0: return "medium"
     return "low"
 

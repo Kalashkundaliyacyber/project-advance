@@ -727,36 +727,6 @@ const Chatbot = (() => {
      Validates, routes, handles loading states + errors.
   ═══════════════════════════════════════════════════════ */
 
-  async function _cmdModel() {
-    try {
-      const st = await ApiService.getAIStatus();
-      const active   = st.display_name     || st.active_provider || 'Unknown';
-      const provider = st.display_provider || '';
-      const ollama   = st.ollama_available   ? '✅ Online' : '❌ Offline — run Ollama to enable local models';
-      const qwen     = st.qwen_available   ? `✅ ${st.qwen_model  || 'qwen'}` : '❌ Not found  →  ollama pull qwen2.5-coder:3b';
-      const llama    = st.llama_available  ? `✅ ${st.llama_model || 'llama'}` : '❌ Not found  →  ollama pull llama3.2:1b';
-      const cloud    = st.openrouter_available ? '✅ Configured' : '❌ Not configured  →  set OPENROUTER_API_KEY in .env';
-      const cbLines  = Object.entries(st.circuit_breakers || {})
-        .map(([n, cb]) => `  • ${n}: ${cb.state}  (${cb.success_rate || '—'})`)
-        .join('\n');
-      _updateModelIndicator({ aiStatus: st });
-      addMsg(
-        `**🤖 AI Model Status**\n\n` +
-        `**Active:** ${active}  ·  ${provider}\n\n` +
-        `**Local Ollama:** ${ollama}\n` +
-        `  • Qwen2.5-Coder: ${qwen}\n` +
-        `  • Llama:         ${llama}\n\n` +
-        `**Cloud (OpenRouter):** ${cloud}\n` +
-        `  Generate stack: Nemotron → GPT-OSS → DeepSeek Flash\n` +
-        `  Chat stack:     Llama 3.3 → Gemma 4 → DeepSeek Flash\n` +
-        (cbLines ? `\n**Circuit Breakers:**\n${cbLines}` : ''),
-        'ai'
-      );
-    } catch (e) {
-      addMsg('❌ Could not reach server to fetch model status. Is the server running?', 'ai');
-    }
-  }
-
   /* ── Graph picker ─────────────────────────────────────────── */
   function _cmdGraph() {
     // Clear any stale graph data from localStorage to free quota before user picks a graph
@@ -849,48 +819,18 @@ const Chatbot = (() => {
     window.open('graph_viewer.html?type=' + type, '_blank');
   }
 
-  /* ── Extra slash command handlers ─────────────────────────── */
-  async function _cmdRisk(parts) {
-    const sessionId = App.getCurrentSession() || '';
-    const t = addTyping();
-    try {
-      const d = await ApiService.sendChatMessage('/risk', _currentTarget, sessionId, SessionManager.getProjectName());
-      t.remove();
-      addMsg(d.reply || 'No risk data available. Run a scan first.', 'ai');
-    } catch(e) { t.remove(); addMsg('❌ Risk command error: ' + (e.message || e), 'ai'); }
-  }
-
-  async function _cmdRemediate(parts) { await _handlePatchAll(); }
-
-  async function _cmdCveSearch(parts) {
-    const cveId = parts[1] || '';
-    const sessionId = App.getCurrentSession() || '';
-    const t = addTyping();
-    try {
-      const d = await ApiService.sendChatMessage('/cve ' + cveId, _currentTarget, sessionId, SessionManager.getProjectName());
-      t.remove();
-      addMsg(d.reply || `No data found for ${cveId}`, 'ai');
-    } catch(e) { t.remove(); addMsg('❌ CVE lookup error: ' + (e.message || e), 'ai'); }
-  }
-
-  async function _cmdExport(parts) {
-    const fmt = (parts[1] || 'html').toLowerCase();
-    if (!['pdf','html','json'].includes(fmt)) { addMsg('⚠️ `/export` supports: `pdf`, `html`, or `json`', 'ai'); return; }
-    await _cmdReport([null, fmt]);
-  }
-
-  async function _cmdProjects(parts) {
-    const sessionId = App.getCurrentSession() || '';
-    const t = addTyping();
-    try {
-      const d = await ApiService.sendChatMessage('/projects', _currentTarget, sessionId, SessionManager.getProjectName());
-      t.remove();
-      addMsg(d.reply || 'No projects found.', 'ai');
-    } catch(e) { t.remove(); addMsg('❌ Projects error: ' + (e.message || e), 'ai'); }
-  }
-
-  async function _cmdHistory(parts) {
-    addMsg('📁 Use the **sidebar drawer** (☰ button) to browse all scan history and past projects.', 'ai');
+  /** Derive a severity bucket from whatever score is actually being shown,
+   *  rather than trusting a 'severity' field that may have come from a
+   *  different calculation (e.g. the CVE's own static rating vs a
+   *  separately-computed blended risk score). Only falls back to the
+   *  original label when there's no usable score at all — a score of 0
+   *  usually just means "not available", not literally CVSS 0. */
+  function _sevFromScore(score, fallbackSev) {
+    if (!(score > 0)) return (fallbackSev || 'low').toLowerCase();
+    if (score >= 9) return 'critical';
+    if (score >= 7) return 'high';
+    if (score >= 4) return 'medium';
+    return 'low';
   }
 
   /* ── Tab-based patch card functions ───────────────────────── */
@@ -909,9 +849,11 @@ const Chatbot = (() => {
     }
     const score = cvss; // risk_score == cvss when not separately provided
 
-    // Correct severity from CVSS if the passed severity seems wrong (e.g. "medium" but cvss=9.8)
-    const _sevFromCvss = v => v >= 9 ? 'critical' : v >= 7 ? 'high' : v >= 4 ? 'medium' : v > 0 ? 'low' : sev;
-    const effectiveSev = (sev === 'medium' && cvss >= 7) ? _sevFromCvss(cvss) : sev;
+    // Severity badge must match whatever score is actually shown next to it —
+    // 'sev' may be the CVE's own static rating while 'cvss' here is often a
+    // separately-computed blended risk score, so don't display them as if
+    // they were one consistent pair without reconciling them first.
+    const effectiveSev = _sevFromScore(cvss, sev);
 
     const _sevColor = s => ({ critical:'#f87171', high:'#fbbf24', medium:'#60a5fa', low:'#34d399' }[s] || '#9ca3af');
     const clr = _sevColor(effectiveSev);
@@ -1089,25 +1031,6 @@ const Chatbot = (() => {
     return true;
   }
 
-  function _normalizeTarget(raw) {
-    if (!raw) return raw;
-    // Auto-correct "10.83.113,112" → "10.83.113.112"
-    const m = raw.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3}),(\d{1,3})$/);
-    return m ? `${m[1]}.${m[2]}.${m[3]}.${m[4]}` : raw;
-  }
-
-  async function _cmdScan(parts) {
-    const raw = parts[1] || '';
-    if (raw) {
-      // Auto-correct comma in IP (e.g. 10.83.113,112 → 10.83.113.112)
-      const m = raw.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3}),(\d{1,3})$/);
-      const target = m ? `${m[1]}.${m[2]}.${m[3]}.${m[4]}` : raw;
-      _autoStartVulnScan(target);
-    } else {
-      _promptScanIP();
-    }
-  }
-
   async function _cmdPatch(parts) {
     if (parts[1]?.toLowerCase() === 'all') {
       // /patch all needs scan data
@@ -1127,7 +1050,6 @@ const Chatbot = (() => {
       await _handlePatchCommand(parts[1], parts[2]);
     }
   }
-  async function _cmdVuln()          { await _handleVulnCommand(); }
   async function _cmdReport(parts) {
     const fmt = (parts[1] || '').toLowerCase();
     if (fmt && !['pdf','html'].includes(fmt)) {
@@ -1413,10 +1335,6 @@ const Chatbot = (() => {
      AUTO VULN SCAN — replaces the scan selector completely
   ═══════════════════════════════════════════════════════ */
 
-  let _liveTableId  = null;
-  let _liveTableEl  = null;
-  let _liveCounters = { total: 0, confirmed: 0, not_vuln: 0, unconfirmed: 0 };
-
   // ── Sequential port-by-port NSE confirmation table state ──────────────────
   // Incremented every time _runSequentialConfirmation starts. A running loop
   // checks its captured generation against this counter each iteration — if a
@@ -1427,105 +1345,26 @@ const Chatbot = (() => {
   async function _autoStartVulnScan(ip) {
     _currentTarget = ip;
     addMsg(`🎯 Target set: \`${ip}\` — starting the full scan automatically…`, 'user');
-    _renderLiveVulnTable(ip);
     await runScan(ip, 'full_scan');
   }
 
   async function executeScan(ip, scanType) {
     _currentTarget = ip;
     addMsg(`Running **${scanType}** on \`${ip}\`…`, 'user');
-    _renderLiveVulnTable(ip);
     await runScan(ip, scanType);
   }
 
-  function _renderLiveVulnTable(ip) {
-    const chat = document.getElementById('chat');
-    const wrap = document.createElement('div');
-    _liveTableId = 'live-vuln-' + Date.now();
-    wrap.id        = _liveTableId;
-    wrap.className = 'msg msg-ai live-vuln-wrap';
-    wrap.innerHTML = `
-      <div class="lv-header">
-        <div class="lv-title-row">
-          <span class="lv-scan-badge scanning" id="${_liveTableId}-badge">
-            <span class="lv-badge-dot"></span>⚡ SCANNING
-          </span>
-          <span class="lv-target"><code>${ip}</code></span>
-          <span class="lv-scan-label">nmap -sV --script vuln</span>
-        </div>
-        <div class="lv-counters" id="${_liveTableId}-counters">
-          <span class="lv-ctr lv-ctr-total"   id="${_liveTableId}-c-total">0 ports</span>
-          <span class="lv-ctr lv-ctr-confirm"  id="${_liveTableId}-c-confirm">0 ✅ CONFIRMED</span>
-          <span class="lv-ctr lv-ctr-notvuln"  id="${_liveTableId}-c-notvuln">0 🟢 NOT VULNERABLE</span>
-          <span class="lv-ctr lv-ctr-unconf"   id="${_liveTableId}-c-unconf">0 ⚠️ UNCONFIRMED</span>
-        </div>
-      </div>
-      <div class="lv-table-wrap">
-        <table class="lv-table">
-          <thead>
-            <tr>
-              <th>Port</th><th>Protocol</th><th>Service</th><th>Version</th>
-              <th>Vuln Status</th><th>Script Used</th><th>Evidence</th>
-            </tr>
-          </thead>
-          <tbody id="${_liveTableId}-body">
-            <tr class="lv-placeholder" id="${_liveTableId}-placeholder">
-              <td colspan="7" class="lv-waiting">
-                <span class="lv-pulse"></span>
-                Waiting for nmap to discover ports…
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>`;
-    wrap.style.opacity = '0'; wrap.style.transform = 'translateY(8px)';
-    chat.appendChild(wrap);
-    _liveTableEl = wrap;
-    requestAnimationFrame(() => {
-      wrap.style.transition = 'opacity .3s ease, transform .3s ease';
-      wrap.style.opacity = '1'; wrap.style.transform = 'translateY(0)';
-    });
-    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
-    _liveCounters = { total: 0, confirmed: 0, not_vuln: 0, unconfirmed: 0 };
-    _saveRichMsg('LIVE_VULN_TABLE_START', { ip, tableId: _liveTableId });
-  }
-
-  function _onPortFound(portData) {
-    if (!_liveTableId) return;
-    const tbody = document.getElementById(_liveTableId + '-body');
-    if (!tbody) return;
-    const ph = document.getElementById(_liveTableId + '-placeholder');
-    if (ph) ph.remove();
-    const vs     = portData.vuln_status || {};
-    const status = vs.status || 'UNCONFIRMED';
-    const script = vs.script_used || '—';
-    const evid   = (vs.evidence || '').slice(0, 80) || '—';
-    const ver    = [portData.product, portData.version].filter(Boolean).join(' ') || '—';
-    const badge  = _vulnStatusBadge(status);
-    _liveCounters.total++;
-    if (status === 'CONFIRMED')          _liveCounters.confirmed++;
-    else if (status === 'NOT_VULNERABLE') _liveCounters.not_vuln++;
-    else                                  _liveCounters.unconfirmed++;
-    _updateLiveCounters();
-    const tr = document.createElement('tr');
-    tr.className = 'lv-row lv-row-' + status.toLowerCase().replace('_', '-');
-    tr.innerHTML = `
-      <td class="lv-mono">${portData.port}</td>
-      <td>${portData.protocol || 'tcp'}</td>
-      <td><span class="lv-svc">${portData.service || '—'}</span></td>
-      <td class="lv-ver">${ver}</td>
-      <td class="lv-status-cell">${badge}</td>
-      <td class="lv-script">${script !== '—' ? `<code>${script}</code>` : '—'}</td>
-      <td class="lv-evid" title="${evid}">${evid}</td>`;
-    tr.style.opacity = '0'; tr.style.transform = 'translateX(-8px)';
-    tbody.appendChild(tr);
-    requestAnimationFrame(() => {
-      tr.style.transition = 'opacity .25s ease, transform .25s ease';
-      tr.style.opacity = '1'; tr.style.transform = 'translateX(0)';
-    });
-    const chat = document.getElementById('chat');
-    if (chat && !_userScrolledUp) chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
-  }
+  /* ═══════════════════════════════════════════════════════
+     SEQUENTIAL NSE CONFIRMATION TABLE
+     Renders one row per open port (mirrors the right-panel PORT DETAILS).
+     Ports already CONFIRMED / NOT_VULNERABLE (no CVEs) show their final
+     status immediately. Everything else starts as ⏳ WAITING, then the
+     confirmation loop below picks the best Kali NSE script for ONE port
+     at a time, sets that row to 🔄 Confirming…, awaits the result via
+     POST /api/scan/confirm-port, writes CONFIRMED / NOT_VULNERABLE /
+     UNCONFIRMED + script + evidence, then moves to the next row.
+     One nmap process at a time — never parallel.
+  ═══════════════════════════════════════════════════════ */
 
   function _vulnStatusBadge(status) {
     if (status === 'CONFIRMED')      return '<span class="lv-badge lv-confirmed">✅ CONFIRMED VULNERABLE</span>';
@@ -1543,37 +1382,6 @@ const Chatbot = (() => {
     if (status === 'NOT_VALIDATABLE')        return '<span class="lv-badge lv-notvalidatable">❔ NOT VALIDATABLE</span>';
     return '<span class="lv-badge lv-unconfirmed">⚠️ UNCONFIRMED</span>';
   }
-
-  function _updateLiveCounters() {
-    const bump = (id, val, suffix) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.textContent = val + suffix;
-      el.classList.remove('lv-bump'); void el.offsetWidth; el.classList.add('lv-bump');
-    };
-    bump(_liveTableId + '-c-total',   _liveCounters.total,       ' ports');
-    bump(_liveTableId + '-c-confirm', _liveCounters.confirmed,   ' ✅ CONFIRMED');
-    bump(_liveTableId + '-c-notvuln', _liveCounters.not_vuln,    ' 🟢 NOT VULNERABLE');
-    bump(_liveTableId + '-c-unconf',  _liveCounters.unconfirmed, ' ⚠️ UNCONFIRMED');
-  }
-
-  function _completeLiveTable() {
-    if (!_liveTableId) return;
-    const badge = document.getElementById(_liveTableId + '-badge');
-    if (badge) { badge.className = 'lv-scan-badge complete'; badge.innerHTML = '✔ COMPLETE'; }
-  }
-
-  /* ═══════════════════════════════════════════════════════
-     SEQUENTIAL NSE CONFIRMATION TABLE
-     Renders one row per open port (mirrors the right-panel PORT DETAILS).
-     Ports already CONFIRMED / NOT_VULNERABLE (no CVEs) show their final
-     status immediately. Everything else starts as ⏳ WAITING, then the
-     confirmation loop below picks the best Kali NSE script for ONE port
-     at a time, sets that row to 🔄 Confirming…, awaits the result via
-     POST /api/scan/confirm-port, writes CONFIRMED / NOT_VULNERABLE /
-     UNCONFIRMED + script + evidence, then moves to the next row.
-     One nmap process at a time — never parallel.
-  ═══════════════════════════════════════════════════════ */
 
   /** Normalise vuln_status to a plain string, whether it's a dict (from the
    *  initial nmap parser) or already a string (from a prior confirmation). */
@@ -1637,23 +1445,106 @@ const Chatbot = (() => {
    *  a port's primary row. Spans the Protocol+Service columns for the title
    *  since there's no separate per-finding protocol/service to show. */
   function _findingSubRowHtml(rowId, idx, finding) {
-    const status    = finding.status || 'UNCONFIRMED';
-    const badge     = _vulnStatusBadge(status);
-    const cveTag    = finding.cve ? `<span class="rb rb-high">${_esc(finding.cve)}</span>` : '—';
+    const hasStatus = !!finding.status;
+    const badge     = hasStatus
+      ? _vulnStatusBadge(finding.status)
+      : '<span class="lv-badge lv-notchecked">— Not Actively Checked</span>';
+    const sev       = finding.severity || 'high';
+    const cveTag    = finding.cve ? `<span class="rb rb-${sev}">${_esc(finding.cve)}</span>` : '—';
     const scriptTag = finding.script ? `<code>${_esc(finding.script)}</code>` : '—';
     const titleSafe = _esc(finding.title || finding.script || 'Finding');
     const evidFull  = finding.evidence || '';
     const evidShort = _esc(evidFull.slice(0, 100)) || '—';
+    const stateCls  = (finding.status || 'not-checked').toLowerCase().replace(/_/g, '-');
     return `
-      <tr class="lv-row lv-subrow lv-row-${status.toLowerCase().replace(/_/g, '-')}" id="${rowId}-f${idx}">
+      <tr class="lv-row lv-subrow lv-row-${stateCls}" id="${rowId}-f${idx}"
+          data-group="${rowId}" style="display:none">
         <td class="lv-mono lv-subindent">↳</td>
         <td colspan="2" class="lv-subtitle" title="${titleSafe}">${titleSafe}</td>
         <td class="lv-ver">—</td>
         <td class="lv-cves">${cveTag}</td>
-        <td class="lv-status-cell">${badge}</td>
         <td class="lv-script">${scriptTag}</td>
         <td class="lv-evid" title="${_escAttr(evidFull)}">${evidShort}</td>
+        <td class="lv-status-cell">${badge}</td>
       </tr>`;
+  }
+
+  /** Shows/hides every sub-row grouped under a port's rowId (extra CVE
+   *  candidates + misconfigs/extra findings), flipping the toggle button's
+   *  chevron. Collapsed by default — this only ever opens on click. */
+  function _toggleLvSubrows(rowId, btn) {
+    const subRows = document.querySelectorAll(`tr[data-group="${rowId}"]`);
+    const open = btn.dataset.open === 'true';
+    subRows.forEach(r => { r.style.display = open ? 'none' : 'table-row'; });
+    btn.dataset.open = open ? 'false' : 'true';
+    const chev = btn.querySelector('.lv-chevron');
+    if (chev) chev.textContent = open ? '▼' : '▲';
+  }
+
+  /** Builds one port's primary row + its collapsed sub-rows. Pulled out of
+   *  _renderPortConfirmTable so a single port's row can be try/caught
+   *  independently — one malformed entry should never take down the whole
+   *  table (see _renderPortConfirmTable's per-row try/catch). */
+  function _buildConfirmRowHtml(tableId, p, cves, extra, initialStatus) {
+    const rowKey = p.port + '-' + (p.protocol || 'tcp');
+    const rowId  = tableId + '-row-' + rowKey;
+    const ver    = [p.product, p.version].filter(Boolean).join(' ') || '—';
+
+    // Only the FIRST cve candidate is ever actively run through an NSE
+    // script for a given port (see confirmation_router.py — one verdict
+    // per port). Every other cve candidate on this port, plus misconfigs
+    // / extra script findings, is real but was never individually proven —
+    // so it's collapsed behind one toggle rather than implying each one
+    // got its own confirmation pass.
+    const extraCves = cves.slice(1).filter(Boolean).map(c => ({
+      title:    c.description || c.cve_id || 'Additional CVE',
+      status:   null,   // null => "not actively checked", not a real verdict
+      script:   null,
+      cve:      c.cve_id || null,
+      severity: c.severity || 'medium',
+      evidence: 'Version/CVE-database match only — this candidate was not run through an NSE script in this scan.',
+    }));
+    const allExtra = [...extraCves, ...(Array.isArray(extra) ? extra.filter(Boolean) : [])];
+
+    // CVE column — top candidate inline; everything else behind ONE toggle.
+    let cveCell = '—';
+    if (cves.length && cves[0]) {
+      const top = cves[0];
+      cveCell = `<span class="rb rb-${top.severity || 'low'}">${top.cve_id || '?'}</span>`;
+    }
+    if (allExtra.length) {
+      cveCell += ` <button type="button" class="lv-toggle-btn" data-open="false" `
+        + `onclick="Chatbot._toggleLvSubrows('${rowId}', this)">`
+        + `+${allExtra.length} more <span class="lv-chevron">▼</span></button>`;
+    }
+
+    // Ports already confirmed by the initial vuln scan carry their
+    // script_used / evidence in the vuln_status dict — show them now.
+    const vsObj = (p.vuln_status && typeof p.vuln_status === 'object') ? p.vuln_status : {};
+    const scriptOut = vsObj.script_used || '—';
+    const evidOut   = (vsObj.evidence || '').slice(0, 100) || '—';
+    const badge     = _vulnStatusBadge(initialStatus);
+
+    // Script/Evidence (the proof) render before Status (the verdict) —
+    // confirmation should read as a conclusion drawn from the NSE output
+    // to its left, not appear alongside it.
+    const primaryRow = `
+    <tr class="lv-row lv-row-${initialStatus.toLowerCase().replace(/_/g, '-')}" id="${rowId}">
+      <td class="lv-mono">${p.port}</td>
+      <td>${p.protocol || 'tcp'}</td>
+      <td><span class="lv-svc">${p.service || '—'}</span></td>
+      <td class="lv-ver">${ver}</td>
+      <td class="lv-cves">${cveCell}</td>
+      <td class="lv-script" id="${rowId}-script">${scriptOut !== '—' ? `<code>${scriptOut}</code>` : '—'}</td>
+      <td class="lv-evid" id="${rowId}-evid" title="${_escAttr(vsObj.evidence || '')}">${_esc(evidOut)}</td>
+      <td class="lv-status-cell" id="${rowId}-status">${badge}</td>
+    </tr>`;
+
+    // One indented sub-row per additional item, grouped under this port's
+    // rowId, hidden by default — revealed only via the toggle button above.
+    const subRows = allExtra.map((f, idx) => _findingSubRowHtml(rowId, idx, f)).join('');
+
+    return primaryRow + subRows;
   }
 
   /**
@@ -1687,53 +1578,24 @@ const Chatbot = (() => {
     wrap.id = tableId;
 
     const rowsHtml = rows.map(({ p, cves, extra, initialStatus }) => {
-      const rowKey = p.port + '-' + (p.protocol || 'tcp');
-      const rowId  = tableId + '-row-' + rowKey;
-      const ver    = [p.product, p.version].filter(Boolean).join(' ') || '—';
-
-      // CVE column — strongest CVE first, "+N more" if there are others
-      let cveCell = '—';
-      if (cves.length) {
-        const top = cves[0];
-        cveCell = `<span class="rb rb-${top.severity || 'low'}">${top.cve_id || '?'}</span>`
-          + (cves.length > 1 ? ` <span class="lv-scan-label">+${cves.length - 1} more</span>` : '');
+      try {
+        return _buildConfirmRowHtml(tableId, p, cves, extra, initialStatus);
+      } catch (rowErr) {
+        console.error('[ThreatWeave] confirm-table: row render failed for port', p && p.port, rowErr);
+        const rowKey = (p && p.port) + '-' + ((p && p.protocol) || 'tcp');
+        const rowId  = tableId + '-row-' + rowKey;
+        return `
+        <tr class="lv-row lv-row-not-validatable" id="${rowId}">
+          <td class="lv-mono">${(p && p.port) ?? '?'}</td>
+          <td>${(p && p.protocol) || 'tcp'}</td>
+          <td><span class="lv-svc">${(p && p.service) || '—'}</span></td>
+          <td class="lv-ver">—</td>
+          <td class="lv-cves">—</td>
+          <td class="lv-script" id="${rowId}-script">—</td>
+          <td class="lv-evid" id="${rowId}-evid">Row render error — see console</td>
+          <td class="lv-status-cell" id="${rowId}-status">${_vulnStatusBadge('NOT_VALIDATABLE')}</td>
+        </tr>`;
       }
-      // FIX (multi-finding visibility): hint that more detail is sitting
-      // right below in the sub-rows, whether that's extra named
-      // vulnerabilities pulled out of one script's output or misconfigs —
-      // a port with ONLY a misconfig (no CVE match at all) used to show a
-      // blank "—" here with no hint anything was found at all.
-      if (extra.length) {
-        const eTag = `<span class="lv-scan-label">⚠ +${extra.length} finding${extra.length > 1 ? 's' : ''}</span>`;
-        cveCell = cveCell === '—' ? eTag : `${cveCell} ${eTag}`;
-      }
-
-      // Ports already confirmed by the initial vuln scan carry their
-      // script_used / evidence in the vuln_status dict — show them now.
-      const vsObj = (p.vuln_status && typeof p.vuln_status === 'object') ? p.vuln_status : {};
-      const scriptOut = vsObj.script_used || '—';
-      const evidOut   = (vsObj.evidence || '').slice(0, 100) || '—';
-      const badge     = _vulnStatusBadge(initialStatus);
-
-      const primaryRow = `
-      <tr class="lv-row lv-row-${initialStatus.toLowerCase().replace(/_/g, '-')}" id="${rowId}">
-        <td class="lv-mono">${p.port}</td>
-        <td>${p.protocol || 'tcp'}</td>
-        <td><span class="lv-svc">${p.service || '—'}</span></td>
-        <td class="lv-ver">${ver}</td>
-        <td class="lv-cves">${cveCell}</td>
-        <td class="lv-status-cell" id="${rowId}-status">${badge}</td>
-        <td class="lv-script" id="${rowId}-script">${scriptOut !== '—' ? `<code>${scriptOut}</code>` : '—'}</td>
-        <td class="lv-evid" id="${rowId}-evid" title="${_escAttr(vsObj.evidence || '')}">${_esc(evidOut)}</td>
-      </tr>`;
-
-      // FIX (multi-vulnerability / misconfig visibility): one sub-row per
-      // additional finding, rendered once here (these come from the
-      // original scan and don't change after live confirmation, unlike the
-      // primary row above).
-      const subRows = extra.map((f, idx) => _findingSubRowHtml(rowId, idx, f)).join('');
-
-      return primaryRow + subRows;
     }).join('');
 
     const badgeHtml = toConfirmCount
@@ -1757,9 +1619,9 @@ const Chatbot = (() => {
               <th>Service</th>
               <th>Version</th>
               <th>CVEs</th>
-              <th>Status</th>
               <th>Script Used</th>
               <th>Evidence</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody id="${tableId}-body">${rowsHtml}</tbody>
@@ -1825,7 +1687,7 @@ const Chatbot = (() => {
           product:  p.product,
           version:  p.version,
           cves:     p.cves || [],
-        });
+        }, App.getCurrentSession() || '');
       } catch (e) {
         result = {
           vuln_status: 'UNCONFIRMED',
@@ -1840,6 +1702,23 @@ const Chatbot = (() => {
       const finalScript = result.script_used || '—';
       const finalEvid   = (result.evidence || '—').slice(0, 100);
 
+      // Show the proof first — what ran and what it returned.
+      if (scriptCell) {
+        scriptCell.innerHTML = (finalScript && finalScript !== '—') ? `<code>${finalScript}</code>` : '—';
+      }
+      if (evidCell) {
+        evidCell.textContent = finalEvid || '—';   // textContent — raw NSE output may contain < > &
+        evidCell.title       = result.evidence || '';
+      }
+
+      if (myGen !== _confirmGeneration) return; // superseded mid-reveal
+
+      // Brief pause so the verdict reads as a conclusion drawn from the
+      // script output above, not something that lands at the same instant.
+      await new Promise(r => setTimeout(r, 450));
+      if (myGen !== _confirmGeneration) return; // superseded during the pause
+
+      // Then reveal the verdict.
       if (statusCell) {
         statusCell.style.transition = 'opacity .2s';
         statusCell.style.opacity = '0';
@@ -1847,13 +1726,6 @@ const Chatbot = (() => {
           statusCell.innerHTML = _vulnStatusBadge(finalStatus);
           statusCell.style.opacity = '1';
         }, 150);
-      }
-      if (scriptCell) {
-        scriptCell.innerHTML = (finalScript && finalScript !== '—') ? `<code>${finalScript}</code>` : '—';
-      }
-      if (evidCell) {
-        evidCell.textContent = finalEvid || '—';   // textContent — raw NSE output may contain < > &
-        evidCell.title       = result.evidence || '';
       }
       if (tr) {
         tr.className = 'lv-row lv-row-' + finalStatus.toLowerCase().replace(/_/g, '-');
@@ -1990,21 +1862,15 @@ const Chatbot = (() => {
     es.onmessage = (event) => {
       try {
         const d = JSON.parse(event.data);
-        // Route by event type
-        if (d.type === 'port_found') {
-          _onPortFound(d.port);
-          return;
-        }
         // Progress event
         _updateProgressUI(d);
         if (!d.running && d.status !== 'running') {
           es.close(); _progressTimer = null;
           if (d.status === 'stopped') Utils.setStatus('stopped');
-          _completeLiveTable();
         }
       } catch (e) {}
     };
-    es.onerror = () => { es.close(); _progressTimer = null; _completeLiveTable(); };
+    es.onerror = () => { es.close(); _progressTimer = null; };
   }
 
   function _updateProgressUI(d) {
@@ -2706,13 +2572,6 @@ const Chatbot = (() => {
     chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
   }
 
-  function _filterVulnTable(input, tableId) {
-    const q = input.value.toLowerCase();
-    document.getElementById(tableId)?.querySelectorAll('.vt-row').forEach(row => {
-      row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-    });
-  }
-
   function _sortVulnTable(col, tableId, th) {
     const tbl = document.getElementById(tableId);
     if (!tbl) return;
@@ -2822,8 +2681,10 @@ const Chatbot = (() => {
     const wrapId = 'paw-' + Date.now();
 
     let cardsHtml = entries.map((e, idx) => {
-      const clr     = CLRS[e.risk_level] || '#888';
-      const sev     = (e.severity || e.risk_level || 'low').toLowerCase();
+      const rawSev  = (e.severity || e.risk_level || 'low').toLowerCase();
+      const cvssEarly = parseFloat(e.cvss || e.risk_score || 0);
+      const sev     = _sevFromScore(cvssEarly, rawSev);
+      const clr     = CLRS[sev] || '#888';
       const hdg     = e.config_hardening || [];
       const eng     = e.engine || '';
       const tabId   = `ptab-${idx}-${wrapId}`;
@@ -2839,7 +2700,7 @@ const Chatbot = (() => {
 
       // Primary CVE tag
       const primaryCve = e.cve || e.cve_id || '';
-      const cvss = parseFloat(e.cvss || e.risk_score || 0);
+      const cvss = cvssEarly;
 
       // Distro/version tags
       const distroTags = [];
@@ -3303,40 +3164,6 @@ const Chatbot = (() => {
     });
   }
 
-  function _togglePaExpand(expId) {
-    const el  = document.getElementById(expId);
-    const arr = document.getElementById('arr-' + expId);
-    if (!el) {
-      // Try finding within the most recent patch-all-wrap (DOM restore edge case)
-      const cards = document.querySelectorAll('.patch-all-wrap .pa-expand');
-      for (const c of cards) {
-        if (c.id === expId) { c.style.display = c.style.display === 'none' ? 'block' : 'none'; return; }
-      }
-      console.warn('[patch] expand element not found:', expId); return;
-    }
-    const open = el.style.display !== 'none';
-    el.style.display  = open ? 'none' : 'block';
-    if (arr) arr.textContent = open ? '▶' : '▼';
-  }
-
-  function _copyPatchAllCSV(btn) {
-    const wrap  = btn.closest('.patch-all-wrap');
-    const cards = wrap ? wrap.querySelectorAll('.pa-card') : [];
-    const lines = ['Port,Service,Severity,Risk Score,CVE,Upgrade Command'];
-    cards.forEach(card => {
-      const port  = card.querySelector('.pa-port-badge')?.textContent.replace('Port ','').trim() || '';
-      const svc   = card.querySelector('.pa-svc')?.textContent.trim() || '';
-      const sev   = card.querySelector('.rb')?.textContent.trim() || '';
-      const score = card.querySelector('.pa-score')?.textContent.replace('/10','').trim() || '';
-      const cve   = card.querySelector('.pa-cve-link')?.textContent.trim() || '';
-      const upg   = card.querySelector('.pa-cmd')?.textContent.trim().replace(/,/g,';') || '';
-      lines.push(`${port},${svc},${sev},${score},${cve},"${upg}"`);
-    });
-    navigator.clipboard.writeText(lines.join('\n'));
-    btn.textContent = '✅ Copied!';
-    setTimeout(() => btn.textContent = '📋 Export CSV', 2000);
-  }
-
   /* ═══════════════════════════════════════════════════════
      /patch <service> <port> — SINGLE PORT GUIDANCE
      Completely rewrites _handlePatchCommand to show AI
@@ -3430,214 +3257,6 @@ const Chatbot = (() => {
     chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
   }
 
-  // Keep old _renderPatchCard for any legacy callers
-  function _renderPatchCard(ip, port, data, rawText) {
-    if (rawText) { addMsg(rawText, 'ai'); return; }
-    if (data) _renderRichPatchCard(ip, port, data);
-  }
-
-  function _renderPatchDashboard(entries) {
-    const dashId  = 'pd-' + Date.now();
-    const counts  = { critical: 0, high: 0, medium: 0, low: 0 };
-    entries.forEach(e => counts[e.risk_level] = (counts[e.risk_level] || 0) + 1);
-    const immediate = entries.filter(e => ['critical','high'].includes(e.risk_level)).length;
-
-    const chat = document.getElementById('chat');
-    const wrap = document.createElement('div');
-    wrap.className = 'msg msg-ai patch-dash-wrap';
-
-    wrap.innerHTML = `
-      <div class="pd-header">
-        <div class="pd-title-row">
-          <span class="pd-title">🔧 Vulnerability Remediation Dashboard</span>
-          <span class="pd-subtitle">${entries.length} services · ${immediate} need immediate action</span>
-        </div>
-        <div class="pd-stat-row">
-          ${['critical','high','medium','low'].filter(s => counts[s]).map(s =>
-            `<div class="pd-stat pd-stat-${s}"><span class="pd-stat-num">${counts[s]}</span><span class="pd-stat-lbl">${s}</span></div>`
-          ).join('')}
-        </div>
-        <div class="pd-controls">
-          <input class="pd-search" id="${dashId}-search" type="text" placeholder="Search port, service, CVE…"
-                 oninput="Chatbot._searchPatchDash('${dashId}')"/>
-          <div class="pd-filter-row">
-            ${['all','critical','high','medium','low'].map(s =>
-              `<button class="pd-filter-btn ${s==='all'?'active':''}" id="${dashId}-f-${s}"
-                       onclick="Chatbot._filterPatchDash('${dashId}','${s==='all'?'':s}')">${s==='all'?'All':s}</button>`
-            ).join('')}
-          </div>
-        </div>
-      </div>
-
-      <div class="pd-scroll pnc-cards-wrap" id="${dashId}-cards">
-        ${entries.map((e, i) => {
-          const clr   = CLRS[e.risk_level] || '#888';
-          const sev   = (e.severity || e.risk_level || 'low').toLowerCase();
-          const cvss  = parseFloat(e.cvss || e.risk_score || 0);
-          const pCve  = e.cve || e.cve_id || '';
-          const tabId = `ptab-d-${i}-${dashId}`;
-          const osCmd = _buildOsCommands(e).linux;
-          const _copyIcon = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="5.5" y="1.5" width="9" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="1.5" y="4.5" width="9" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4" fill="var(--bg2,#161b22)"/></svg>`;
-          const allCvesHtml = (e.all_cves||[]).slice(0,5).map(c=>{const cs=(c.severity||'low').toLowerCase();const cc=CLRS[cs]||'#888';return `<span class="pnc-cve-tag" style="background:${cc}22;color:${cc};border:1px solid ${cc}44">${c.cve_id||''} (${(c.cvss_score||0).toFixed(1)})</span>`;}).join('');
-          const cmdBlocks = [{n:1,label:'UPGRADE',cmd:osCmd.upgrade,cls:'pa-os-upgrade'},{n:2,label:'RESTART',cmd:osCmd.restart,cls:'pa-os-restart'},{n:3,label:'VERIFY',cmd:osCmd.verify,cls:'pa-os-verify'}].filter(b=>b.cmd).map(b=>`<div class="pnc-cmd-block"><div class="pnc-cmd-label"><span class="pnc-cmd-num">${b.n}</span>${b.label}</div><div class="pnc-cmd-row"><code class="pnc-cmd ${b.cls}">${b.cmd}</code><button class="pnc-copy-btn" title="Copy" onclick="event.stopPropagation();var c=this.previousElementSibling;navigator.clipboard.writeText(c.textContent.trim());var o=this.innerHTML;this.innerHTML='<svg width=14 height=14 viewBox=\\'0 0 16 16\\'><polyline points=\\'2,8 6,12 14,4\\' stroke=\\'#4caf50\\' stroke-width=\\'2\\' fill=\\'none\\'/></svg>';setTimeout(()=>{this.innerHTML=o},1500)" type="button">${_copyIcon}</button></div></div>`).join('');
-          const entryJson = JSON.stringify({port:e.port,service:e.service,cve:pCve,cve_desc:e.cve_desc||'',severity:sev,risk_level:e.risk_level||sev,risk_score:e.risk_score||cvss,cvss,version:e.version||'unknown',reasons:e.reasons||[],all_cves:e.all_cves||[],ai_action:e.ai_action||'',patch_note:e.patch_note||'',mitigation:osCmd.mitigation||''}).replace(/"/g,'&quot;');
-          const cmdsJson  = JSON.stringify({upgrade:osCmd.upgrade,restart:osCmd.restart,verify:osCmd.verify,mitigation:osCmd.mitigation}).replace(/"/g,'&quot;');
-          return `<div class="pnc-card" data-card-idx="${i}" data-sev="${sev}" style="border-left:3px solid ${clr}">
-            <div class="pnc-header" onclick="Chatbot._togglePncCard(this)" style="cursor:pointer">
-              <div class="pnc-header-left">
-                <span class="pnc-port-badge" style="background:${clr}22;color:${clr};border:1px solid ${clr}44">Port ${e.port}</span>
-                <span class="pnc-svc">${e.service}</span>
-                ${e.version&&e.version!=='unknown'?`<span class="pnc-tag pnc-tag-ver">${e.version}</span>`:''}
-              </div>
-              <div class="pnc-header-right">
-                ${pCve?`<a class="pnc-cve-primary" href="https://nvd.nist.gov/vuln/detail/${pCve}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${pCve}</a>`:''}
-                <span class="rb rb-${sev}" style="font-size:11px;padding:2px 8px">${sev.toUpperCase()}</span>
-                <span class="pnc-score" style="color:${clr}">${cvss.toFixed(1)}/10</span>
-                ${pCve?`<a class="pnc-nvd-link" href="https://nvd.nist.gov/vuln/detail/${pCve}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="View on NVD" style="color:#6e7681;font-size:11px;text-decoration:none;padding:2px 6px;border:1px solid #30363d;border-radius:4px">NVD ↗</a>`:''}
-                <span class="pnc-toggle-arrow">▼</span>
-              </div>
-            </div>
-            <div class="pnc-card-body" style="display:none">
-              ${e.cve_desc?`<div class="pnc-desc">${e.cve_desc}</div>`:''}
-              ${allCvesHtml?`<div class="pnc-cve-tags">${allCvesHtml}</div>`:''}
-              <div class="pnc-cmds" data-idx="${i}">${cmdBlocks}</div>
-              <div class="pnc-tab-bar" data-tabgroup="${tabId}">
-                ${[{id:'mitigation',icon:'🛡',label:'Mitigation'},{id:'riskscore',icon:'📊',label:'Risk Score'},{id:'impact',icon:'💥',label:'Impact'},{id:'risklevel',icon:'🚨',label:'Risk Level'},{id:'severity',icon:'⚠',label:'Severity'}].map((t,ti)=>`<button class="pnc-tab${ti===0?' active':''}" data-tab="${t.id}" onclick="event.stopPropagation();Chatbot._switchPatchTab('${tabId}-content','${t.id}',this)">${t.icon} ${t.label}</button>`).join('')}
-              </div>
-              <div class="pnc-tab-content pd-expand-row" id="${tabId}-content" data-entry="${entryJson}" data-cmds="${cmdsJson}">
-                ${_genTabContent({port:e.port,service:e.service,cve:pCve,cve_desc:e.cve_desc||'',severity:sev,risk_level:e.risk_level||sev,risk_score:e.risk_score||cvss,cvss,version:e.version||'unknown',reasons:e.reasons||[],all_cves:e.all_cves||[],ai_action:e.ai_action||'',patch_note:e.patch_note||''},{upgrade:osCmd.upgrade,restart:osCmd.restart,verify:osCmd.verify,mitigation:osCmd.mitigation},'mitigation')}
-              </div>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-
-      <div class="pd-footer">
-        <span id="${dashId}-cnt">${entries.length} services</span>
-
-      </div>
-
-    `;
-
-    wrap.style.opacity = '0'; wrap.style.transform = 'translateY(8px)';
-    chat.appendChild(wrap);
-    requestAnimationFrame(() => {
-      wrap.style.transition = 'opacity .3s ease, transform .3s ease';
-      wrap.style.opacity = '1'; wrap.style.transform = 'translateY(0)';
-    });
-    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
-    // Persist as rich token for session restore
-    _saveRichMsg('PATCH_DASH', entries);
-  }
-
-  function _patchRow(e, i, dashId) {
-    const expId    = `${dashId}-exp-${i}`;
-    const sev      = e.severity.toLowerCase();
-    const pri      = e.ai_priority.toLowerCase();
-    const pctScore = Math.min((e.risk_score || e.cvss || 0) * 10, 100);
-    const hasPatch = !!e.patch_note || !!e.ai_action;
-    const patchStatus = hasPatch
-      ? `<span class="pd-patch-avail">✅ Available</span>`
-      : `<span class="pd-patch-none">🔍 Research</span>`;
-    const priorityBadge = `<span class="pd-pri pd-pri-${pri}">${pri.toUpperCase()}</span>`;
-
-    // Generate smart patch commands based on service
-    const upgCmds = _genPatchCmds(e);
-
-    return `
-      <tr class="pd-row" data-sev="${e.risk_level}" data-text="${(e.port+' '+e.service+' '+e.cve+' '+(e.cve_desc||'')).toLowerCase()}"
-          onclick="Chatbot._togglePatchExpand('${expId}', this)">
-        <td class="vd-mono">${e.port}</td>
-        <td><span class="vd-svc-tag">${e.service}</span>${e.product ? `<br><small style="color:var(--text3)">${e.product}</small>` : ''}</td>
-        <td class="vt-cve-cell">
-          ${e.cve !== '—'
-            ? `<a class="vt-cve-link" href="https://nvd.nist.gov/vuln/detail/${e.cve}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${e.cve}</a>
-               <button class="vt-copy-btn" onclick="event.stopPropagation();navigator.clipboard.writeText('${e.cve}');this.textContent='✅';setTimeout(()=>this.textContent='📋',1500)">📋</button>`
-            : '<span style="color:var(--text3)">—</span>'}
-        </td>
-        <td><span class="rb rb-${sev}">${sev}</span></td>
-        <td>
-          <div class="vd-cvss-wrap">
-            <span class="vd-cvss-num vd-cvss-${e.risk_level}">${(e.risk_score||e.cvss||0).toFixed(1)}</span>
-            <div class="vd-cvss-bar"><div class="vd-cvss-fill vd-cvss-fill-${e.risk_level}" style="width:${pctScore}%"></div></div>
-          </div>
-        </td>
-        <td><code style="font-size:11px;color:var(--purple)">${e.version}</code></td>
-        <td>${patchStatus}</td>
-        <td>${priorityBadge}</td>
-        <td><span class="pd-expand-arrow" id="${expId}-arrow">▶</span></td>
-      </tr>
-      <tr class="pd-expand-row" id="${expId}" style="display:none">
-        <td colspan="9">
-          <div class="pd-expand-body">
-            <div class="pd-exp-grid">
-              <div class="pd-exp-section">
-                <div class="pd-exp-title">📋 Vulnerability Summary</div>
-                <div class="pd-exp-text">${e.cve_desc || 'No description available.'}</div>
-                ${e.reasons.length ? `<div class="pd-exp-reasons">${e.reasons.map(r => `<div class="pd-reason">• ${r}</div>`).join('')}</div>` : ''}
-              </div>
-              <div class="pd-exp-section">
-                <div class="pd-exp-title">📦 Affected Software</div>
-                <div class="pd-exp-text">
-                  <div>Service: <code>${e.service}</code></div>
-                  <div>Current: <code style="color:var(--orange)">${e.version || 'unknown'}</code></div>
-                  ${e.cve !== '—' ? `<div>CVE: <code>${e.cve}</code> (CVSS ${e.cvss})</div>` : ''}
-                </div>
-              </div>
-            </div>
-
-            ${upgCmds.upgrade ? `
-            <div class="pd-exp-cmd-block">
-              <div class="pd-exp-title">⬆️ Upgrade Command</div>
-              <div class="pd-cmd-row">
-                <code class="pd-cmd">${upgCmds.upgrade}</code>
-                <button class="vt-copy-btn" onclick="navigator.clipboard.writeText('${upgCmds.upgrade.replace(/'/g,"\\'")}');this.textContent='✅';setTimeout(()=>this.textContent='📋',1500)">📋</button>
-              </div>
-            </div>` : ''}
-
-            ${e.ai_action ? `
-            <div class="pd-exp-cmd-block">
-              <div class="pd-exp-title">🤖 AI Recommendation</div>
-              <div class="pd-exp-text">${e.ai_action}</div>
-            </div>` : ''}
-
-            ${upgCmds.mitigation ? `
-            <div class="pd-exp-cmd-block">
-              <div class="pd-exp-title">🛡️ Mitigation</div>
-              <div class="pd-exp-text" style="white-space:pre-line">${upgCmds.mitigation}</div>
-            </div>` : ''}
-
-            ${upgCmds.restart ? `
-            <div class="pd-exp-cmd-block">
-              <div class="pd-exp-title">🔄 Restart Service</div>
-              <div class="pd-cmd-row">
-                <code class="pd-cmd">${upgCmds.restart}</code>
-                <button class="vt-copy-btn" onclick="navigator.clipboard.writeText('${upgCmds.restart.replace(/'/g,"\\'")}');this.textContent='✅';setTimeout(()=>this.textContent='📋',1500)">📋</button>
-              </div>
-            </div>` : ''}
-
-            ${upgCmds.verify ? `
-            <div class="pd-exp-cmd-block">
-              <div class="pd-exp-title">✅ Verify Fix</div>
-              <div class="pd-cmd-row">
-                <code class="pd-cmd">${upgCmds.verify}</code>
-                <button class="vt-copy-btn" onclick="navigator.clipboard.writeText('${upgCmds.verify.replace(/'/g,"\\'")}');this.textContent='✅';setTimeout(()=>this.textContent='📋',1500)">📋</button>
-              </div>
-            </div>` : ''}
-
-            <div class="pd-exp-actions">
-              ${e.cve !== '—' ? `<a class="vd-exp-btn" href="https://nvd.nist.gov/vuln/detail/${e.cve}" target="_blank" rel="noopener">🔗 NVD Advisory</a>` : ''}
-              <button class="vd-exp-btn vd-exp-btn-ai" id="${expId}-ai-btn"
-                      onclick="Chatbot._fetchAIPatch('${expId}', '${e.service}', ${JSON.stringify(e.port)}, '${(e.version||'unknown').replace(/'/g,"\\'")}', '${(e.cve||'unknown').replace(/'/g,"\\'")}', '${e.severity}')">
-                ✨ Get AI Patch Guide
-              </button>
-              ${e.patch_note ? `<div class="pd-exp-text" style="margin-top:8px"><strong>Official patch note:</strong> ${e.patch_note}</div>` : ''}
-            </div>
-          </div>
-        </td>
-      </tr>`;
-  }
-
   function _genPatchCmds(e) {
     const svc = (e.service || '').toLowerCase();
     const map = {
@@ -3652,16 +3271,6 @@ const Chatbot = (() => {
       snmp:   { upgrade: 'apt update && apt install --only-upgrade snmpd', restart: 'systemctl restart snmpd', verify: 'snmpd --version', mitigation: 'Upgrade to SNMPv3. Change community strings. Restrict to monitoring host IPs only.' },
     };
     return map[svc] || { upgrade: `apt update && apt install --only-upgrade ${svc || 'package'}`, mitigation: `Review if port ${e.port} needs to be exposed. Apply latest security patches.` };
-  }
-
-  function _togglePatchExpand(expId, row) {
-    const tr    = document.getElementById(expId);
-    const arrow = document.getElementById(expId + '-arrow');
-    if (!tr) return;
-    const open = tr.style.display !== 'none';
-    tr.style.display = open ? 'none' : 'table-row';
-    if (arrow) arrow.textContent = open ? '▶' : '▼';
-    row.classList.toggle('pd-row-open', !open);
   }
 
   function _togglePncCard(headerEl) {
@@ -3709,18 +3318,6 @@ const Chatbot = (() => {
       if (match) shown++;
     });
     const cnt = document.getElementById(`${dashId}-cnt`); if (cnt) cnt.textContent = `${shown} services shown`;
-  }
-
-  function _copyPatchCSV(dashId) {
-    const cards = document.querySelectorAll(`#${dashId}-cards .pnc-card`);
-    const lines = ['Port,Service,CVE,Severity,Risk Score,Version'];
-    cards.forEach(card => {
-      try {
-        const entry = JSON.parse((card.querySelector('.pnc-tab-content')?.dataset?.entry || '{}').replace(/&quot;/g,'"'));
-        lines.push([entry.port, entry.service, entry.cve||'—', entry.severity, (entry.cvss||entry.risk_score||0).toFixed(1), entry.version||'—'].join(','));
-      } catch(_) {}
-    });
-    navigator.clipboard.writeText(lines.join('\n'));
   }
 
   /* ═══════════════════════════════════════════════════════
@@ -4039,9 +3636,10 @@ const Chatbot = (() => {
       </div>
       <div class="pd-scroll pnc-cards-wrap" id="${dashId}-cards">
             ${entries.map((e, i) => {
-              const clr   = CLRS[e.risk_level] || '#888';
-              const sev   = (e.severity || e.risk_level || 'low').toLowerCase();
+              const rawSev = (e.severity || e.risk_level || 'low').toLowerCase();
               const cvss  = parseFloat(e.cvss || e.risk_score || 0);
+              const sev   = _sevFromScore(cvss, rawSev);
+              const clr   = CLRS[sev] || '#888';
               const pCve  = e.cve || e.cve_id || '';
               const tabId = `ptab-r-${i}-${dashId}`;
               const osCmd = _buildOsCommands(e).linux;
@@ -4858,625 +4456,6 @@ const Chatbot = (() => {
     body.querySelectorAll('.scan-card').forEach(c => c.style.display = '');
   }
 
-
-
-/* ═══════════════════════════════════════════════════════════════════
-   SCAN MODE SELECTOR — Step 1 after project init
-   Shows "Single IP" vs "Multiple IP" cards
-═══════════════════════════════════════════════════════════════════ */
-
-  function _showScanModeSelector() {
-    const chat = document.getElementById('chat');
-    const uid  = 'sms-' + Date.now();
-    const d    = document.createElement('div');
-    d.className = 'msg msg-ai sms-wrap';
-    d.id = uid;
-    d.innerHTML = `
-      <div class="sms-title">🎯 How would you like to scan?</div>
-      <div class="sms-subtitle">Choose your scanning mode to continue</div>
-      <div class="sms-cards">
-        <div class="sms-card" onclick="Chatbot._onScanModeSelect('single','${uid}')">
-          <div class="sms-card-icon">🖥️</div>
-          <div class="sms-card-name">Single IP Scan</div>
-          <div class="sms-card-desc">Scan one target — IP address or hostname</div>
-          <div class="sms-card-examples">e.g. 192.168.1.1 · scanme.nmap.org</div>
-          <div class="sms-card-badge sms-badge-single">Single Target</div>
-        </div>
-        <div class="sms-card" onclick="Chatbot._onScanModeSelect('multi','${uid}')">
-          <div class="sms-card-icon">📋</div>
-          <div class="sms-card-name">Multiple IP Scan</div>
-          <div class="sms-card-desc">Upload a .txt file with one target per line</div>
-          <div class="sms-card-examples">Up to 100 targets · Sequential scanning</div>
-          <div class="sms-card-badge sms-badge-multi">Bulk Scan</div>
-        </div>
-      </div>`;
-    d.style.opacity = '0'; d.style.transform = 'translateY(8px)';
-    chat.appendChild(d);
-    requestAnimationFrame(() => {
-      d.style.transition = 'opacity .25s ease, transform .25s ease';
-      d.style.opacity = '1'; d.style.transform = 'translateY(0)';
-    });
-    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
-  }
-
-  function _onScanModeSelect(mode, uid) {
-    // Highlight the selected card
-    const wrap = document.getElementById(uid);
-    if (wrap) {
-      wrap.querySelectorAll('.sms-card').forEach(c => c.classList.remove('sms-card-selected'));
-      const cards = wrap.querySelectorAll('.sms-card');
-      const idx   = mode === 'single' ? 0 : 1;
-      if (cards[idx]) cards[idx].classList.add('sms-card-selected');
-    }
-    setTimeout(() => {
-      wrap && wrap.remove();
-      if (mode === 'single') {
-        _promptScanIP();
-      } else {
-        _showMultiIPUpload();
-      }
-    }, 200);
-  }
-
-
-/* ═══════════════════════════════════════════════════════════════════
-   MULTI-IP UPLOAD FLOW
-═══════════════════════════════════════════════════════════════════ */
-
-  // Active multi-scan job state
-  let _multiJobId        = null;
-  let _multiPollTimer    = null;
-  let _multiScanType     = 'service_detect';
-
-  function _showMultiIPUpload() {
-    const chat = document.getElementById('chat');
-    const uid  = 'miu-' + Date.now();
-    const d    = document.createElement('div');
-    d.className = 'msg msg-ai miu-wrap';
-    d.id = uid;
-    d.innerHTML = `
-      <div class="miu-header">
-        <span class="miu-icon">📋</span>
-        <div>
-          <div class="miu-title">Multiple IP Scan</div>
-          <div class="miu-sub">Upload a .txt file — one target per line</div>
-        </div>
-      </div>
-      <div class="miu-format">
-        <div class="miu-format-title">📄 File format:</div>
-        <div class="miu-code">192.168.1.1<br>192.168.1.2<br>10.0.0.5<br>scanme.nmap.org</div>
-        <div class="miu-rules">• One target per line &nbsp;•&nbsp; IPs or hostnames &nbsp;•&nbsp; Max 100 targets &nbsp;•&nbsp; Comments with #</div>
-      </div>
-      <div class="miu-upload-zone" id="${uid}-zone"
-           onclick="document.getElementById('${uid}-file').click()"
-           ondragover="event.preventDefault();this.classList.add('miu-drag')"
-           ondragleave="this.classList.remove('miu-drag')"
-           ondrop="Chatbot._onMultiFileDrop(event,'${uid}')">
-        <div class="miu-upload-icon">📂</div>
-        <div class="miu-upload-text">Click to select .txt file</div>
-        <div class="miu-upload-hint">or drag and drop here</div>
-      </div>
-      <input type="file" id="${uid}-file" accept=".txt,text/plain" style="display:none"
-             onchange="Chatbot._onMultiFileSelect(event,'${uid}')"/>
-      <div class="miu-validation" id="${uid}-val" style="display:none"></div>
-      <div class="miu-scan-type-row" id="${uid}-type-row" style="display:none">
-        <label class="miu-label">Scan mode:</label>
-        <select class="miu-select" id="${uid}-scan-type">
-          <option value="service_detect">Service Detection (~45s)</option>
-          <option value="tcp_basic">Quick TCP (~30s)</option>
-          <option value="vuln_scan">Vulnerability Scan (~30m)</option>
-          <option value="os_detect">OS Detection (~60s)</option>
-          <option value="stealth_syn">Stealth SYN (~3-5m)</option>
-        </select>
-      </div>
-      <div class="miu-actions" id="${uid}-actions" style="display:none">
-        <button class="miu-btn-start" onclick="Chatbot._startMultiScan('${uid}')">
-          ▶ Start Batch Scan
-        </button>
-        <button class="miu-btn-back" onclick="Chatbot._promptScanIP()">
-          ← Change Mode
-        </button>
-      </div>`;
-    d.style.opacity = '0'; d.style.transform = 'translateY(8px)';
-    chat.appendChild(d);
-    requestAnimationFrame(() => {
-      d.style.transition = 'opacity .25s ease, transform .25s ease';
-      d.style.opacity = '1'; d.style.transform = 'translateY(0)';
-    });
-    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
-  }
-
-  function _onMultiFileDrop(event, uid) {
-    event.preventDefault();
-    const zone = document.getElementById(uid + '-zone');
-    if (zone) zone.classList.remove('miu-drag');
-    const file = event.dataTransfer?.files?.[0];
-    if (file) _processMultiFile(file, uid);
-  }
-
-  function _onMultiFileSelect(event, uid) {
-    const file = event.target?.files?.[0];
-    if (file) _processMultiFile(file, uid);
-  }
-
-  async function _processMultiFile(file, uid) {
-    if (!file.name.endsWith('.txt') && file.type !== 'text/plain') {
-      _multiShowValidation(uid, null, 'Only .txt files are accepted.');
-      return;
-    }
-    if (file.size > 50000) {
-      _multiShowValidation(uid, null, 'File too large (max 50 KB).');
-      return;
-    }
-    const zone = document.getElementById(uid + '-zone');
-    if (zone) {
-      zone.innerHTML = `<div class="miu-upload-icon">⏳</div><div class="miu-upload-text">Reading file…</div>`;
-    }
-    try {
-      const text = await file.text();
-      // Preview validation via backend
-      const result = await ApiService.multiScanValidate(text, 'service_detect', SessionManager.getProjectName());
-      // Store txt for later use
-      if (zone) zone.dataset.txt = text;
-      const zone2 = document.getElementById(uid + '-zone');
-      if (zone2) {
-        zone2.innerHTML = `
-          <div class="miu-upload-icon">✅</div>
-          <div class="miu-upload-text">${file.name}</div>
-          <div class="miu-upload-hint">${result.valid.length} valid targets loaded</div>`;
-      }
-      _multiShowValidation(uid, result, null);
-      // Show scan type + start button
-      const typeRow = document.getElementById(uid + '-type-row');
-      const actions = document.getElementById(uid + '-actions');
-      if (typeRow) typeRow.style.display = 'flex';
-      if (actions) actions.style.display = 'flex';
-    } catch (e) {
-      if (zone) zone.innerHTML = `<div class="miu-upload-icon">📂</div><div class="miu-upload-text">Click to re-select</div>`;
-      _multiShowValidation(uid, null, 'Validation failed: ' + e.message);
-    }
-  }
-
-  function _multiShowValidation(uid, result, errorMsg) {
-    const el = document.getElementById(uid + '-val');
-    if (!el) return;
-    el.style.display = 'block';
-    if (errorMsg) {
-      el.innerHTML = `<div class="miu-val-error">❌ ${errorMsg}</div>`;
-      return;
-    }
-    const valid   = result?.valid   || [];
-    const invalid = result?.invalid || [];
-    let html = `<div class="miu-val-summary">`;
-    html += `<span class="miu-val-ok">✅ ${valid.length} valid</span>`;
-    if (invalid.length) html += `<span class="miu-val-err">⚠️ ${invalid.length} invalid</span>`;
-    html += `</div>`;
-    if (valid.length) {
-      html += `<div class="miu-val-list">${valid.slice(0, 8).map(t => `<span class="miu-val-target">${t}</span>`).join('')}`;
-      if (valid.length > 8) html += `<span class="miu-val-more">+${valid.length - 8} more</span>`;
-      html += `</div>`;
-    }
-    if (invalid.length) {
-      html += `<div class="miu-val-inv">`;
-      invalid.slice(0, 3).forEach(inv => {
-        html += `<div class="miu-val-inv-row">Line ${inv.line}: <code>${inv.raw}</code> — ${inv.reason}</div>`;
-      });
-      if (invalid.length > 3) html += `<div class="miu-val-inv-row">+${invalid.length - 3} more invalid entries</div>`;
-      html += `</div>`;
-    }
-    el.innerHTML = html;
-  }
-
-  async function _startMultiScan(uid) {
-    const zone     = document.getElementById(uid + '-zone');
-    const typeEl   = document.getElementById(uid + '-scan-type');
-    const txt      = zone?.dataset?.txt;
-    const scanType = typeEl?.value || 'service_detect';
-
-    if (!txt) { addMsg('⚠️ No file loaded. Please upload a .txt file first.', 'ai'); return; }
-
-    _multiScanType = scanType;
-    const projectName = SessionManager.getProjectName();
-
-    // Remove upload card
-    const card = document.getElementById(uid);
-    if (card) {
-      card.style.opacity = '0';
-      setTimeout(() => card.remove(), 300);
-    }
-
-    addMsg(`🚀 Starting batch scan (${scanType})…`, 'user');
-    await _runMultiScanJob(txt, scanType, projectName);
-  }
-
-  async function _runMultiScanJob(txt, scanType, projectName) {
-    const chat = document.getElementById('chat');
-    const progressId = 'ms-prog-' + Date.now();
-
-    // Render progress widget
-    const prog = document.createElement('div');
-    prog.className = 'msg msg-ai ms-progress-wrap';
-    prog.id = progressId;
-    prog.innerHTML = `
-      <div class="ms-prog-header">
-        <span class="ms-prog-icon">📡</span>
-        <div class="ms-prog-info">
-          <div class="ms-prog-title">Running Batch Scan</div>
-          <div class="ms-prog-target" id="${progressId}-cur">Initializing…</div>
-        </div>
-        <span class="ms-prog-count" id="${progressId}-count">0/0</span>
-      </div>
-      <div class="ms-prog-bar"><div class="ms-prog-fill" id="${progressId}-fill" style="width:0%"></div></div>
-      <div class="ms-prog-status" id="${progressId}-status">Queuing targets…</div>`;
-    prog.style.opacity = '0'; prog.style.transform = 'translateY(6px)';
-    chat.appendChild(prog);
-    requestAnimationFrame(() => {
-      prog.style.transition = 'opacity .25s ease, transform .25s ease';
-      prog.style.opacity = '1'; prog.style.transform = 'translateY(0)';
-    });
-    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
-
-    try {
-      const start = await ApiService.multiScanStart(txt, scanType, projectName);
-      if (!start.ok) {
-        document.getElementById(progressId)?.remove();
-        addMsg(`❌ Could not start batch scan: ${start.error || 'unknown error'}`, 'ai');
-        return;
-      }
-
-      _multiJobId = start.job_id;
-      const total  = start.total;
-
-      // Update widget with target count
-      const countEl = document.getElementById(progressId + '-count');
-      if (countEl) countEl.textContent = `0/${total}`;
-
-      // Poll for status
-      await new Promise((resolve) => {
-        _multiPollTimer = setInterval(async () => {
-          try {
-            const status = await ApiService.multiScanStatus(_multiJobId);
-            const pct    = total > 0 ? Math.round((status.completed / total) * 100) : 0;
-
-            const fill   = document.getElementById(progressId + '-fill');
-            const cur    = document.getElementById(progressId + '-cur');
-            const cnt    = document.getElementById(progressId + '-count');
-            const sts    = document.getElementById(progressId + '-status');
-
-            if (fill) fill.style.width = pct + '%';
-            if (cur)  cur.textContent  = status.current ? `[${status.completed + 1}/${total}] Scanning ${status.current}` : 'Processing…';
-            if (cnt)  cnt.textContent  = `${status.completed}/${total}`;
-            if (sts)  sts.textContent  = status.done
-              ? `✅ Complete — ${status.completed} scanned, ${status.failed} failed`
-              : `⏳ ${pct}% — elapsed ${status.elapsed_s}s`;
-
-            if (status.done) {
-              clearInterval(_multiPollTimer);
-              _multiPollTimer = null;
-              resolve(status);
-            }
-          } catch (e) {
-            clearInterval(_multiPollTimer);
-            _multiPollTimer = null;
-            resolve(null);
-          }
-        }, 2000);
-      });
-
-      // Fetch final status with aggregate
-      const finalStatus = await ApiService.multiScanStatus(_multiJobId);
-      document.getElementById(progressId)?.remove();
-      _renderMultiResultCards(finalStatus, scanType);
-
-    } catch (e) {
-      document.getElementById(progressId)?.remove();
-      addMsg(`❌ Batch scan error: ${e.message}`, 'ai');
-    }
-  }
-
-
-/* ═══════════════════════════════════════════════════════════════════
-   MULTI-SCAN RESULT CARDS
-═══════════════════════════════════════════════════════════════════ */
-
-  const _RISK_COLORS_M = {
-    critical: '#ef4444', high: '#f97316', medium: '#f59e0b',
-    low: '#22c55e', unknown: '#6b7280'
-  };
-
-  function _renderMultiResultCards(status, scanType) {
-    const chat   = document.getElementById('chat');
-    const results = status.results || [];
-    const agg     = status.aggregate || {};
-    const ok      = results.filter(r => r.status === 'ok');
-    const failed  = results.filter(r => r.status === 'error');
-
-    if (!results.length) {
-      addMsg('⚠️ Batch scan completed with no results.', 'ai');
-      return;
-    }
-
-    // ── Aggregate summary banner ──
-    const banner = document.createElement('div');
-    banner.className = 'msg msg-ai ms-agg-banner';
-    const aggRisk    = agg.overall_risk || 'unknown';
-    const aggColor   = _RISK_COLORS_M[aggRisk] || '#6b7280';
-    banner.innerHTML = `
-      <div class="ms-agg-header">
-        <span class="ms-agg-icon">📊</span>
-        <div class="ms-agg-info">
-          <div class="ms-agg-title">Batch Scan Complete</div>
-          <div class="ms-agg-sub">${ok.length} scanned · ${failed.length} failed · ${agg.total_cves || 0} CVEs total · ${agg.total_ports || 0} open ports</div>
-        </div>
-        <span class="ms-agg-risk" style="background:${aggColor}20;color:${aggColor};border:1px solid ${aggColor}40">
-          ${aggRisk.toUpperCase()}
-        </span>
-      </div>
-      ${agg.severity ? `
-      <div class="ms-agg-sev">
-        <span class="ms-sev-pill ms-sev-critical">CRIT ${agg.severity.critical || 0}</span>
-        <span class="ms-sev-pill ms-sev-high">HIGH ${agg.severity.high || 0}</span>
-        <span class="ms-sev-pill ms-sev-medium">MED ${agg.severity.medium || 0}</span>
-        <span class="ms-sev-pill ms-sev-low">LOW ${agg.severity.low || 0}</span>
-      </div>` : ''}`;
-    banner.style.opacity = '0';
-    chat.appendChild(banner);
-    requestAnimationFrame(() => {
-      banner.style.transition = 'opacity .3s ease';
-      banner.style.opacity = '1';
-    });
-
-    // ── Result cards grid ──
-    const grid = document.createElement('div');
-    grid.className = 'msg msg-ai ms-cards-wrap';
-
-    // Search/filter bar
-    const filterId = 'msf-' + Date.now();
-    grid.innerHTML = `
-      <div class="ms-cards-header">
-        <div class="ms-cards-title">📋 Scan Results — ${results.length} Targets</div>
-        <input class="ms-cards-search" id="${filterId}-search" type="text"
-               placeholder="🔍 Filter targets…"
-               oninput="Chatbot._filterMultiCards('${filterId}', this.value)"
-               autocomplete="off"/>
-      </div>
-      <div class="ms-cards-grid" id="${filterId}-grid">
-        ${results.map(r => _buildResultCard(r, filterId)).join('')}
-      </div>`;
-    grid.style.opacity = '0'; grid.style.transform = 'translateY(6px)';
-    chat.appendChild(grid);
-    requestAnimationFrame(() => {
-      grid.style.transition = 'opacity .35s ease, transform .35s ease';
-      grid.style.opacity = '1'; grid.style.transform = 'translateY(0)';
-    });
-    chat.scrollTo({ top: chat.scrollHeight, behavior: 'smooth' });
-  }
-
-  function _buildResultCard(r, filterId) {
-    const risk      = r.overall_risk || 'unknown';
-    const riskColor = _RISK_COLORS_M[risk] || '#6b7280';
-    const isOk      = r.status === 'ok';
-    const sev       = r.severity || {};
-
-    if (!isOk) {
-      return `
-        <div class="ms-card ms-card-error" data-target="${r.target}" data-filter-id="${filterId}">
-          <div class="ms-card-target">❌ ${r.target}</div>
-          <div class="ms-card-error-msg">${r.reason || 'Scan failed'}</div>
-        </div>`;
-    }
-
-    const sessionId = r.session_id || '';
-    return `
-      <div class="ms-card" data-target="${r.target}" data-filter-id="${filterId}"
-           onclick="Chatbot._loadMultiIPDetail('${sessionId}','${r.target}',this)">
-        <div class="ms-card-header">
-          <span class="ms-card-target">${r.target}</span>
-          <span class="ms-card-risk" style="color:${riskColor}">${risk.toUpperCase()}</span>
-        </div>
-        <div class="ms-card-stats">
-          <span class="ms-stat"><span class="ms-stat-num">${r.open_ports || 0}</span><span class="ms-stat-lbl">ports</span></span>
-          <span class="ms-stat"><span class="ms-stat-num">${r.cve_count || 0}</span><span class="ms-stat-lbl">CVEs</span></span>
-          <span class="ms-stat-bar" style="--pct:${Math.min((r.risk_score || 0) * 10, 100)}%;--clr:${riskColor}"></span>
-        </div>
-        <div class="ms-card-sev">
-          ${sev.critical ? `<span class="ms-sev-pill ms-sev-critical">C:${sev.critical}</span>` : ''}
-          ${sev.high     ? `<span class="ms-sev-pill ms-sev-high">H:${sev.high}</span>`         : ''}
-          ${sev.medium   ? `<span class="ms-sev-pill ms-sev-medium">M:${sev.medium}</span>`     : ''}
-          ${sev.low      ? `<span class="ms-sev-pill ms-sev-low">L:${sev.low}</span>`           : ''}
-          ${(!sev.critical && !sev.high && !sev.medium && !sev.low) ? '<span class="ms-card-clean">✅ Clean</span>' : ''}
-        </div>
-        ${r.ai_summary ? `<div class="ms-card-summary">${r.ai_summary.slice(0, 90)}${r.ai_summary.length > 90 ? '…' : ''}</div>` : ''}
-        <div class="ms-card-footer">
-          <span class="ms-card-dur">${r.duration ? r.duration.toFixed(1) + 's' : ''}</span>
-          <span class="ms-card-cta">Click for details →</span>
-        </div>
-      </div>`;
-  }
-
-  function _filterMultiCards(filterId, query) {
-    const grid = document.getElementById(filterId + '-grid');
-    if (!grid) return;
-    const q = query.toLowerCase().trim();
-    grid.querySelectorAll('.ms-card, .ms-card-error').forEach(card => {
-      const target = (card.dataset.target || '').toLowerCase();
-      card.style.display = (!q || target.includes(q)) ? '' : 'none';
-    });
-  }
-
-  async function _loadMultiIPDetail(sessionId, target, cardEl) {
-    if (!sessionId) { addMsg(`⚠️ No session data for ${target}.`, 'ai'); return; }
-
-    // Mark card as loading
-    if (cardEl) cardEl.classList.add('ms-card-loading');
-
-    try {
-      const d = await ApiService.getScanResults(sessionId);
-      if (cardEl) cardEl.classList.remove('ms-card-loading');
-
-      // Load the full results into the app state and render all panels
-      App.setLastData(d);
-      App.setCurrentSession(d.session_id);
-      renderAll(d);
-      loadDrawer();
-
-      // Show a confirmation message then render results in chat
-      addMsg(`📊 **${target}** — loading detailed scan results…`, 'ai');
-      const _scanRichData = {
-        target: d.target, scan_type: d.scan_type, duration: d.duration,
-        summary: d.explanation?.summary || '', recommendation: d.recommendation?.reason || '',
-        risk: d.risk, ai_analysis: d.ai_analysis, explanation: d.explanation,
-      };
-      _renderScanCompleteCard(_scanRichData);
-
-      const hosts     = d.risk?.hosts || [];
-      const totalCves = hosts.reduce((n, h) => n + (h.ports || []).reduce((m, p) => m + (p.cves || []).length, 0), 0);
-      if (totalCves > 0) {
-        _renderVulnTableInChat(hosts);
-      } else {
-        addMsg(`✅ No CVEs detected on open ports for ${target}.`, 'ai');
-      }
-
-    } catch (e) {
-      if (cardEl) cardEl.classList.remove('ms-card-loading');
-      addMsg(`❌ Could not load details for ${target}: ${e.message}`, 'ai');
-    }
-  }
-
-
-  /* ═══════════════════════════════════════════════════════
-     AI PATCH FETCH — called from /patch all dashboard rows
-     Uses Qwen2.5-Coder → Nemotron → GPT-OSS → DeepSeek → Rule engine fallback chain.
-     Deduplicated: concurrent calls for same key share ONE request.
-  ═══════════════════════════════════════════════════════ */
-
-  async function _fetchAIPatch(expId, service, port, version, cveId, severity) {
-    const btn     = document.getElementById(expId + '-ai-btn');
-    const expBody = document.getElementById(expId);
-    if (!expBody) return;
-
-    if (btn) {
-      btn.disabled    = true;
-      btn.textContent = '⏳ Fetching AI patch…';
-    }
-
-    try {
-      const sessionId = App.getCurrentSession() || SessionManager.activeId() || '';
-      const data = typeof RemediationClient !== 'undefined'
-        ? await RemediationClient.getPatchGuidance({ service, port, version, cve_id: cveId, severity, session_id: sessionId })
-        : await ApiService.getPatchGuidance(service, port, version, cveId, severity, sessionId);
-
-      // Build AI patch result block HTML
-      const engineRaw = data.engine || 'qwen';
-      const engineLabels = {
-        qwen:                  'Qwen2.5-Coder 7B',
-        llama:                 'Llama 3.2 3B',
-        nemotron:              'Nemotron 3 Super 120B',
-        gpt_oss:               'GPT-OSS 120B',
-        deepseek_flash:        'DeepSeek V4 Flash',
-        llama33:               'Llama 3.3 70B',
-        gemma4:                'Gemma 4 27B',
-        'rule-based-fallback': 'Rule Engine',
-        'rule-based':          'Rule Engine',
-      };
-      const engine   = engineLabels[engineRaw] || engineRaw;
-      // Support both old fields (upgrade_command) and new structured fields (commands[])
-      const cmds     = Array.isArray(data.commands) ? data.commands.filter(Boolean) : [];
-      const upg      = data.upgrade_command  || data.upgrade_cmd  || cmds[0] || '';
-      const rst      = data.restart_command  || cmds[1] || '';
-      const vrfy     = data.verify_command   || cmds[2] || '';
-      const mit      = data.mitigation       || '';
-      const hdg      = data.hardening_tips   || data.config_hardening || [];
-      const refs     = data.references       || [];
-      const summary  = data.summary          || '';
-      const recVer   = data.recommended_version || '';
-
-      let html = `
-        <div class="pd-ai-patch-result" id="${expId}-ai-result">
-          <div class="pd-ai-patch-header">
-            <span class="pd-ai-badge">✨ AI Patch Guide</span>
-            <span class="pd-ai-engine">${engine}</span>
-          </div>`;
-
-      if (summary) html += `<div class="pd-exp-text" style="margin-bottom:8px">${summary}</div>`;
-      if (recVer)  html += `<div class="pd-exp-text"><strong>Recommended version:</strong> <code>${recVer}</code></div>`;
-
-      if (upg) html += `
-        <div class="pd-exp-cmd-block">
-          <div class="pd-exp-title">⬆️ Upgrade Command</div>
-          <div class="pd-cmd-row">
-            <code class="pd-cmd">${upg}</code>
-            <button class="vt-copy-btn" onclick="navigator.clipboard.writeText(${JSON.stringify(upg)});this.textContent='✅';setTimeout(()=>this.textContent='📋',1500)">📋</button>
-          </div>
-        </div>`;
-
-      if (rst) html += `
-        <div class="pd-exp-cmd-block">
-          <div class="pd-exp-title">🔄 Restart Service</div>
-          <div class="pd-cmd-row">
-            <code class="pd-cmd">${rst}</code>
-            <button class="vt-copy-btn" onclick="navigator.clipboard.writeText(${JSON.stringify(rst)});this.textContent='✅';setTimeout(()=>this.textContent='📋',1500)">📋</button>
-          </div>
-        </div>`;
-
-      if (vrfy) html += `
-        <div class="pd-exp-cmd-block">
-          <div class="pd-exp-title">✅ Verify Fix</div>
-          <div class="pd-cmd-row">
-            <code class="pd-cmd">${vrfy}</code>
-            <button class="vt-copy-btn" onclick="navigator.clipboard.writeText(${JSON.stringify(vrfy)});this.textContent='✅';setTimeout(()=>this.textContent='📋',1500)">📋</button>
-          </div>
-        </div>`;
-
-      if (mit) html += `
-        <div class="pd-exp-cmd-block">
-          <div class="pd-exp-title">🛡️ Mitigation</div>
-          <div class="pd-exp-text">${mit}</div>
-        </div>`;
-
-      if (hdg.length) html += `
-        <div class="pd-exp-cmd-block">
-          <div class="pd-exp-title">⚙️ Config Hardening</div>
-          <ul class="pd-hardening-list">${hdg.map(h => `<li>${h}</li>`).join('')}</ul>
-        </div>`;
-
-      if (refs.length) html += `
-        <div class="pd-exp-cmd-block">
-          <div class="pd-exp-title">🔗 References</div>
-          <div>${refs.slice(0,3).map(r => `<a class="vd-exp-btn" href="${r}" target="_blank" rel="noopener" style="margin-right:6px;margin-bottom:4px">${r.slice(0,50)}${r.length>50?'…':''}</a>`).join('')}</div>
-        </div>`;
-
-      html += `</div>`;
-
-      // Remove existing result block if any, then inject
-      document.getElementById(expId + '-ai-result')?.remove();
-      const actionsDiv = expBody.querySelector('.pd-exp-actions');
-      if (actionsDiv) actionsDiv.insertAdjacentHTML('beforebegin', html);
-
-      // Update button to "Refresh"
-      if (btn) {
-        btn.disabled    = false;
-        btn.textContent = '🔄 Refresh AI Patch';
-      }
-
-    } catch (err) {
-      if (btn) {
-        btn.disabled    = false;
-        btn.textContent = '⚠️ Retry AI Patch';
-      }
-      // Show error inline
-      const existing = document.getElementById(expId + '-ai-result');
-      if (existing) existing.remove();
-      const errDiv = document.createElement('div');
-      errDiv.id        = expId + '-ai-result';
-      errDiv.className = 'pd-ai-patch-result';
-      errDiv.innerHTML = `<div class="pd-ai-patch-header"><span class="pd-ai-badge" style="background:#e24b4a22;color:#e24b4a">⚠️ AI Unavailable</span></div>
-        <div class="pd-exp-text" style="color:var(--text3)">Could not fetch AI guidance: ${err.message}. Ensure Ollama is running (<code>ollama serve</code>) or run <code>setup_env.sh</code>.</div>`;
-      const actionsDiv = document.getElementById(expId)?.querySelector('.pd-exp-actions');
-      if (actionsDiv) actionsDiv.insertAdjacentHTML('beforebegin', errDiv.outerHTML);
-    }
-  }
-
   return {
     showGreeting, addMsg, sendChat, quickChat, restoreChatMessages,
     runScan, executeScan, confirmStop, doStop, startNewScan, newChat,
@@ -5484,10 +4463,10 @@ const Chatbot = (() => {
     openDrawer, closeDrawer, filterDrawer, loadDrawer, viewSession,
     showReportModal, selectFmt, doExportReport, suggestNext,
     onChatKeyDown, onChatInput, selectAutocomplete,
-    _filterVulnTable, _sortVulnTable, _filterVulnDash, _searchVulnDash,
+    _sortVulnTable, _filterVulnDash, _searchVulnDash,
     _filterScans, _filterScanCat,
-    _sortVulnDash, _toggleVulnExpand, _copyVulnCSV,
-    _togglePatchExpand, _togglePncCard, _filterPatchDash, _searchPatchDash,
+    _sortVulnDash, _toggleVulnExpand, _copyVulnCSV, _toggleLvSubrows,
+    _togglePncCard, _filterPatchDash, _searchPatchDash,
     _promptScanIP, _submitScanIP,
     _showProjectOnboarding, _submitProjectName, _setProjectQuick,
     // Drawer 3-dot menu
@@ -5495,10 +4474,8 @@ const Chatbot = (() => {
     _cancelDrawerRename, _deleteDrawerSession, _confirmDrawerDelete, _copySessionLink,
     // Fix 8 — scroll-to-bottom
     scrollToBottom, _onChatScroll,
-    // AI patch guidance
-    _fetchAIPatch,
     // Multi-OS patch switcher + patch-all card controls
-    _switchPatchOs, _togglePaExpand, 
+    _switchPatchOs,
     // Tab-based details inside patch rows
     _switchPatchTab,
     // Graph picker

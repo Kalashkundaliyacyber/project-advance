@@ -40,8 +40,8 @@ LOCAL_CVE_DB = {
     "apache httpd": [
         # ── Apache 2.2.x (EOL — all versions affected) ────────────────────
         {"cve_id": "CVE-2017-7679", "affected": ["2.2"],
-         "cvss": 9.8, "severity": "critical",
-         "description": "mod_mime buffer overread in Apache 2.2.x — allows remote code execution.",
+         "cvss": 5.3, "severity": "medium",
+         "description": "mod_mime out-of-bounds read in Apache 2.2.x — can leak adjacent memory or crash a worker process.",
          "patch": "Apache 2.2 is EOL. Upgrade to Apache 2.4.26 or later immediately.",
          "published": "2017-06-19T00:00:00"},
         {"cve_id": "CVE-2017-9798", "affected": ["2.2"],
@@ -164,6 +164,12 @@ LOCAL_CVE_DB = {
          "description": "Buffer overflow in BSD telnetd — pre-auth RCE.",
          "patch": "Disable telnet immediately. Replace with SSH."},
     ],
+    "distccd": [
+        {"cve_id": "CVE-2004-2687", "affected": [""],
+         "cvss": 9.3, "severity": "critical",
+         "description": "distcc daemon allows unauthenticated remote command execution via its compilation protocol, which has no authentication by design.",
+         "patch": "Upgrade distcc to version > 3.1. Restrict distccd access with --allow firewall rules, or disable it entirely."},
+    ],
     "redis": [
         {"cve_id": "CVE-2022-0543", "affected": ["6.", "7."],
          "cvss": 10.0, "severity": "critical",
@@ -197,10 +203,14 @@ LOCAL_CVE_DB = {
          "patch": "Upgrade to Tomcat 9.0.19, 8.5.40, or 7.0.93+."},
     ],
     "samba": [
-        {"cve_id": "CVE-2017-7494", "affected": ["4.6.", "4.5.", "4.4.", "4.3.", "4.2.", "4.1.", "3."],
+        {"cve_id": "CVE-2017-7494", "affected": ["4.6.", "4.5.", "4.4.", "4.3.", "4.2.", "4.1.", "3.6.", "3.5."],
          "cvss": 9.8, "severity": "critical",
          "description": "SambaCry: remote code execution via writable share in Samba.",
          "patch": "Upgrade to Samba 4.6.4, 4.5.10, 4.4.14+. Add 'nt pipe support = no' as workaround."},
+        {"cve_id": "CVE-2007-2447", "affected": ["3.0."],
+         "cvss": 10.0, "severity": "critical",
+         "description": "Samba 'username map script' command injection — unauthenticated RCE via crafted SMB session setup.",
+         "patch": "Upgrade to Samba 3.0.25rc3+, or disable the 'username map script' setting. Apply vendor patch."},
     ],
     "wordpress": [
         {"cve_id": "CVE-2023-39999", "affected": ["6.3.", "6.2.", "6.1.", "6.0.", "5."],
@@ -415,13 +425,17 @@ _KNOWN_CVES = {
         "description": "Logjam: TLS DHE_EXPORT downgrade allows MITM to break 512-bit export DH encryption.",
         "patch": "Disable DHE_EXPORT ciphers. Use 2048-bit+ DH groups. Upgrade TLS libraries.",
         "source": "nse"},
-    "CVE-2007-6750": {"cvss": 7.5, "severity": "high",
+    "CVE-2007-6750": {"cvss": 5.0, "severity": "medium",
         "description": "Slowloris DoS: partial HTTP requests keep connections open, exhausting server resources.",
         "patch": "Enable mod_reqtimeout / RequestReadTimeout. Use nginx or a reverse proxy with timeout controls.",
         "source": "nse"},
     "CVE-2016-6515": {"cvss": 7.5, "severity": "high",
         "description": "OpenSSH very long password DoS — CPU exhaustion via crafted authentication request.",
         "patch": "Upgrade to OpenSSH 7.4+.",
+        "source": "nse"},
+    "CVE-2010-2075": {"cvss": 10.0, "severity": "critical",
+        "description": "UnrealIRCd 3.2.8.1 trojaned source distribution — contains a deliberate backdoor allowing unauthenticated remote command execution.",
+        "patch": "Replace with a clean UnrealIRCd build from the official source. Verify checksums against upstream.",
         "source": "nse"},
 }
 
@@ -642,15 +656,35 @@ def _find_cves(port: dict, use_nvd: bool = False) -> list:
         "telnet":         "telnet",
         "java-rmi":       "java-rmi",
         "java rmi":       "java-rmi",
+        "distccd":        "distccd",
         "http-proxy":     "http-proxy",
     }
-    # Add alias-resolved product
+    # Add alias-resolved product. Require an exact key match, or a prefix
+    # match that lands on a real word boundary (space) — not a bare
+    # substring. Without the boundary check, raw_key="" (very common for
+    # RPC services like rpcbind/nfs/mountd/nlockmgr, which nmap reports
+    # with no 'product' string) made `alias_key.startswith(raw_key)` true
+    # for EVERY alias_key, since every string trivially starts with "".
+    # That flooded those ports with version-agnostic CVEs (CVE-2020-0796,
+    # CVE-2011-2523, etc.) belonging to completely unrelated services.
+    # Likewise short generic service names like "http" were matching
+    # unrelated longer keys such as "http-proxy" / "httpd" with no boundary
+    # check, pulling CVE-2021-26855 (ProxyLogon, Exchange) onto Apache/Tomcat.
     for raw_key in [product, service]:
+        if not raw_key:
+            continue
         if raw_key in _aliases:
             candidates.append(_aliases[raw_key])
-        # partial prefix match (e.g. "apache httpd 2.4" → "apache httpd")
+            continue
         for alias_key in _aliases:
-            if raw_key.startswith(alias_key) or alias_key.startswith(raw_key):
+            if raw_key.startswith(alias_key) and (
+                len(raw_key) == len(alias_key) or raw_key[len(alias_key)] in (' ', '/', '-')
+            ):
+                candidates.append(_aliases[alias_key])
+            elif (
+                len(raw_key) >= 4 and alias_key.startswith(raw_key)
+                and (len(alias_key) == len(raw_key) or alias_key[len(raw_key)] == ' ')
+            ):
                 candidates.append(_aliases[alias_key])
 
     # Deduplicate preserving order
@@ -702,16 +736,20 @@ def _affected(detected: str, patterns: list) -> bool:
     """Return True if the detected version string matches any pattern.
 
     Rules:
-      - Empty detected  → False (no version info, cannot confirm affected)
-      - Empty pattern   → True  (version-agnostic CVE — always affected)
+      - Empty pattern   → True  (version-agnostic CVE — always affected,
+        regardless of whether a version was even detected; this is the
+        whole point of marking a CVE version-agnostic in the first place)
+      - Empty detected, non-wildcard pattern → False (no version info,
+        cannot confirm a version-gated CVE)
       - Otherwise check prefix match in both directions (e.g. "7.4" in "7.",
         or "7.4.1" detected against "7." pattern).
     """
+    for p in patterns:
+        if p == "":          # version-agnostic CVE (e.g. EternalBlue) — always matches
+            return True
     if not detected:
         return False
     for p in patterns:
-        if p == "":          # version-agnostic CVE (e.g. EternalBlue)
-            return True
         if detected.startswith(p) or p.startswith(detected[:len(p)]):
             return True
     return False

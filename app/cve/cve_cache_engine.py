@@ -106,7 +106,6 @@ class CVECacheEngine:
         Returns list of CVE dicts sorted by CVSS descending.
         """
         self._ensure_loaded()
-        key = f"product:{product.lower()}:{version.lower()}"
 
         # Scan local DB for matching entries
         local_hits = [

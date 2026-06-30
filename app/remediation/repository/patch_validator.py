@@ -10,7 +10,7 @@ from typing import Optional
 _CVE_RE = re.compile(r"^CVE-\d{4}-\d{4,}$", re.IGNORECASE)
 
 REQUIRED_FIELDS = {"cve_id"}
-VALID_SOURCES   = {"repository", "vendor", "nvd", "community", "ai", "rule_engine"}
+VALID_SOURCES   = {"repository", "vendor", "nvd", "community", "ai", "rule_engine", "manual"}
 
 
 def validate_patch_entry(entry: dict) -> tuple[bool, Optional[str]]:

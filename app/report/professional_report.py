@@ -97,7 +97,6 @@ def _port_rows(hosts: list) -> str:
 def _render_html(target, ts, sess_id, parsed, analysis, sec_score, ti, timeline) -> str:
     hosts      = parsed.get("hosts", []) if isinstance(parsed, dict) else []
     all_ports  = [p for h in hosts for p in h.get("ports", [])]
-    risk_hosts = (analysis.get("risk") or {}).get("hosts", []) or []
     cves       = analysis.get("cves", []) or []
 
     grade      = sec_score.get("grade", "?")
@@ -287,6 +286,9 @@ def _render_html(target, ts, sess_id, parsed, analysis, sec_score, ti, timeline)
 
   <!-- Patch Recommendations -->
   {f'<div class="card"><h2>🔧 Patch Recommendations (Phase 18)</h2>{patch_section}</div>' if patch_section else ''}
+
+  <!-- Recommendations -->
+  {f'<div class="card"><h2>📝 Recommendations</h2><ul>{recs_html}</ul></div>' if recs_html else ''}
 
   <!-- Open Ports -->
   <div class="card">

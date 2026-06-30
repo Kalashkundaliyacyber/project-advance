@@ -29,8 +29,11 @@ NVD_BASE_URL     = "https://services.nvd.nist.gov/rest/json/cves/2.0"
 NVD_ENABLED      = os.environ.get("NVD_ENABLED", "true").lower() == "true"
 USER_AGENT       = "ThreatWeave-AI/3.0 (security scanner)"
 
-# No API key — free unauthenticated tier: 5 req / 30s
-_RATE_LIMIT      = 4       # stay safely under 5/30s
+# NVD_API_KEY (optional): unauthenticated tier is 5 req/30s; with a key NVD
+# allows 50 req/30s. Previously this module never read the key or sent it,
+# so configuring NVD_API_KEY in .env had no effect — fixed here.
+_NVD_API_KEY     = os.environ.get("NVD_API_KEY", "").strip()
+_RATE_LIMIT      = 45 if _NVD_API_KEY else 4   # stay safely under 50/30s or 5/30s
 _RATE_WINDOW     = 30.0
 _REQUEST_TIMEOUT = 10      # seconds — fail fast
 _MAX_RETRIES     = 1       # only 1 retry — don't spam on timeout
@@ -115,7 +118,23 @@ class _NvdCache:
             c = self._conn()
             try:
                 total = c.execute("SELECT COUNT(*) FROM nvd_cache").fetchone()[0]
-                return {"total_entries": total}
+                expired = c.execute(
+                    "SELECT COUNT(*) FROM nvd_cache WHERE fetched_at + ttl < ?",
+                    (time.time(),)
+                ).fetchone()[0]
+                return {"total_entries": total, "expired_entries": expired}
+            finally: c.close()
+
+    def clear_expired(self) -> int:
+        """Delete expired rows. Returns the number of rows removed."""
+        with self._lock:
+            c = self._conn()
+            try:
+                cur = c.execute(
+                    "DELETE FROM nvd_cache WHERE fetched_at + ttl < ?", (time.time(),)
+                )
+                c.commit()
+                return cur.rowcount if cur.rowcount is not None else 0
             finally: c.close()
 
 
@@ -151,18 +170,29 @@ def _parse_cvss(metrics: dict):
             data  = entries[0].get("cvssData", {})
             score = float(data.get("baseScore", 0.0))
             sev   = (data.get("baseSeverity") or data.get("severity") or
-                     _score_to_sev(score)).lower()
+                     _score_to_severity(score)).lower()
             return score, sev, ver, data.get("vectorString", "")
     return 0.0, "unknown", "N/A", ""
 
-def _score_to_sev(s):
+def _score_to_severity(s):
     if s >= 9: return "critical"
     if s >= 7: return "high"
     if s >= 4: return "medium"
     if s > 0:  return "low"
     return "none"
 
-def _normalise(item: dict):
+def _extract_cpes(cve: dict) -> list[str]:
+    """Pull CPE 2.3 match strings out of the NVD 'configurations' block."""
+    out = []
+    for cfg in cve.get("configurations", []):
+        for node in cfg.get("nodes", []):
+            for match in node.get("cpeMatch", []):
+                criteria = match.get("criteria", "")
+                if criteria:
+                    out.append(criteria)
+    return out
+
+def _normalise_cve(item: dict):
     try:
         cve    = item.get("cve", {})
         cve_id = cve.get("id", "")
@@ -172,6 +202,7 @@ def _normalise(item: dict):
         score, sev, ver, vec = _parse_cvss(cve.get("metrics", {}))
         cwes = [d["value"] for w in cve.get("weaknesses",[])
                 for d in w.get("description",[]) if d.get("value","").startswith("CWE-")]
+        cpes = _extract_cpes(cve)
         refs = [{"url":r.get("url",""),"tags":r.get("tags",[])}
                 for r in cve.get("references",[])[:5]]
         nvd_url = f"https://nvd.nist.gov/vuln/detail/{cve_id}"
@@ -181,7 +212,7 @@ def _normalise(item: dict):
             "cve_id": cve_id, "description": desc[:400],
             "cvss_score": score, "cvss_version": ver,
             "vector": vec, "severity": sev, "color": severity_color(sev),
-            "cwes": cwes[:5], "references": refs,
+            "cwes": cwes[:5], "cpes": cpes[:5], "references": refs,
             "published": cve.get("published",""), "modified": cve.get("lastModified",""),
             "nvd_url": nvd_url,
             "patch": f"Apply vendor patch. See: {patch_urls[0]}" if patch_urls
@@ -200,11 +231,12 @@ class NvdApiClient:
     def _get(self, url: str) -> dict:
         """Blocking GET with rate limit + single retry."""
         self._limiter.acquire()
+        headers = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+        if _NVD_API_KEY:
+            headers["apiKey"] = _NVD_API_KEY
         for attempt in range(_MAX_RETRIES + 1):
             try:
-                req = urllib.request.Request(
-                    url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"}
-                )
+                req = urllib.request.Request(url, headers=headers)
                 with urllib.request.urlopen(req, timeout=_REQUEST_TIMEOUT) as resp:
                     return json.loads(resp.read())
             except urllib.error.HTTPError as e:
@@ -222,9 +254,13 @@ class NvdApiClient:
         return {}
 
     def _fetch_sync(self, url: str) -> list[dict]:
-        data  = self._get(url)
+        try:
+            data = self._get(url)
+        except Exception as e:
+            logger.warning("NVD fetch error (unhandled by _get): %s", e)
+            return []
         items = data.get("vulnerabilities", [])
-        out   = [n for n in (_normalise(i) for i in items) if n]
+        out   = [n for n in (_normalise_cve(i) for i in items) if n]
         out.sort(key=lambda x: x["cvss_score"], reverse=True)
         return out[:_MAX_RESULTS]
 
@@ -333,10 +369,24 @@ class NvdApiClient:
     def status(self) -> dict:
         return {
             "enabled":      NVD_ENABLED,
+            "api_key_set":  bool(_NVD_API_KEY),
             "base_url":     NVD_BASE_URL,
             "rate_limit":   f"{_RATE_LIMIT} req / {int(_RATE_WINDOW)}s",
             "cache_stats":  self._cache.stats(),
         }
+
+    def clear_expired_cache(self) -> int:
+        """Remove expired rows from the NVD SQLite cache. Returns rows removed.
+
+        Called by POST /api/nvd/cache/clear (app/vuln/routes.py) — this method
+        previously did not exist, so that endpoint raised AttributeError on
+        every request.
+        """
+        return self._cache.clear_expired()
+
+    def cache_stats(self) -> dict:
+        """Return cache entry counts. Called by POST /api/nvd/cache/clear."""
+        return self._cache.stats()
 
 
 # ── CPE builder ────────────────────────────────────────────────────────────────

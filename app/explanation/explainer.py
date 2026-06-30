@@ -54,10 +54,6 @@ SERVICE_GUIDANCE = {
         "Enable DNSSEC for DNS integrity.",
         "Rate-limit DNS queries to mitigate amplification attacks.",
     ],
-    "ftp": [
-        "Replace FTP with SFTP. FTP credentials are sent in plaintext.",
-        "If FTP must run, restrict to a specific IP range.",
-    ],
 }
 
 DB_PORTS = {3306, 5432, 27017, 6379, 1521, 1433}

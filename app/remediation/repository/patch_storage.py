@@ -79,11 +79,41 @@ class PatchStorage:
                     confidence       INTEGER DEFAULT 70,
                     source           TEXT DEFAULT 'repository',
                     last_verified    REAL DEFAULT 0,
-                    created_at       REAL DEFAULT 0
+                    created_at       REAL DEFAULT 0,
+                    title            TEXT DEFAULT '',
+                    upgrade_path     TEXT DEFAULT '',
+                    mitigation       TEXT DEFAULT '',
+                    patch_type       TEXT DEFAULT 'upgrade',
+                    notes            TEXT DEFAULT '',
+                    verification_steps TEXT DEFAULT '[]',
+                    rollback_steps      TEXT DEFAULT '[]',
+                    "references"        TEXT DEFAULT '[]'
                 );
                 CREATE INDEX IF NOT EXISTS idx_cve_id  ON patches(cve_id);
                 CREATE INDEX IF NOT EXISTS idx_product ON patches(product, vendor);
             """)
+            # Migration: the columns above were added after some databases
+            # were already created with the original (smaller) schema.
+            # CREATE TABLE IF NOT EXISTS does not retrofit existing tables,
+            # so ALTER TABLE in any columns that are still missing.
+            existing_cols = {row["name"] for row in c.execute("PRAGMA table_info(patches)")}
+            migrations = {
+                "title":              "TEXT DEFAULT ''",
+                "upgrade_path":       "TEXT DEFAULT ''",
+                "mitigation":         "TEXT DEFAULT ''",
+                "patch_type":         "TEXT DEFAULT 'upgrade'",
+                "notes":              "TEXT DEFAULT ''",
+                "verification_steps": "TEXT DEFAULT '[]'",
+                "rollback_steps":     "TEXT DEFAULT '[]'",
+                '"references"':      "TEXT DEFAULT '[]'",
+            }
+            for col, decl in migrations.items():
+                bare_name = col.strip('"')
+                if bare_name not in existing_cols:
+                    try:
+                        c.execute(f"ALTER TABLE patches ADD COLUMN {col} {decl}")
+                    except Exception as e:
+                        logger.warning("PatchStorage migration: could not add column %s: %s", col, e)
             c.commit()
             c.close()
 
@@ -112,12 +142,17 @@ class PatchStorage:
                 if isinstance(patch_cmd, dict):
                     patch_cmd = json.dumps(patch_cmd)
 
+                verification_steps = entry.get("verification_steps", [])
+                rollback_steps     = entry.get("rollback_steps", [])
+                references         = entry.get("references", [])
+
                 c.execute("""
                     INSERT OR REPLACE INTO patches
                       (id, cve_id, vendor, product, affected_version, fixed_version,
                        patch_command, official_url, severity, confidence, source,
-                       last_verified, created_at)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                       last_verified, created_at, title, upgrade_path, mitigation,
+                       patch_type, notes, verification_steps, rollback_steps, "references")
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """, (
                     row_id,
                     cve_id,
@@ -132,6 +167,14 @@ class PatchStorage:
                     entry.get("source", "repository"),
                     time.time(),
                     entry.get("created_at", time.time()),
+                    entry.get("title", ""),
+                    entry.get("upgrade_path", ""),
+                    entry.get("mitigation", ""),
+                    entry.get("patch_type", "upgrade"),
+                    entry.get("notes", ""),
+                    json.dumps(verification_steps) if isinstance(verification_steps, list) else (verification_steps or "[]"),
+                    json.dumps(rollback_steps) if isinstance(rollback_steps, list) else (rollback_steps or "[]"),
+                    json.dumps(references) if isinstance(references, list) else (references or "[]"),
                 ))
                 c.commit()
                 return True
@@ -226,6 +269,11 @@ class PatchStorage:
             d["patch_command"] = json.loads(d.get("patch_command") or "{}")
         except Exception:
             d["patch_command"] = {}
+        for list_field in ("verification_steps", "rollback_steps", "references"):
+            try:
+                d[list_field] = json.loads(d.get(list_field) or "[]")
+            except Exception:
+                d[list_field] = []
         return d
 
 

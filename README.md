@@ -189,6 +189,33 @@ ThreatWeave/
 
 ---
 
+## 🔄 Changelog — QA & Hardening Pass
+
+A review pass against the existing test suite (28 failing → 0 of 193) and targeted integration testing surfaced and fixed the following:
+
+**NVD Integration** (`app/vuln/nvd_client.py`)
+- `NVD_API_KEY` (set in `.env`) is now actually sent with requests — previously it was read by other parts of the codebase but never wired into this client, so the rate limit stayed capped at the unauthenticated 5 req/30s tier regardless of configuration. With a key set, it now correctly rises to 45 req/30s.
+- CVE normalization now extracts CPE match strings (`cpes`) from NVD's `configurations` block.
+- Added the cache-management methods (`clear_expired_cache()`, `cache_stats()`) that `/api/nvd/cache/clear` was already calling — that endpoint previously raised `AttributeError` on every request.
+
+**Patch Resolution Orchestrator**
+- `verification_steps`, `rollback_steps`, `upgrade_path`, `mitigation`, and `references` are now persisted end-to-end (SQLite schema → repository lookup → orchestrator output) instead of being silently dropped between the seed data and the final API response.
+- `patch_found` — read by the report generator to decide whether to include remediation guidance for a finding — is now preserved through orchestration. Previously it was dropped during result normalization, so every generated report silently omitted patch guidance for every finding regardless of whether one was actually found.
+- Manual patch submission (`POST /api/patch/add`) is now functional. A missing entry in the repository's source allow-list meant every manual submission was silently rejected, while the endpoint itself reported success regardless.
+
+**Self-Learning CVE → Script Mapping** (`app/scanner/cve_db.py`)
+- Gemini's reasoning for a script selection is now correctly saved when an existing mapping (e.g. one auto-seeded from NSE filenames) gets upgraded by a later AI answer. Previously this was only persisted on the very first insert of a brand-new CVE and silently dropped on every subsequent update — the much more common path in practice.
+- The confirmation trace now surfaces that reasoning when a learned answer is reused, instead of showing a bare "DB hit" with no explanation of why.
+
+**Confirmation Table UI**
+- The live per-port confirmation table now displays the NSE script and its evidence *before* the confirmed / not-confirmed verdict, both spatially (column order) and temporally (the verdict badge appears after a brief pause, once the proof is already visible) — so confirmation reads as a conclusion, not a simultaneous claim.
+- A port with multiple candidate CVEs now exposes all of them behind a single collapsible toggle (closed by default), rather than showing only the strongest match. Since only one candidate per port is ever actually run through an NSE script, the rest are explicitly labeled "Not Actively Checked" instead of implying each one was individually confirmed.
+
+**Misc.**
+- Fixed a duplicate dictionary key in the misconfiguration explainer (`ftp` guidance) that was silently discarding part of its own advice text.
+
+---
+
 ## 📚 Research
 
 See [RESEARCH.md](RESEARCH.md) for research contributions and novelty analysis, experimental methodology, and Scopus publication readiness notes, and [RESEARCH_ASSESSMENT.md](RESEARCH_ASSESSMENT.md) for the detailed self-assessment.

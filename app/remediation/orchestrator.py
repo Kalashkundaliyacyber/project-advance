@@ -192,6 +192,7 @@ def resolve_patch_batch(vulnerabilities: list) -> list:
                 "confidence":    0,
                 "source":        "error",
                 "layer":         "error",
+                "patch_found":   False,
             }
         results.append(result)
 
@@ -304,6 +305,7 @@ def _normalize_output(
         "source":              result.get("source", "ai"),
         "provider":            result.get("provider") or result.get("engine", ""),
         "layer":               result.get("layer", ""),
+        "patch_found":         result.get("patch_found", True),
         "from_kb":             result.get("from_kb") or result.get("from_learning_kb", False),
         "from_cache":          (
             result.get("from_cache")

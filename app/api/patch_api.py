@@ -238,6 +238,25 @@ async def patch_add_endpoint(req: PatchAddRequest):
             source="manual",
             confidence=req.confidence,
         )
+        if not stored:
+            existing = patch_repository.lookup(cve_id, patch_data["product"])
+            logger.info(
+                "patch/add: manual patch for %s NOT stored — an existing entry "
+                "(confidence=%s) is equal or higher",
+                cve_id, existing.get("confidence") if existing else "?"
+            )
+            return {
+                "ok":      False,
+                "cve_id":  cve_id,
+                "stored":  None,
+                "existing": existing,
+                "message": (
+                    f"Patch for {cve_id} was NOT stored: an existing entry with "
+                    f"equal or higher confidence already exists. Increase "
+                    f"'confidence' above {existing.get('confidence') if existing else 'the current value'} "
+                    f"to override it."
+                ),
+            }
         logger.info(
             "patch/add: manually stored patch for %s vendor=%s os_keys=%s",
             cve_id, req.vendor, list(req.commands.keys())

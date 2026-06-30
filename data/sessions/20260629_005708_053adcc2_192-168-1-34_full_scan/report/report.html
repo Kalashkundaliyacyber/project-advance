@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ThreatWeave Security — Security Assessment Finding Report — 192.168.1.34</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+    background: #e6e9ef; padding: 30px 20px; color: #1e2a3a;
+    font-size: 14px; line-height: 1.55;
+}
+.report-page {
+    max-width: 1100px; margin: 0 auto 30px auto; background: white;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1); padding: 50px 45px;
+    page-break-after: always; border-radius: 4px;
+}
+.report-page:last-child { page-break-after: auto; }
+h1 { font-size: 28px; font-weight: 700; margin-bottom: 10px; color: #0b2b3b; }
+h2 { font-size: 20px; margin: 28px 0 12px 0; padding-bottom: 6px; border-bottom: 2px solid #ccd7e4; color: #1c4e6e; }
+h3 { font-size: 17px; margin: 20px 0 10px; color: #2c5a7a; }
+h4 { font-size: 14px; margin: 14px 0 6px; color: #2c5a7a; }
+p { margin-bottom: 8px; }
+ul { margin-left: 22px; margin-top: 6px; margin-bottom: 8px; }
+li { margin-bottom: 6px; }
+table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+th { background: #f0f4f8; padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #bdc4cf; }
+td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+.severity-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: bold;
+    font-size: 12px; text-align: center; min-width: 80px;
+}
+.critical { background: #a61c1c; color: white; }
+.high { background: #e67e22; color: white; }
+.medium { background: #f1c40f; color: #1e2a3a; }
+.low { background: #2ecc71; color: white; }
+.info { background: #3498db; color: white; }
+.unknown { background: #8b949e; color: white; }
+.muted { color: #4a627a; font-size: 12px; }
+.vuln-card {
+    background: #fafcfd; border-left: 4px solid; margin: 22px 0; padding: 12px 20px;
+    border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.vuln-meta { font-size: 12.5px; color: #4a627a; margin: 4px 0; }
+.chart-bar-container { width: 100%; background: #edf2f7; border-radius: 8px; margin: 15px 0; padding: 4px; }
+.chart-bar { padding: 8px 12px; border-radius: 6px; color: white; font-weight: bold; margin: 5px 0; font-size: 13px; }
+.signature-line { margin: 30px 0 20px; border-top: 1px solid #aaa; width: 300px; padding-top: 8px; font-size: 12px; color: #555; }
+.footer-note { margin-top: 35px; font-size: 11px; text-align: center; color: #6c86a3; border-top: 1px solid #ddd; padding-top: 18px; }
+.thankyou { text-align: center; margin-top: 160px; font-size: 18px; color: #2c5a7a; }
+.code-inline { background: #f4f4f4; border: 1px solid #ddd; border-radius: 4px; padding: 1px 6px; font-family: 'Courier New', monospace; font-size: 12.5px; }
+.placeholder { color: #9aa7b5; font-style: italic; }
+@media print {
+    body { background: white; padding: 0; margin: 0; }
+    .report-page { box-shadow: none; padding: 0.75in; margin: 0; page-break-after: always; }
+    .severity-badge { border: 1px solid #ccc; }
+}
+</style>
+</head>
+<body>
+<div class="report-page">
+  <div style="text-align: center; margin-top: 110px;">
+    <h1 style="font-size: 36px;">Lab Assessment</h1>
+    <p style="font-size: 24px; margin: 20px 0;">Security Assessment Finding Report</p>
+    <p class="muted" style="font-size:14px;margin-bottom:10px;">Engagement: Lab Assessment</p>
+    <p style="margin-top: 50px;">June 29, 2026</p>
+    <p class="muted" style="margin-top:6px;">Target Scope: 192.168.1.34 &nbsp;|&nbsp; Assessment Type: Full Scan</p>
+    <p style="margin-top: 90px; font-size: 12px; color: #4a627a;">Confidential – Proprietary Information</p>
+    <p style="margin-top: 6px; font-size: 12px; color: #4a627a;">Prepared by ThreatWeave Security</p>
+  </div>
+</div>
+<div class="report-page">
+  <h2>1. Confidentiality Statement</h2>
+  <p>This document is the exclusive property of Lab Assessment and ThreatWeave Security (TWS). This document
+  contains proprietary and confidential information. Duplication, redistribution, or use, in whole or in part,
+  in any form, requires consent of both Lab Assessment and TWS. TWS may share this document
+  with auditors under non-disclosure agreements to demonstrate security assessment compliance.</p>
+
+  <h2>2. Disclaimer</h2>
+  <p>A security assessment is considered a snapshot in time. The findings and recommendations in this report
+  reflect the information gathered during the assessment window (June 29, 2026) and do not account for
+  any changes or modifications made outside of that period. Time-limited engagements do not allow for a full
+  evaluation of all security controls. TWS prioritized this assessment to identify the weakest security
+  controls an attacker would be likely to exploit. TWS recommends conducting similar assessments on a
+  recurring (e.g. quarterly or annual) basis using internal or third-party assessors.</p>
+
+  <h2>3. Contact Information</h2>
+  <table>
+    <tr><th>Name</th><th>Title</th><th>Contact Information</th></tr>
+    <tr><td><span class="placeholder">[Client Contact Name]</span></td><td><span class="placeholder">[Title]</span></td><td><span class="placeholder">[Phone] / [Email]</span></td></tr>
+    <tr><td>ThreatWeave Security Team</td><td>Security Analyst</td><td>Email: security@threatweave.local</td></tr>
+  </table>
+  <p class="muted">The client contact row above is intentionally left blank for the engagement owner to complete.</p>
+</div>
+<div class="report-page">
+  <h2>4. Assessment Overview</h2>
+  <p>On June 29, 2026, TWS used the ThreatWeave Security platform to evaluate the security posture
+  of Lab Assessment's infrastructure against current industry best practices, including a
+  Full Scan of the in-scope target(s). Methodology is based on the NIST SP 800-115 Technical Guide
+  to Information Security Testing and Assessment, the OWASP Testing Guide, and ThreatWeave Security's own automated
+  testing framework. Phases of the assessment include the following:</p>
+  <ul>
+    <li><strong>Planning</strong> – Assessment goals, scope, and rules of engagement are established.</li>
+    <li><strong>Discovery</strong> – Scanning and enumeration are performed to identify potential vulnerabilities and weak areas.</li>
+    <li><strong>Correlation</strong> – Discovered service versions are matched against known CVE databases and scored for risk.</li>
+    <li><strong>Reporting</strong> – All findings, version intelligence, and remediation guidance are documented in this report.</li>
+  </ul>
+
+  <h2>5. Assessment Components</h2>
+  <p><strong>Full Scan</strong> – this assessment used an automated security scan of the in-scope target(s). The assessment lasted
+  approximately 25 min 37 sec and covered 1 live host(s).</p>
+
+  <h2>6. Findings Severity Classification</h2>
+  <table>
+    <tr><th>Severity</th><th>CVSS v3 Score Range</th><th>Definition</th></tr>
+    <tr><td><span class="severity-badge critical">Critical</span></td><td>9.0 – 10.0</td><td>Exploitation is straightforward and usually results in system-level compromise. Immediate action required.</td></tr>
+    <tr><td><span class="severity-badge high">High</span></td><td>7.0 – 8.9</td><td>Exploitation is more difficult but could cause elevated privileges and potential loss of data or downtime.</td></tr>
+    <tr><td><span class="severity-badge medium">Medium</span></td><td>4.0 – 6.9</td><td>Vulnerabilities exist but are not easily exploitable or require extra steps. Patch after high-priority issues.</td></tr>
+    <tr><td><span class="severity-badge low">Low</span></td><td>0.1 – 3.9</td><td>Non-exploitable but would reduce attack surface. Patch during the next maintenance window.</td></tr>
+    <tr><td><span class="severity-badge info">Informational</span></td><td>N/A</td><td>No vulnerability exists. Additional information about strong controls or documentation.</td></tr>
+  </table>
+  <p class="muted">Note: the per-finding risk level shown elsewhere in this report (Sections 9–10) is
+  ThreatWeave Security's composite risk score — CVSS (40%), service criticality (25%), version currency (20%), and
+  exposure (15%) — rather than raw CVSS alone, and may therefore differ slightly from the CVE's own CVSS-based
+  severity shown on each finding card.</p>
+</div>
+<div class="report-page">
+  <h2>7. Scope</h2>
+  <table>
+    <tr><th>Assessment</th><th>Scope Details</th></tr>
+    <tr><td>Full Scan</td><td>192.168.1.34</td></tr>
+  </table>
+  <h3>7.1 Scope Exclusion</h3>
+  <p>Per ThreatWeave Security's standard safety policy, denial-of-service style attacks and live exploitation were not
+  performed; this assessment is limited to non-intrusive discovery, version detection, and vulnerability
+  correlation.</p>
+  <h3>7.2 Client Allowances</h3>
+  <p>No special allowances (e.g. credentials, IP whitelisting) were provided for this assessment.</p>
+
+  <h2>8. Executive Summary</h2>
+  <p>Scan complete. Found 1 live host(s) with 30 open port(s). 9 CRITICAL finding(s) — immediate action required. 5 HIGH finding(s) — remediation strongly recommended.</p>
+  <p>Overall risk for this assessment is rated <strong>CRITICAL</strong>, based on
+  30 open service(s) across 1 host(s) and 69 matched CVE(s).</p>
+  <p class="muted">Narrative summary generated using Rule Based Fallback analysis.</p>
+
+  <h3>8.1 Attack Summary</h3>
+  <p>The following table illustrates how the highest-severity findings could be chained together by an attacker,
+  step by step, based on the discovered weaknesses.</p>
+  <table>
+    <tr><th>Step</th><th>Action</th><th>Finding / Recommendation</th></tr>
+    <tr><td>1</td><td>Service enumeration identified ftp (vsftpd 2.3.4) open on port 21/tcp of 192.168.1.34.</td><td>CVE-2011-2523 — CVSS 10.0 (Critical). Remove vsftpd 2.3.4 immediately. Deploy vsftpd 3.0.5+.</td></tr><tr><td>2</td><td>Service enumeration identified rpcbind (2) open on port 111/tcp of 192.168.1.34.</td><td>CVE-2011-2523 — CVSS 10.0 (Critical). Remove vsftpd 2.3.4 immediately. Deploy vsftpd 3.0.5+.</td></tr><tr><td>3</td><td>Service enumeration identified rpcbind (2) open on port 111/tcp of 192.168.1.34.</td><td>CVE-2020-0796 — CVSS 10.0 (Critical). Apply KB4551762. Disable SMBv3 compression as interim mitigation.</td></tr><tr><td>4</td><td>Service enumeration identified rpcbind (2) open on port 111/tcp of 192.168.1.34.</td><td>CVE-2011-4862 — CVSS 10.0 (Critical). Disable telnet immediately. Replace with SSH.</td></tr><tr><td>5</td><td>Service enumeration identified rpcbind (2) open on port 111/tcp of 192.168.1.34.</td><td>CVE-2011-3556 — CVSS 10.0 (Critical). Disable RMI registry. Restrict port 1099. Upgrade to Java 7u2+.</td></tr><tr><td>6</td><td>Service enumeration identified java-rmi (GNU Classpath grmiregistry) open on port 1099/tcp of 192.168.1.34.</td><td>CVE-2011-3556 — CVSS 10.0 (Critical). Disable RMI registry. Restrict port 1099 with firewall. Upgrade to Java 7u2+.</td></tr><tr><td>7</td><td>Service enumeration identified nfs (2-4) open on port 2049/tcp of 192.168.1.34.</td><td>CVE-2020-0796 — CVSS 10.0 (Critical). Apply KB4551762. Disable SMBv3 compression as interim mitigation.</td></tr><tr><td>8</td><td>Service enumeration identified nfs (2-4) open on port 2049/tcp of 192.168.1.34.</td><td>CVE-2011-4862 — CVSS 10.0 (Critical). Disable telnet immediately. Replace with SSH.</td></tr>
+  </table>
+
+  <h3>8.2 Security Strengths</h3>
+  <ul><li>No significant strengths were identified given the number and severity of issues discovered during this assessment. Logging and alerting posture could not be evaluated as part of this engagement.</li></ul>
+
+  <h3>8.3 Security Weaknesses</h3>
+  <ul><li><strong>Outdated or Unsupported Software</strong> — the following service version(s) are outdated or no longer supported by their vendor: Apache Tomcat/Coyote JSP engine 1.1, Apache httpd 2.2.8, ISC BIND 9.4.2, MySQL 5.0.51a-3ubuntu5, OpenSSH 4.7p1 Debian 8ubuntu1, ProFTPD 1.3.1, and 1 more.</li><li><strong>Clear-text Protocols</strong> — ftp, telnet transmit credentials and/or data without encryption.</li><li><strong>Authentication Weaknesses</strong> — one or more findings on distccd, ftp, java-rmi, mountd, nfs, nlockmgr, rpcbind, status indicate missing or bypassable authentication.</li><li><strong>Large Attack Surface</strong> — 30 open services were detected, which increases the overall attack surface and should be reviewed for necessity.</li></ul>
+</div>
+<div class="report-page">
+  <h2>9. Vulnerabilities by Impact</h2>
+  <p>Figure 1 illustrates the open services found by impact, based on ThreatWeave Security's composite risk score
+  (CVSS, service criticality, version currency, and exposure).</p>
+  <div style="margin: 30px 0;">
+    <div class="chart-bar-container"><div class="chart-bar" style="background:#a61c1c;color:#ffffff;width:30%;">Critical (9 findings) – 30%</div><div class="chart-bar" style="background:#e67e22;color:#ffffff;width:17%;">High (5 findings) – 17%</div><div class="chart-bar" style="background:#f1c40f;color:#1e2a3a;width:23%;">Medium (7 findings) – 23%</div><div class="chart-bar" style="background:#2ecc71;color:#ffffff;width:30%;">Low (9 findings) – 30%</div></div>
+    <p class="muted"><em>Figure 1: Distribution of findings by severity level (30 total)</em></p>
+  </div>
+  <p>Critical-severity findings dominate the risk landscape, representing 9 of 30 total finding(s).</p>
+</div>
+<div class="report-page"><h2>10. Full Scan Findings</h2><p class="muted">Showing the top 25 of 69 total matched CVEs, ordered by CVSS score. The complete list is provided in Appendix B.</p><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.1 CVE-2011-2523 — ftp (vsftpd 2.3.4)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> vsFTPd 2.3.4 backdoor — supply-chain compromise allows unauthenticated RCE via port 6200.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:21/tcp</p>
+  <p><strong>References:</strong> CVE-2011-2523 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2011-2523">https://nvd.nist.gov/vuln/detail/CVE-2011-2523</a></p>
+  <p><strong>Remediation:</strong> Remove vsftpd 2.3.4 immediately. Deploy vsftpd 3.0.5+.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.2 CVE-2011-2523 — rpcbind (2)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> Backdoor in vsftpd 2.3.4 — supply-chain compromise.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:111/tcp</p>
+  <p><strong>References:</strong> CVE-2011-2523 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2011-2523">https://nvd.nist.gov/vuln/detail/CVE-2011-2523</a></p>
+  <p><strong>Remediation:</strong> Remove vsftpd 2.3.4 immediately. Deploy vsftpd 3.0.5+.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.3 CVE-2020-0796 — rpcbind (2)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:111/tcp</p>
+  <p><strong>References:</strong> CVE-2020-0796 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2020-0796">https://nvd.nist.gov/vuln/detail/CVE-2020-0796</a></p>
+  <p><strong>Remediation:</strong> Apply KB4551762. Disable SMBv3 compression as interim mitigation.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.4 CVE-2011-4862 — rpcbind (2)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> Buffer overflow in BSD telnetd — pre-auth RCE.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:111/tcp</p>
+  <p><strong>References:</strong> CVE-2011-4862 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2011-4862">https://nvd.nist.gov/vuln/detail/CVE-2011-4862</a></p>
+  <p><strong>Remediation:</strong> Disable telnet immediately. Replace with SSH.</p>
+</div></div>
+<div class="report-page"><h3>10. Full Scan Findings (continued)</h3><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.5 CVE-2011-3556 — rpcbind (2)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> Java RMI server allows unauthenticated remote code execution.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:111/tcp</p>
+  <p><strong>References:</strong> CVE-2011-3556 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2011-3556">https://nvd.nist.gov/vuln/detail/CVE-2011-3556</a></p>
+  <p><strong>Remediation:</strong> Disable RMI registry. Restrict port 1099. Upgrade to Java 7u2+.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.6 CVE-2011-3556 — java-rmi (GNU Classpath grmiregistry)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> Java RMI registry default configuration allows remote classloading → unauthenticated RCE.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:1099/tcp</p>
+  <p><strong>References:</strong> CVE-2011-3556 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2011-3556">https://nvd.nist.gov/vuln/detail/CVE-2011-3556</a></p>
+  <p><strong>Remediation:</strong> Disable RMI registry. Restrict port 1099 with firewall. Upgrade to Java 7u2+.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.7 CVE-2020-0796 — nfs (2-4)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:2049/tcp</p>
+  <p><strong>References:</strong> CVE-2020-0796 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2020-0796">https://nvd.nist.gov/vuln/detail/CVE-2020-0796</a></p>
+  <p><strong>Remediation:</strong> Apply KB4551762. Disable SMBv3 compression as interim mitigation.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.8 CVE-2011-4862 — nfs (2-4)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> Buffer overflow in BSD telnetd — pre-auth RCE.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:2049/tcp</p>
+  <p><strong>References:</strong> CVE-2011-4862 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2011-4862">https://nvd.nist.gov/vuln/detail/CVE-2011-4862</a></p>
+  <p><strong>Remediation:</strong> Disable telnet immediately. Replace with SSH.</p>
+</div></div>
+<div class="report-page"><h3>10. Full Scan Findings (continued)</h3><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.9 CVE-2011-3556 — nfs (2-4)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> Java RMI server allows unauthenticated remote code execution.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:2049/tcp</p>
+  <p><strong>References:</strong> CVE-2011-3556 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2011-3556">https://nvd.nist.gov/vuln/detail/CVE-2011-3556</a></p>
+  <p><strong>Remediation:</strong> Disable RMI registry. Restrict port 1099. Upgrade to Java 7u2+.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.10 CVE-2010-2075 — irc (UnrealIRCd)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> Looks like trojaned version of unrealircd. See http://seclists.org/fulldisclosure/2010/Jun/277</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:6667/tcp</p>
+  <p><strong>References:</strong> CVE-2010-2075 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2010-2075">https://nvd.nist.gov/vuln/detail/CVE-2010-2075</a></p>
+  <p><strong>Remediation:</strong> See https://nvd.nist.gov/vuln/detail/CVE-2010-2075</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.11 CVE-2020-0796 — nlockmgr (1-4)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:35949/tcp</p>
+  <p><strong>References:</strong> CVE-2020-0796 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2020-0796">https://nvd.nist.gov/vuln/detail/CVE-2020-0796</a></p>
+  <p><strong>Remediation:</strong> Apply KB4551762. Disable SMBv3 compression as interim mitigation.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.12 CVE-2011-4862 — nlockmgr (1-4)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> Buffer overflow in BSD telnetd — pre-auth RCE.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:35949/tcp</p>
+  <p><strong>References:</strong> CVE-2011-4862 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2011-4862">https://nvd.nist.gov/vuln/detail/CVE-2011-4862</a></p>
+  <p><strong>Remediation:</strong> Disable telnet immediately. Replace with SSH.</p>
+</div></div>
+<div class="report-page"><h3>10. Full Scan Findings (continued)</h3><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.13 CVE-2011-3556 — nlockmgr (1-4)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> Java RMI server allows unauthenticated remote code execution.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:35949/tcp</p>
+  <p><strong>References:</strong> CVE-2011-3556 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2011-3556">https://nvd.nist.gov/vuln/detail/CVE-2011-3556</a></p>
+  <p><strong>Remediation:</strong> Disable RMI registry. Restrict port 1099. Upgrade to Java 7u2+.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.14 CVE-2020-0796 — mountd (1-3)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:39992/tcp</p>
+  <p><strong>References:</strong> CVE-2020-0796 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2020-0796">https://nvd.nist.gov/vuln/detail/CVE-2020-0796</a></p>
+  <p><strong>Remediation:</strong> Apply KB4551762. Disable SMBv3 compression as interim mitigation.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.15 CVE-2011-4862 — mountd (1-3)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> Buffer overflow in BSD telnetd — pre-auth RCE.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:39992/tcp</p>
+  <p><strong>References:</strong> CVE-2011-4862 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2011-4862">https://nvd.nist.gov/vuln/detail/CVE-2011-4862</a></p>
+  <p><strong>Remediation:</strong> Disable telnet immediately. Replace with SSH.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.16 CVE-2011-3556 — mountd (1-3)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> Java RMI server allows unauthenticated remote code execution.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:39992/tcp</p>
+  <p><strong>References:</strong> CVE-2011-3556 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2011-3556">https://nvd.nist.gov/vuln/detail/CVE-2011-3556</a></p>
+  <p><strong>Remediation:</strong> Disable RMI registry. Restrict port 1099. Upgrade to Java 7u2+.</p>
+</div></div>
+<div class="report-page"><h3>10. Full Scan Findings (continued)</h3><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.17 CVE-2020-0796 — status (1)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:50010/tcp</p>
+  <p><strong>References:</strong> CVE-2020-0796 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2020-0796">https://nvd.nist.gov/vuln/detail/CVE-2020-0796</a></p>
+  <p><strong>Remediation:</strong> Apply KB4551762. Disable SMBv3 compression as interim mitigation.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.18 CVE-2011-4862 — status (1)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> Buffer overflow in BSD telnetd — pre-auth RCE.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:50010/tcp</p>
+  <p><strong>References:</strong> CVE-2011-4862 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2011-4862">https://nvd.nist.gov/vuln/detail/CVE-2011-4862</a></p>
+  <p><strong>Remediation:</strong> Disable telnet immediately. Replace with SSH.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.19 CVE-2011-3556 — status (1)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> Java RMI server allows unauthenticated remote code execution.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:50010/tcp</p>
+  <p><strong>References:</strong> CVE-2011-3556 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2011-3556">https://nvd.nist.gov/vuln/detail/CVE-2011-3556</a></p>
+  <p><strong>Remediation:</strong> Disable RMI registry. Restrict port 1099. Upgrade to Java 7u2+.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.20 CVE-2011-3556 — java-rmi (GNU Classpath grmiregistry)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 10.0/10</span></p>
+  <p><strong>Description:</strong> Java RMI registry default configuration allows remote classloading → unauthenticated RCE.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:52511/tcp</p>
+  <p><strong>References:</strong> CVE-2011-3556 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2011-3556">https://nvd.nist.gov/vuln/detail/CVE-2011-3556</a></p>
+  <p><strong>Remediation:</strong> Disable RMI registry. Restrict port 1099 with firewall. Upgrade to Java 7u2+.</p>
+</div></div>
+<div class="report-page"><h3>10. Full Scan Findings (continued)</h3><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.21 CVE-2017-7679 — http (Apache httpd 2.2.8)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 9.8/10</span></p>
+  <p><strong>Description:</strong> mod_mime buffer overread in Apache 2.2.x — allows remote code execution.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:80/tcp</p>
+  <p><strong>References:</strong> CVE-2017-7679 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2017-7679">https://nvd.nist.gov/vuln/detail/CVE-2017-7679</a></p>
+  <p><strong>Remediation:</strong> Apache 2.2 is EOL. Upgrade to Apache 2.4.26 or later immediately.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.22 CVE-2021-26855 — http (Apache httpd 2.2.8)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 9.8/10</span></p>
+  <p><strong>Description:</strong> ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:80/tcp</p>
+  <p><strong>References:</strong> CVE-2021-26855 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2021-26855">https://nvd.nist.gov/vuln/detail/CVE-2021-26855</a></p>
+  <p><strong>Remediation:</strong> Apply Microsoft Exchange cumulative update patches from March 2021.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.23 CVE-2017-7679 — rpcbind (2)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 9.8/10</span></p>
+  <p><strong>Description:</strong> mod_mime buffer overread in Apache 2.2.x — allows remote code execution.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:111/tcp</p>
+  <p><strong>References:</strong> CVE-2017-7679 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2017-7679">https://nvd.nist.gov/vuln/detail/CVE-2017-7679</a></p>
+  <p><strong>Remediation:</strong> Apache 2.2 is EOL. Upgrade to Apache 2.4.26 or later immediately.</p>
+</div><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.24 CVE-2021-41773 — rpcbind (2)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 9.8/10</span></p>
+  <p><strong>Description:</strong> Path traversal and RCE in Apache 2.4.49. Files readable outside docroot.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:111/tcp</p>
+  <p><strong>References:</strong> CVE-2021-41773 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2021-41773">https://nvd.nist.gov/vuln/detail/CVE-2021-41773</a></p>
+  <p><strong>Remediation:</strong> Upgrade to Apache 2.4.51 or later immediately.</p>
+</div></div>
+<div class="report-page"><h3>10. Full Scan Findings (continued)</h3><div class="vuln-card" style="border-left-color: #a61c1c;">
+  <h4>10.25 CVE-2021-42013 — rpcbind (2)</h4>
+  <p><span class="severity-badge critical">Critical</span> <span class="vuln-meta">CVSS 9.8/10</span></p>
+  <p><strong>Description:</strong> Incomplete fix for CVE-2021-41773 in Apache 2.4.50.</p>
+  <p><strong>Affected System:</strong> 192.168.1.34:111/tcp</p>
+  <p><strong>References:</strong> CVE-2021-42013 — <a href="https://nvd.nist.gov/vuln/detail/CVE-2021-42013">https://nvd.nist.gov/vuln/detail/CVE-2021-42013</a></p>
+  <p><strong>Remediation:</strong> Upgrade to Apache 2.4.51 or later.</p>
+</div></div>
+<div class="report-page">
+  <h2>Appendix A — Full Port &amp; Service Inventory</h2>
+  <p>The following table lists every open service observed during this assessment, including those without a
+  matched CVE, for completeness.</p>
+  <table>
+    <tr><th>Host</th><th>Port</th><th>Service</th><th>Version</th><th>Version Status</th>
+        <th>State</th><th>Risk</th><th>Score</th><th>CVEs</th></tr>
+    <tr><td>192.168.1.34</td><td>21/tcp</td><td>ftp</td><td>vsftpd 2.3.4</td><td>unsupported</td><td>open</td><td><span class="severity-badge critical">Critical</span></td><td style='font-weight:700;color:#a61c1c'>8.5</td><td>2</td></tr><tr><td>192.168.1.34</td><td>22/tcp</td><td>ssh</td><td>OpenSSH 4.7p1 Debian 8ubuntu1</td><td>outdated</td><td>open</td><td><span class="severity-badge medium">Medium</span></td><td style='font-weight:700;color:#f1c40f'>4.0</td><td>0</td></tr><tr><td>192.168.1.34</td><td>23/tcp</td><td>telnet</td><td>Linux telnetd</td><td>unknown</td><td>open</td><td><span class="severity-badge medium">Medium</span></td><td style='font-weight:700;color:#f1c40f'>4.7</td><td>0</td></tr><tr><td>192.168.1.34</td><td>25/tcp</td><td>smtp</td><td>Postfix smtpd</td><td>unknown</td><td>open</td><td><span class="severity-badge low">Low</span></td><td style='font-weight:700;color:#2ecc71'>3.3</td><td>2</td></tr><tr><td>192.168.1.34</td><td>53/tcp</td><td>domain</td><td>ISC BIND 9.4.2</td><td>outdated</td><td>open</td><td><span class="severity-badge medium">Medium</span></td><td style='font-weight:700;color:#f1c40f'>4.0</td><td>0</td></tr><tr><td>192.168.1.34</td><td>80/tcp</td><td>http</td><td>Apache httpd 2.2.8</td><td>unsupported</td><td>open</td><td><span class="severity-badge high">High</span></td><td style='font-weight:700;color:#e67e22'>6.5</td><td>5</td></tr><tr><td>192.168.1.34</td><td>111/tcp</td><td>rpcbind</td><td>2</td><td>unknown</td><td>open</td><td><span class="severity-badge critical">Critical</span></td><td style='font-weight:700;color:#a61c1c'>8.5</td><td>17</td></tr><tr><td>192.168.1.34</td><td>139/tcp</td><td>netbios-ssn</td><td>Samba smbd 3.X - 4.X</td><td>unknown</td><td>open</td><td><span class="severity-badge high">High</span></td><td style='font-weight:700;color:#e67e22'>6.5</td><td>1</td></tr><tr><td>192.168.1.34</td><td>445/tcp</td><td>netbios-ssn</td><td>Samba smbd 3.X - 4.X</td><td>unknown</td><td>open</td><td><span class="severity-badge high">High</span></td><td style='font-weight:700;color:#e67e22'>6.5</td><td>1</td></tr><tr><td>192.168.1.34</td><td>512/tcp</td><td>exec</td><td>netkit-rsh rexecd</td><td>unknown</td><td>open</td><td><span class="severity-badge low">Low</span></td><td style='font-weight:700;color:#2ecc71'>2.7</td><td>0</td></tr><tr><td>192.168.1.34</td><td>513/tcp</td><td>login</td><td>—</td><td>unknown</td><td>open</td><td><span class="severity-badge low">Low</span></td><td style='font-weight:700;color:#2ecc71'>2.7</td><td>0</td></tr><tr><td>192.168.1.34</td><td>514/tcp</td><td>shell</td><td>Netapp ONTAP rshd</td><td>unknown</td><td>open</td><td><span class="severity-badge low">Low</span></td><td style='font-weight:700;color:#2ecc71'>2.7</td><td>0</td></tr><tr><td>192.168.1.34</td><td>1099/tcp</td><td>java-rmi</td><td>GNU Classpath grmiregistry</td><td>unknown</td><td>open</td><td><span class="severity-badge critical">Critical</span></td><td style='font-weight:700;color:#a61c1c'>8.5</td><td>1</td></tr><tr><td>192.168.1.34</td><td>1524/tcp</td><td>bindshell</td><td>Metasploitable root shell</td><td>unknown</td><td>open</td><td><span class="severity-badge low">Low</span></td><td style='font-weight:700;color:#2ecc71'>2.7</td><td>0</td></tr><tr><td>192.168.1.34</td><td>2049/tcp</td><td>nfs</td><td>2-4</td><td>unknown</td><td>open</td><td><span class="severity-badge critical">Critical</span></td><td style='font-weight:700;color:#a61c1c'>8.5</td><td>7</td></tr><tr><td>192.168.1.34</td><td>2121/tcp</td><td>ftp</td><td>ProFTPD 1.3.1</td><td>outdated</td><td>open</td><td><span class="severity-badge medium">Medium</span></td><td style='font-weight:700;color:#f1c40f'>4.0</td><td>0</td></tr><tr><td>192.168.1.34</td><td>3306/tcp</td><td>mysql</td><td>MySQL 5.0.51a-3ubuntu5</td><td>outdated</td><td>open</td><td><span class="severity-badge medium">Medium</span></td><td style='font-weight:700;color:#f1c40f'>4.2</td><td>1</td></tr><tr><td>192.168.1.34</td><td>3632/tcp</td><td>distccd</td><td>distccd v1</td><td>unknown</td><td>open</td><td><span class="severity-badge high">High</span></td><td style='font-weight:700;color:#e67e22'>6.5</td><td>1</td></tr><tr><td>192.168.1.34</td><td>5432/tcp</td><td>postgresql</td><td>PostgreSQL DB 8.3.0 - 8.3.7</td><td>unknown</td><td>open</td><td><span class="severity-badge medium">Medium</span></td><td style='font-weight:700;color:#f1c40f'>4.1</td><td>1</td></tr><tr><td>192.168.1.34</td><td>5900/tcp</td><td>vnc</td><td>VNC</td><td>unknown</td><td>open</td><td><span class="severity-badge medium">Medium</span></td><td style='font-weight:700;color:#f1c40f'>4.7</td><td>0</td></tr><tr><td>192.168.1.34</td><td>6000/tcp</td><td>X11</td><td>—</td><td>unknown</td><td>open</td><td><span class="severity-badge low">Low</span></td><td style='font-weight:700;color:#2ecc71'>2.7</td><td>0</td></tr><tr><td>192.168.1.34</td><td>6667/tcp</td><td>irc</td><td>UnrealIRCd</td><td>unknown</td><td>open</td><td><span class="severity-badge critical">Critical</span></td><td style='font-weight:700;color:#a61c1c'>8.5</td><td>1</td></tr><tr><td>192.168.1.34</td><td>6697/tcp</td><td>irc</td><td>UnrealIRCd</td><td>unknown</td><td>open</td><td><span class="severity-badge low">Low</span></td><td style='font-weight:700;color:#2ecc71'>2.7</td><td>0</td></tr><tr><td>192.168.1.34</td><td>8009/tcp</td><td>ajp13</td><td>Apache Jserv</td><td>unknown</td><td>open</td><td><span class="severity-badge low">Low</span></td><td style='font-weight:700;color:#2ecc71'>2.7</td><td>0</td></tr><tr><td>192.168.1.34</td><td>8180/tcp</td><td>http</td><td>Apache Tomcat/Coyote JSP engine 1.1</td><td>outdated</td><td>open</td><td><span class="severity-badge high">High</span></td><td style='font-weight:700;color:#e67e22'>6.5</td><td>3</td></tr><tr><td>192.168.1.34</td><td>8787/tcp</td><td>drb</td><td>Ruby DRb RMI</td><td>unknown</td><td>open</td><td><span class="severity-badge low">Low</span></td><td style='font-weight:700;color:#2ecc71'>2.7</td><td>0</td></tr><tr><td>192.168.1.34</td><td>35949/tcp</td><td>nlockmgr</td><td>1-4</td><td>unknown</td><td>open</td><td><span class="severity-badge critical">Critical</span></td><td style='font-weight:700;color:#a61c1c'>8.5</td><td>7</td></tr><tr><td>192.168.1.34</td><td>39992/tcp</td><td>mountd</td><td>1-3</td><td>unknown</td><td>open</td><td><span class="severity-badge critical">Critical</span></td><td style='font-weight:700;color:#a61c1c'>8.5</td><td>7</td></tr><tr><td>192.168.1.34</td><td>50010/tcp</td><td>status</td><td>1</td><td>unknown</td><td>open</td><td><span class="severity-badge critical">Critical</span></td><td style='font-weight:700;color:#a61c1c'>8.5</td><td>11</td></tr><tr><td>192.168.1.34</td><td>52511/tcp</td><td>java-rmi</td><td>GNU Classpath grmiregistry</td><td>unknown</td><td>open</td><td><span class="severity-badge critical">Critical</span></td><td style='font-weight:700;color:#a61c1c'>8.5</td><td>1</td></tr>
+  </table>
+</div>
+<div class="report-page">
+  <h2>Appendix B — CVE Listing (69 total matched)</h2>
+  <p class="muted">Showing the top 60 of 69 matched CVEs, ordered by CVSS score, to keep this report to a manageable length. The complete machine-readable list is retained with the scan session and can be exported on request.</p>
+  <table>
+    <tr><th>CVE ID</th><th>Host:Port</th><th>Service</th><th>CVSS</th><th>Severity</th><th>Description</th></tr>
+    <tr><td>CVE-2011-2523</td><td>192.168.1.34:21</td><td>ftp</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>vsFTPd 2.3.4 backdoor — supply-chain compromise allows unauthenticated RCE via port 6200.</td></tr><tr><td>CVE-2011-2523</td><td>192.168.1.34:111</td><td>rpcbind</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>Backdoor in vsftpd 2.3.4 — supply-chain compromise.</td></tr><tr><td>CVE-2020-0796</td><td>192.168.1.34:111</td><td>rpcbind</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</td></tr><tr><td>CVE-2011-4862</td><td>192.168.1.34:111</td><td>rpcbind</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>Buffer overflow in BSD telnetd — pre-auth RCE.</td></tr><tr><td>CVE-2011-3556</td><td>192.168.1.34:111</td><td>rpcbind</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>Java RMI server allows unauthenticated remote code execution.</td></tr><tr><td>CVE-2011-3556</td><td>192.168.1.34:1099</td><td>java-rmi</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>Java RMI registry default configuration allows remote classloading → unauthenticated RCE.</td></tr><tr><td>CVE-2020-0796</td><td>192.168.1.34:2049</td><td>nfs</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</td></tr><tr><td>CVE-2011-4862</td><td>192.168.1.34:2049</td><td>nfs</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>Buffer overflow in BSD telnetd — pre-auth RCE.</td></tr><tr><td>CVE-2011-3556</td><td>192.168.1.34:2049</td><td>nfs</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>Java RMI server allows unauthenticated remote code execution.</td></tr><tr><td>CVE-2010-2075</td><td>192.168.1.34:6667</td><td>irc</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>Looks like trojaned version of unrealircd. See http://seclists.org/fulldisclosure/2010/Jun/277</td></tr><tr><td>CVE-2020-0796</td><td>192.168.1.34:35949</td><td>nlockmgr</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</td></tr><tr><td>CVE-2011-4862</td><td>192.168.1.34:35949</td><td>nlockmgr</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>Buffer overflow in BSD telnetd — pre-auth RCE.</td></tr><tr><td>CVE-2011-3556</td><td>192.168.1.34:35949</td><td>nlockmgr</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>Java RMI server allows unauthenticated remote code execution.</td></tr><tr><td>CVE-2020-0796</td><td>192.168.1.34:39992</td><td>mountd</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</td></tr><tr><td>CVE-2011-4862</td><td>192.168.1.34:39992</td><td>mountd</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>Buffer overflow in BSD telnetd — pre-auth RCE.</td></tr><tr><td>CVE-2011-3556</td><td>192.168.1.34:39992</td><td>mountd</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>Java RMI server allows unauthenticated remote code execution.</td></tr><tr><td>CVE-2020-0796</td><td>192.168.1.34:50010</td><td>status</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>SMBGhost: SMBv3 buffer overflow, unauthenticated RCE on Windows 10/Server 2019.</td></tr><tr><td>CVE-2011-4862</td><td>192.168.1.34:50010</td><td>status</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>Buffer overflow in BSD telnetd — pre-auth RCE.</td></tr><tr><td>CVE-2011-3556</td><td>192.168.1.34:50010</td><td>status</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>Java RMI server allows unauthenticated remote code execution.</td></tr><tr><td>CVE-2011-3556</td><td>192.168.1.34:52511</td><td>java-rmi</td><td>10.0</td><td><span class="severity-badge critical">Critical</span></td><td>Java RMI registry default configuration allows remote classloading → unauthenticated RCE.</td></tr><tr><td>CVE-2017-7679</td><td>192.168.1.34:80</td><td>http</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>mod_mime buffer overread in Apache 2.2.x — allows remote code execution.</td></tr><tr><td>CVE-2021-26855</td><td>192.168.1.34:80</td><td>http</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</td></tr><tr><td>CVE-2017-7679</td><td>192.168.1.34:111</td><td>rpcbind</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>mod_mime buffer overread in Apache 2.2.x — allows remote code execution.</td></tr><tr><td>CVE-2021-41773</td><td>192.168.1.34:111</td><td>rpcbind</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>Path traversal and RCE in Apache 2.4.49. Files readable outside docroot.</td></tr><tr><td>CVE-2021-42013</td><td>192.168.1.34:111</td><td>rpcbind</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>Incomplete fix for CVE-2021-41773 in Apache 2.4.50.</td></tr><tr><td>CVE-2022-31813</td><td>192.168.1.34:111</td><td>rpcbind</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>HTTP Request Smuggling in Apache mod_proxy.</td></tr><tr><td>CVE-2018-1000861</td><td>192.168.1.34:111</td><td>rpcbind</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>Unauthenticated RCE in Jenkins via Stapler URL routing.</td></tr><tr><td>CVE-2017-0144</td><td>192.168.1.34:111</td><td>rpcbind</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>EternalBlue: SMBv1 remote code execution, exploited by WannaCry.</td></tr><tr><td>CVE-2019-0708</td><td>192.168.1.34:111</td><td>rpcbind</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>BlueKeep: pre-auth RCE in Windows RDP — wormable.</td></tr><tr><td>CVE-2019-1182</td><td>192.168.1.34:111</td><td>rpcbind</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>DejaBlue: second BlueKeep-class pre-auth RDP RCE.</td></tr><tr><td>CVE-2021-26855</td><td>192.168.1.34:111</td><td>rpcbind</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</td></tr><tr><td>CVE-2017-7494</td><td>192.168.1.34:139</td><td>netbios-ssn</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>SambaCry: remote code execution via writable share in Samba.</td></tr><tr><td>CVE-2017-7494</td><td>192.168.1.34:445</td><td>netbios-ssn</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>SambaCry: remote code execution via writable share in Samba.</td></tr><tr><td>CVE-2017-0144</td><td>192.168.1.34:2049</td><td>nfs</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>EternalBlue: SMBv1 remote code execution, exploited by WannaCry.</td></tr><tr><td>CVE-2019-0708</td><td>192.168.1.34:2049</td><td>nfs</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>BlueKeep: pre-auth RCE in Windows RDP — wormable.</td></tr><tr><td>CVE-2019-1182</td><td>192.168.1.34:2049</td><td>nfs</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>DejaBlue: second BlueKeep-class pre-auth RDP RCE.</td></tr><tr><td>CVE-2021-26855</td><td>192.168.1.34:2049</td><td>nfs</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</td></tr><tr><td>CVE-2021-26855</td><td>192.168.1.34:8180</td><td>http</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</td></tr><tr><td>CVE-2017-0144</td><td>192.168.1.34:35949</td><td>nlockmgr</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>EternalBlue: SMBv1 remote code execution, exploited by WannaCry.</td></tr><tr><td>CVE-2019-0708</td><td>192.168.1.34:35949</td><td>nlockmgr</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>BlueKeep: pre-auth RCE in Windows RDP — wormable.</td></tr><tr><td>CVE-2019-1182</td><td>192.168.1.34:35949</td><td>nlockmgr</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>DejaBlue: second BlueKeep-class pre-auth RDP RCE.</td></tr><tr><td>CVE-2021-26855</td><td>192.168.1.34:35949</td><td>nlockmgr</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</td></tr><tr><td>CVE-2017-0144</td><td>192.168.1.34:39992</td><td>mountd</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>EternalBlue: SMBv1 remote code execution, exploited by WannaCry.</td></tr><tr><td>CVE-2019-0708</td><td>192.168.1.34:39992</td><td>mountd</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>BlueKeep: pre-auth RCE in Windows RDP — wormable.</td></tr><tr><td>CVE-2019-1182</td><td>192.168.1.34:39992</td><td>mountd</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>DejaBlue: second BlueKeep-class pre-auth RDP RCE.</td></tr><tr><td>CVE-2021-26855</td><td>192.168.1.34:39992</td><td>mountd</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</td></tr><tr><td>CVE-2019-10211</td><td>192.168.1.34:50010</td><td>status</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>Arbitrary code execution in PostgreSQL via host connection parameter injection.</td></tr><tr><td>CVE-2017-0144</td><td>192.168.1.34:50010</td><td>status</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>EternalBlue: SMBv1 remote code execution, exploited by WannaCry.</td></tr><tr><td>CVE-2019-0708</td><td>192.168.1.34:50010</td><td>status</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>BlueKeep: pre-auth RCE in Windows RDP — wormable.</td></tr><tr><td>CVE-2019-1182</td><td>192.168.1.34:50010</td><td>status</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>DejaBlue: second BlueKeep-class pre-auth RDP RCE.</td></tr><tr><td>CVE-2021-26855</td><td>192.168.1.34:50010</td><td>status</td><td>9.8</td><td><span class="severity-badge critical">Critical</span></td><td>ProxyLogon: SSRF in Microsoft Exchange used for pre-auth RCE.</td></tr><tr><td>CVE-2004-2687</td><td>192.168.1.34:3632</td><td>distccd</td><td>9.3</td><td><span class="severity-badge critical">Critical</span></td><td>distcc daemon allows unauthenticated remote command execution. CVSSv2 9.3 HIGH.</td></tr><tr><td>CVE-2015-1427</td><td>192.168.1.34:50010</td><td>status</td><td>9.3</td><td><span class="severity-badge critical">Critical</span></td><td>Groovy sandbox escape in Elasticsearch allows unauthenticated OS command execution.</td></tr><tr><td>CVE-2011-3192</td><td>192.168.1.34:80</td><td>http</td><td>7.8</td><td><span class="severity-badge high">High</span></td><td>Apache 2.2 Range header DoS (Apache Killer). Server exhausted with overlapping ranges.</td></tr><tr><td>CVE-2011-3192</td><td>192.168.1.34:111</td><td>rpcbind</td><td>7.8</td><td><span class="severity-badge high">High</span></td><td>Apache 2.2 Range header DoS (Apache Killer). Server exhausted with overlapping ranges.</td></tr><tr><td>CVE-2021-23017</td><td>192.168.1.34:50010</td><td>status</td><td>7.7</td><td><span class="severity-badge high">High</span></td><td>Off-by-one in nginx DNS resolver allows heap write / RCE.</td></tr><tr><td>CVE-2007-6750</td><td>192.168.1.34:80</td><td>http</td><td>7.5</td><td><span class="severity-badge high">High</span></td><td>Slowloris DoS: partial HTTP requests keep connections open, exhausting server resources.</td></tr><tr><td>CVE-2017-9798</td><td>192.168.1.34:80</td><td>http</td><td>7.5</td><td><span class="severity-badge high">High</span></td><td>Optionsbleed — Apache HTTP OPTIONS method leaks data from server memory.</td></tr><tr><td>CVE-2017-9798</td><td>192.168.1.34:111</td><td>rpcbind</td><td>7.5</td><td><span class="severity-badge high">High</span></td><td>Optionsbleed — Apache HTTP OPTIONS method leaks data from server memory.</td></tr><tr><td>CVE-2015-8080</td><td>192.168.1.34:111</td><td>rpcbind</td><td>7.5</td><td><span class="severity-badge high">High</span></td><td>Integer overflow in Redis Lua scripting — DoS / RCE.</td></tr>
+  </table>
+</div>
+<div class="report-page">
+  <h2>11. Client Acknowledgment &amp; Sign-off</h2>
+  <p>By signing below, the client acknowledges receipt of this Security Assessment Finding Report and agrees to
+  review the findings, assess associated risks, and implement remediation actions as appropriate.</p>
+
+  <table style="margin-top: 40px;">
+    <tr><td style="border: none; width: 50%;"><strong>Client Representative Name:</strong><br><br>
+        <div style="border-bottom: 1px solid #000; width: 90%; margin-top: 10px;">&nbsp;</div></td>
+        <td style="border: none;"><strong>Title:</strong><br><br>
+        <div style="border-bottom: 1px solid #000; width: 90%; margin-top: 10px;">&nbsp;</div></td>
+    </tr>
+    <tr><td style="border: none;"><strong>Signature:</strong><br><br>
+        <div style="border-bottom: 1px solid #000; width: 90%; margin-top: 10px;">&nbsp;</div></td>
+        <td style="border: none;"><strong>Date:</strong><br><br>
+        <div style="border-bottom: 1px solid #000; width: 90%; margin-top: 10px;">&nbsp;</div></td>
+    </tr>
+    <tr><td colspan="2" style="border: none;"><strong>Comments / Observations:</strong><br><br>
+        <div style="border-bottom: 1px solid #000; width: 100%; margin-top: 10px; height: 60px;">&nbsp;</div></td>
+    </tr>
+  </table>
+
+  <div style="margin-top: 40px;">
+    <p><strong>For ThreatWeave Security:</strong></p>
+    <div style="margin-top: 20px;">
+      <div style="border-bottom: 1px solid #000; width: 250px;">&nbsp;</div>
+      <p style="margin-top: 5px;">Lead Security Analyst</p>
+      <p>June 29, 2026</p>
+    </div>
+  </div>
+
+  <div class="footer-note">This sign-off confirms that the report has been delivered and accepted for review.</div>
+</div>
+<div class="report-page">
+  <div class="thankyou">
+    <h1 style="font-size: 32px; margin-bottom: 30px;">Thank You</h1>
+    <p style="font-size: 16px; margin-bottom: 20px;">We appreciate the opportunity to assess your security posture.</p>
+    <p style="font-size: 14px; color: #4a627a;">ThreatWeave Security remains committed to helping you build a resilient and secure environment.</p>
+    <p style="margin-top: 50px; font-size: 12px;">For any questions or follow-up, please contact us at security@threatweave.local</p>
+    <p style="margin-top: 90px; font-style: italic; font-size: 12px;">— This report concludes the Security Assessment Finding Report —</p>
+  </div>
+  <div class="footer-note">Generated by ThreatWeave Security – Professional Security Assessment Platform &nbsp;|&nbsp; 2026-06-29 01:25</div>
+</div>
+</body>
+</html>

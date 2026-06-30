@@ -71,4 +71,12 @@ def _normalize(entry: dict) -> dict:
         "layer":           "repository",
         "ai_called":       False,
         "patch_found":     True,
+        "title":               entry.get("title", ""),
+        "upgrade_path":        entry.get("upgrade_path", ""),
+        "mitigation":          entry.get("mitigation", ""),
+        "patch_type":          entry.get("patch_type", "upgrade"),
+        "notes":               entry.get("notes", ""),
+        "verification_steps":  entry.get("verification_steps", []) or [],
+        "rollback_steps":      entry.get("rollback_steps", []) or [],
+        "references":          entry.get("references", []) or [],
     }

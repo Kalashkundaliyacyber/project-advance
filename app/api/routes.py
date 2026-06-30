@@ -26,7 +26,7 @@ from app.analysis.version_engine import analyze_versions
 from app.cve.mapper import map_cves
 from app.vuln.enrichment import enrich_with_nvd_sync
 from app.analysis.context_engine import analyze_context
-from app.analysis.risk_engine import calculate_risk
+from app.analysis.risk_engine import calculate_risk, _calculate_port_risk
 from app.recommendation.recommender import get_recommendation
 from app.explanation.explainer import generate_explanation
 from app.ai_analysis import analyze_scan, explain_cve, _rule_based_analyze
@@ -91,13 +91,16 @@ class ScanRequest(BaseModel):
 class ConfirmPortRequest(BaseModel):
     """Single-port NSE confirmation request — called sequentially from the
     frontend, one port at a time, to avoid parallel nmap overload."""
-    target:   str
-    port:     int
-    protocol: str  = "tcp"
-    service:  str  = ""
-    product:  str  = ""
-    version:  str  = ""
-    cves:     list = []   # list of CVE ID strings, e.g. ["CVE-2011-2523"]
+    target:     str
+    port:       int
+    protocol:   str  = "tcp"
+    service:    str  = ""
+    product:    str  = ""
+    version:    str  = ""
+    cves:       list = []   # list of CVE ID strings, e.g. ["CVE-2011-2523"]
+    session_id: str  = ""   # optional — when present, a CONFIRMED result is
+                             # persisted back into this session's stored scan
+                             # context, so /patch all and the risk score see it.
 
 class ChatRequest(BaseModel):
     message: str
@@ -639,7 +642,7 @@ async def _run_scan_pipeline(
             logger.warning("Failed to save scan context for %s: %s", session_id, e)
 
     # ── NSE confirmation: handled by the frontend now ──────────────────────
-    # The chatbot's "NSE Confirmation" table (statics/chatbot/scan.js,
+    # The chatbot's "NSE Confirmation" table (statics/js/chatbot.js,
     # _runSequentialConfirmation) drives confirmation itself — one targeted
     # nmap run per port via POST /api/scan/confirm-port, sequentially, with
     # a 400ms gap between ports. That fully replaces the old background
@@ -651,9 +654,9 @@ async def _run_scan_pipeline(
     #     sequential one, which is exactly the "don't run them all at once"
     #     problem the sequential table was built to avoid.
     #
-    # All that's left to do here is signal stream_end so the legacy SSE-based
-    # live table (statics/chatbot/scan.js, _renderLiveVulnTable) closes its
-    # EventSource cleanly instead of waiting on a timeout.
+    # All that's left to do here is signal stream_end so the progress
+    # EventSource (statics/js/chatbot.js, _startProgressPolling) closes
+    # cleanly instead of waiting on a timeout.
     try:
         from app.api.scan_control import scan_state as _ss_ref
         _ss_ref.broadcast_stream_end()
@@ -1063,6 +1066,62 @@ async def confirm_single_port(req: ConfirmPortRequest):
             record_scan_result(matched_cve, result["script_used"], result["vuln_status"])
     except Exception as _fb_err:
         logger.debug("Feedback update skipped: %s", _fb_err)
+
+    # Persist a CONFIRMED result back into this session's stored scan context.
+    # This is what /patch all, the risk score, and report exports actually
+    # read from — they're built from data captured BEFORE active confirmation
+    # ever ran, via static version-range matching alone. Most CVEs end up
+    # consistent either way, but backdoor-style findings (UnrealIRCd's
+    # trojaned source, vsftpd's supply-chain backdoor) often aren't
+    # version-gated at all, so the static pass has no way to know about them
+    # until a script actively proves it. Without this, a port the
+    # confirmation table marks "✅ CONFIRMED VULNERABLE" could still show up
+    # in /patch all with its original, much lower pre-confirmation severity.
+    if req.session_id and matched_cve and result.get("vuln_status") == "CONFIRMED":
+        try:
+            ctx = load_scan_context(req.session_id)
+            hosts = ((ctx.get("risk") or {}).get("hosts", []))
+            target_port = None
+            for h in hosts:
+                if h.get("ip") == req.target:
+                    for p in h.get("ports", []):
+                        if p.get("port") == req.port and p.get("protocol", "tcp") == req.protocol:
+                            target_port = p
+                            break
+                    break
+            if target_port is not None:
+                from app.cve.mapper import _KNOWN_CVES
+                known = _KNOWN_CVES.get(matched_cve)
+                cve_entry = {
+                    "cve_id":      matched_cve,
+                    "cvss_score":  known["cvss"]     if known else 9.0,
+                    "severity":    known["severity"] if known else "critical",
+                    "description": known["description"] if known else
+                                    f"Actively confirmed via NSE script ({result.get('script_used')}).",
+                    "patch":       known.get("patch", "") if known else "",
+                    "source":      "nse_confirmed",
+                }
+                existing_ids = {c.get("cve_id") for c in target_port.get("cves", [])}
+                if matched_cve in existing_ids:
+                    target_port["cves"] = [
+                        cve_entry if c.get("cve_id") == matched_cve else c
+                        for c in target_port["cves"]
+                    ]
+                else:
+                    target_port.setdefault("cves", []).insert(0, cve_entry)
+
+                target_port["context"] = target_port.get("context", {})
+                target_port["context"]["criticality"] = "critical"
+                target_port["risk"] = _calculate_port_risk(
+                    target_port, host_exposure=h.get("context", {}).get("exposure", "high")
+                )
+                save_scan_context(req.session_id, ctx)
+        except Exception as _persist_err:
+            # Persistence is a best-effort enhancement — never let it break
+            # the confirmation response itself, which the live table needs
+            # regardless of whether the write-back succeeds.
+            logger.warning("confirm-port: could not persist result for %s:%s — %s",
+                            req.target, req.port, _persist_err)
 
     return {
         "vuln_status":    result["vuln_status"],

@@ -514,12 +514,15 @@ def get_confirmation_plan(
                 continue   # product mismatch — try next CVE
 
             if script and script in avail_set:
+                reason = f"DB hit ({db['source']}): {script} for {cve_id}"
+                if db["source"] == "gemini" and db.get("gemini_reasoning"):
+                    reason = f"{reason} — learned answer: {db['gemini_reasoning']}"
                 return {
                     "action"                 : "NSE",
                     "script"                 : script,
                     "cve_id"                 : cve_id,
                     "confidence_if_confirmed": db["confidence"],
-                    "reason"                 : f"DB hit ({db['source']}): {script} for {cve_id}",
+                    "reason"                 : reason,
                     "source"                 : f"db_{db['source']}",
                 }
 
